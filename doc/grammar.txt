@@ -1,0 +1,60 @@
+prog -> PSMARK PCMARK prog_body prog_end
+
+prog_body -> fun_body prog_body
+           | fun_def prog_body
+		   | EPS
+		   
+ret -> RETURN ret_cont
+
+ret_cont -> assignment
+          | SEM
+		  
+type_n -> STYPE
+        | ITYPE
+	    | FTYPE
+		| NSTYPE
+		| NITYPE
+		| NFTYPE
+		
+ret_type -> type_n
+          | VTYPE
+		  
+body -> if_n body
+      | while_n body
+	  | fcall body
+	  | ID ASSIGN assignment body
+	  | EPS
+	  
+fcall -> F_ID LPAR fcall_cont SEM
+
+fcall_cont -> RPAR
+            | expr_list RPAR
+
+assignment -> EXPR SEM
+            | fcall
+	  
+if_n -> IF EXPR_PAR LBRC body RBRC else_n
+
+else_n -> ELSE LBRC body RBRC
+        | EPS
+
+while_n -> WHILE EXPR_PAR LBRC body RBRC
+	  
+fun_def -> FUNC F_ID LPAR par_list RPAR TYPE ret_type LBRC fun_body RBRC
+
+par_list -> type_n ID par_list_cont
+
+par_list_cont -> COMMA par_list
+                | EPS
+
+fun_body -> body fun_body
+          | ret
+          | EPS
+			
+expr_list -> EXPR expr_list_cont
+
+expr_list_cont -> COMMA expr_list
+                | EPS
+
+prog_end -> PSEND EOS
+          | EOS

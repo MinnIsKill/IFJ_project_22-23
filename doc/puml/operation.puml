@@ -1,0 +1,32 @@
+@startuml
+
+main -> main : context_init()
+main -> lex : lex_init(context)
+lex -> lex : load first token into context
+lex --> main : return(L_SUCCESS)
+main -> parser : parse(context)
+parser -> parser : parse
+parser -> lex : lex_next(context)
+lex -> lex : store next token in context
+lex --> parser : return(L_SUCCESS)
+parser -> parser : parse
+parser -> lex : lex_next(context)
+lex -> lex : store next token into context
+lex --> parser : return(L_SUCCESS)
+parser -> expr_parser : parse_expr(context)
+expr_parser -> expr_parser : parse
+expr_parser -> lex : lex_next(context)
+lex -> lex : store next token into context
+lex --> expr_parser : return(L_SUCCESS)
+expr_parser --> parser : return(EP_SUCCESS)
+parser --> main : return(P_SUCCESS)
+main -> semantic : sema(context)
+semantic -> semantic : analyze
+semantic --> main : return(S_SUCCES)
+main -> codegen : codegen(context)
+codegen -> codegen : generate
+codegen --> main : return(CG_SUCCESS);
+main -> main : context_destroy(context)
+main -> main : return(SUCCESS)
+
+@enduml

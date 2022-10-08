@@ -1,0 +1,84 @@
+@startuml
+
+enum node_type
+{
+    - TERM
+    - EXPR
+    - EXPR_PAR
+    - EXPR_FCALL
+    - PROG
+    - PROG_BODY
+}
+
+enum token_type
+{
+    - ID
+    - FID
+}
+
+enum type
+{
+    - INT
+    - FLOAT
+    - STRING
+    - VOID
+}
+
+struct ast_node
+{
+    - id : size_t
+    - type : node_type
+    - sub_type : token_type
+    - attrib : char*
+    - children_cnt : size_t
+    - children : ast_node **
+}
+
+struct ast_stack
+{
+    - stack_size : size_t
+    - stack_index : size_t
+    - data : ast_node**
+}
+
+struct char_buffer
+{
+    - size : size_t
+    - len : size_t
+    - buffer : char*
+}
+
+struct btree_node
+{
+    - id : size_t
+
+    - ret_type : type
+    - arg_cnt : size_t
+    - arg_types : type*
+    - local_symtab : btree_node*
+    
+    - key : char*
+    - l : btree_node
+    - r : btree_node
+}
+
+struct context
+{
+    - ast_root : ast_node*
+    - global_symtab : btree_node*
+    - expr_stack : asd_stack
+    - token : token_type
+    - attrib : char_buffer
+}
+
+context o-- ast_node
+context o-- btree_node
+context o-- char_buffer
+context o-- ast_stack
+ast_stack o-- ast_node
+context .. token_type
+ast_node .. token_type
+ast_node .. node_type
+btree_node .. type
+
+@enduml
