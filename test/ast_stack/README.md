@@ -1,4 +1,4 @@
-# AST test
+# AST stack test
 
 ## Dependencies
 `cmocka` - testing framework\
@@ -9,4 +9,4 @@
 make - compiles tests\
 make tests - compile and run tests with valgrind\
 make report - generate xml reports from cmocka and valgrind\
-make coverage - run the test and generate code coverage report in ./out/index.html
+make coverage - run the test and generate code coverage report in ./out/index.html\
