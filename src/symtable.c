@@ -3,18 +3,15 @@
  * @author Vojtěch Kališ (xkalis03)
  * @brief binary tree implementation
  *
- * @date of last update:   28th July 2022
+ * @date of last update:   14th October 2022
  * 
- * UPDATE NOTES: 20-07-2022:  - basic functionality done
- *               28-07-2022:  - after some unavailability time and a following streak of laziness, had 
- *                              a look into the Deletes issue
- *                            - everything seems to be working, the remaining TODOs are minor enough to 
- *                              where they can be ignored for now and focus can be diverted elsewhere
+ * UPDATE NOTES: 20-09-2022:  - basic functionality done
+ *               28-09-2022:  - tried implementing deletes ("try" being the operative word here)
+ *               14-10-2022:  - minor updates, testing (deletes are still not functional but won't probably even be used anyway)
  */
 
 /**
- * TODO: - beautify prints
- *       - make dispose non-recursive (perhaps once stack is implemented?)
+ * TODO: - ???
  */
 
 #include <stdio.h>

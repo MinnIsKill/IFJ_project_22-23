@@ -1,3 +1,11 @@
+/**
+ * @file symtable_tests.c
+ * @author Vojtěch Kališ (xkalis03)
+ * @brief binary tree testing implementation
+ *
+ * @date of last update:   14th October 2022
+ */
+
 /** 
  * gcc -std=c99 -Wall -Wextra -Werror -g symtable.c symtable_test.c -lm -o symtable_test
  * valgrind --leak-check=full ./symtable_test

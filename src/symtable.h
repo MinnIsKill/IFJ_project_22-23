@@ -3,7 +3,7 @@
  * @author Vojtěch Kališ (xkalis03)
  * @brief binary tree implementation
  *
- * @date of last update:   28th July 2022
+ * @date of last update:   14th October 2022
  */
 
 #ifndef SYMTABLE_H
