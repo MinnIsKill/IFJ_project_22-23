@@ -23,28 +23,28 @@
 #include <stdint.h>
 #include "symtable.h"
 
-//BINTREE INIT FUNCTION
-void binTree_init(_binTree_node *root){
+//bintree INIT FUNCTION
+void bintree_init(bintree_node *root){
     if (root != NULL){
         *root = NULL;
     }
 }
 
-//BINTREE DISPOSE FUNCTION
+//bintree DISPOSE FUNCTION
 //recursive
-void binTree_dispose(struct _binTree_node *root){
+void bintree_dispose(struct bintree_node *root){
     //printf("DISPOSE: root pointing at [%d] %s\n", root->nodeData->id, root->nodeData->key);
-    binTree_dispose_internal(root);
-    root = NULL;
+    bintree_dispose_internal(root);
+    bintree_init(&root);
 }
-void binTree_dispose_internal(struct _binTree_node *root){
+void bintree_dispose_internal(struct bintree_node *root){
     if (root == NULL){
         return;
     }
   
     //dispose of both subtrees
-    binTree_dispose_internal(root->l);
-    binTree_dispose_internal(root->r);
+    bintree_dispose_internal(root->l);
+    bintree_dispose_internal(root->r);
     
     //then delete the node
     //printf("DELETING: [%d] %s\n", root->nodeData->id, root->nodeData->key);
@@ -52,10 +52,10 @@ void binTree_dispose_internal(struct _binTree_node *root){
     free (root);
 }
 
-//BINTREE NODE INSERT FUNCTION
+//bintree NODE INSERT FUNCTION
 //non-recursive
-struct _binTree_node* binTree_insert(struct _binTree_node *root, int id, char key[]){
-    struct _binTree_node *tmp, *par, *ptr;
+struct bintree_node* bintree_insert(struct bintree_node *root, int id, char key[]){
+    struct bintree_node *tmp, *par, *ptr;
 
     ptr = root;
     par = NULL;
@@ -67,13 +67,13 @@ struct _binTree_node* binTree_insert(struct _binTree_node *root, int id, char ke
         } else if (id > ptr->nodeData->id ){
             ptr = ptr->r;
         } else {
-            fprintf(stderr,"ERROR: trying to insert a node with an already existing ID\n");
+            fprintf(stderr,"ERROR:  in bintree_insert:  trying to insert a node with an already existing ID\n");
             return root;
         }
     }
 
-    tmp = (struct _binTree_node *)malloc(sizeof(struct _binTree_node));
-    _binTree_data data = (_binTree_data)malloc(sizeof(struct _binTree_data));
+    tmp = (struct bintree_node *)malloc(sizeof(struct bintree_node));
+    bintree_data data = (bintree_data)malloc(sizeof(struct bintree_data));
     tmp->nodeData = data;
     tmp->nodeData->id = id;
     //printf("tmp->nodeData->id = %d\n", tmp->nodeData->id);
@@ -93,17 +93,46 @@ struct _binTree_node* binTree_insert(struct _binTree_node *root, int id, char ke
     return root;
 }
 
-//BINTREE NODE DELETE BY ID FUNCTION
+//bintree NODE DELETE BY ID FUNCTION
 //non-recursive
-void binTree_delete_by_id(struct _binTree_node *root, int id){
-    struct _binTree_node *par, *ptr;
+struct bintree_node* bintree_delete_by_id(struct bintree_node *root, int id){
+    struct bintree_node *par; //parent node ptr
+    struct bintree_node *ptr;
 
     ptr = root;
     par = NULL;
 
     while (ptr != NULL){
+        //printf("\n? scanning: [%d]\n\n",ptr->nodeData->id);
         if (id == ptr->nodeData->id){
-            binTree_delete_aux(ptr, par);
+            if (ptr->l == NULL && ptr->r == NULL){ //leaf
+                if (ptr != root){
+                    if (ptr == par->l){
+                        par->l = NULL;
+                    } else {
+                        par->r = NULL;
+                    }
+                } else { //no parent (is root)
+                    root = NULL;
+                }
+                free(ptr->nodeData);
+                free(ptr);
+            } else if (ptr->l == NULL || ptr->r == NULL){ //one child
+                struct bintree_node *next = ptr->r;
+                if (ptr != root){
+                    if (ptr == par->l){
+                        par->l = next;
+                    } else {
+                        par->r = next;
+                    }
+                } else { //no parent (is root)
+                    root = next;
+                }
+                free(ptr->nodeData);
+                free(ptr);
+            } else {
+                ;
+            }
             break;
         }
         par = ptr;
@@ -115,20 +144,19 @@ void binTree_delete_by_id(struct _binTree_node *root, int id){
     }
 
     if (ptr == NULL){
-        printf("WARNING:  in binTree_delete_by_id:  no node with ID %d found\n", id);
+        printf("WARNING:  in bintree_delete_by_id:  no node with ID %d found\n", id);
     }
 
-    return;
+    return root;
 }
 
-//BINTREE NODE DELETE BY KEY FUNCTION
+//bintree NODE DELETE BY KEY FUNCTION
 //non-recursive (using the principle of inorder traversal)
-void binTree_delete_by_key(struct _binTree_node *root, char key[]){
-    struct _binTree_node *par, *ptr, *tmp; //parent, current pointer, auxiliary
+struct bintree_node* bintree_delete_by_key(struct bintree_node *root, char key[]){
+    struct bintree_node *ptr, *tmp; //parent, current pointer, auxiliary
     int cmp = 0;
 
     ptr = root;
-    par = NULL;
     
     while (ptr != NULL){
         if (ptr->l != NULL){ //something's to the left
@@ -140,22 +168,19 @@ void binTree_delete_by_key(struct _binTree_node *root, char key[]){
             if (tmp->r == ptr){
                 tmp->r = NULL;
                 if ((cmp = strcmp(ptr->nodeData->key, key)) == 0){
-                    binTree_delete_aux(ptr, par);
+                    bintree_delete_by_id(root, ptr->nodeData->id);
                     break;
                 }
-                par = ptr;
                 ptr = ptr->r;
             } else {
                 tmp->r = ptr;
-                par = ptr;
                 ptr = ptr->l;
             }
         } else {
             if ((cmp = strcmp(ptr->nodeData->key, key)) == 0){
-                binTree_delete_aux(ptr, par);
+                bintree_delete_by_id(root, ptr->nodeData->id);
                 break;
             }
-            par = ptr;
             ptr = ptr->r;
         }
     }
@@ -165,78 +190,19 @@ void binTree_delete_by_key(struct _binTree_node *root, char key[]){
     //printf(" root pointing at [%d] %s\n", root->nodeData->id, root->nodeData->key);
 
     if (ptr == NULL){
-        printf("WARNING:  in binTree_delete_by_key:  no node with KEY \"%s\" found\n", key);
+        printf("WARNING:  in bintree_delete_by_key:  no node with KEY \"%s\" found\n", key);
     }
 
-    return;
-}
-
-//BINTREE NODE DELETE AUXILIARY FUNCTION
-//the actual deletor
-void binTree_delete_aux(struct _binTree_node *ptr, struct _binTree_node *par){
-    struct _binTree_node *succ, *tmp;
-    int id = ptr->nodeData->id;
-
-    if (par == NULL){ //deleted node is the root
-        succ = NULL; //parent
- 
-        // Compute the inorder successor
-        tmp = ptr->r;
-        while (tmp->l != NULL) {
-            succ = tmp;
-            tmp = tmp->l;
-        }
- 
-        if (succ != NULL){
-            succ->l = tmp->r;
-        } else {
-            ptr->r = tmp->r;
-        }
- 
-        ptr->nodeData->id = tmp->nodeData->id;
-        strcpy(ptr->nodeData->key, tmp->nodeData->key);
-        
-        free(tmp->nodeData);
-        free(tmp);
-        return;
-    }
-
-    tmp = ptr;
-    if (tmp->r == NULL){
-        ptr = ptr->l;
-    } else if (tmp->r->l == NULL){
-        ptr = ptr->r;
-        ptr->l = tmp->l;
-    } else {
-        succ = ptr->r;
-        while (succ->l->l != NULL){
-            succ = succ->l;
-        }
-        ptr = succ->l;
-        succ->l = ptr->r;
-        ptr->l = tmp->l;
-        ptr->r = tmp->r;
-    }
-
-    free(tmp->nodeData);
-    free(tmp);
-
-    if (par != NULL){
-        if (id < par->nodeData->id){
-            par->l = ptr;
-        } else {
-            par->r = ptr;
-        }
-    }
+    return root;
 }
 
 
 
 
 
-//BINTREE NODE SEARCH BY ID FUNCTION
+//bintree NODE SEARCH BY ID FUNCTION
 //non-recursive
-struct _binTree_node* binTree_search_by_id (struct _binTree_node *root, int id){
+struct bintree_node* bintree_search_by_id (struct bintree_node *root, int id){
     while (root != NULL){
         //printf("id is %d\n", id);
         //printf("root->nodeData->id is %d\n", root->nodeData->id);
@@ -252,10 +218,11 @@ struct _binTree_node* binTree_search_by_id (struct _binTree_node *root, int id){
     return NULL;
 }
 
-//BINTREE NODE SEARCH BY KEY FUNCTION
+//bintree NODE SEARCH BY KEY FUNCTION
 //non-recursive (basically just inorder traversal)
-struct _binTree_node* binTree_search_by_key (struct _binTree_node *root, char key[]){
-    struct _binTree_node *tmp; //forward checker
+struct bintree_node* bintree_search_by_key (struct bintree_node *root, char key[]){
+    struct bintree_node *tmp; //forward checker
+    struct bintree_node *found = NULL;
     int cmp = 0;
  
     while (root != NULL){
@@ -268,7 +235,9 @@ struct _binTree_node* binTree_search_by_key (struct _binTree_node *root, char ke
             if (tmp->r == root){
                 tmp->r = NULL;
                 if ((cmp = strcmp(root->nodeData->key, key)) == 0){
-                    return root;
+                    if (found == NULL){
+                        found = root;
+                    }
                 }
                 root = root->r;
             } else {
@@ -277,19 +246,21 @@ struct _binTree_node* binTree_search_by_key (struct _binTree_node *root, char ke
             }
         } else {
             if ((cmp = strcmp(root->nodeData->key, key)) == 0){
-                return root;
+                if (found == NULL){
+                    found = root;
+                }
             }
             root = root->r;
         }
     }
 
-    return NULL;
+    return found;
 }
 
-//BINTREE INORDER PRINT FUNCTION
+//bintree INORDER PRINT FUNCTION
 //non-recursive
-void binTree_inorder(struct _binTree_node *root){
-    struct _binTree_node *tmp; //forward checker
+void bintree_inorder(struct bintree_node *root){
+    struct bintree_node *tmp; //forward checker
     //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->nodeData->id, root->nodeData->key);}
  
     while (root != NULL){
@@ -309,6 +280,44 @@ void binTree_inorder(struct _binTree_node *root){
             }
         } else {
             printf("    [%d] %s\n", root->nodeData->id, root->nodeData->key);
+            root = root->r;
+        }
+    }
+}
+
+//bintree INORDER PRINT FUNCTION WHICH SAVES OUTPUT INTO PASSED STRING
+//non-recursive
+void bintree_inorder_saveoutput(struct bintree_node *root, char output[]){
+    struct bintree_node *tmp; //forward checker
+    bool firstflag = false;
+    //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->nodeData->id, root->nodeData->key);}
+ 
+    while (root != NULL){
+        if (firstflag == false){
+            firstflag = true;
+        } else {
+            strcat(output, " | ");
+        }
+        if (root->l != NULL){
+            tmp = root->l;
+            while (tmp->r != NULL && tmp->r != root){
+                tmp = tmp->r;
+            }
+ 
+            if (tmp->r == root){
+                tmp->r = NULL;
+                char tmp[128];
+                snprintf(tmp, sizeof(tmp), "[%d]:%s",root->nodeData->id, root->nodeData->key);
+                strcat(output, tmp);
+                root = root->r;
+            } else {
+                tmp->r = root;
+                root = root->l;
+            }
+        } else {
+            char tmp[128];
+            snprintf(tmp, sizeof(tmp), "[%d]:%s",root->nodeData->id, root->nodeData->key);
+            strcat(output, tmp);
             root = root->r;
         }
     }

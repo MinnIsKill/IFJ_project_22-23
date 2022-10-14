@@ -14,46 +14,47 @@
 #include <stdbool.h>
 #include <string.h>
 
-struct _binTree_data{
+struct bintree_data{
     int id;
     char key[32];
 };
-typedef struct _binTree_data* _binTree_data;
+typedef struct bintree_data* bintree_data;
 
 /* node structure */
-struct _binTree_node{
-    struct _binTree_data *nodeData;
-    struct _binTree_node *r; //right node ptr
-    struct _binTree_node *l; //left node ptr
+struct bintree_node{
+    struct bintree_data *nodeData;
+    struct bintree_node *r; //right node ptr
+    struct bintree_node *l; //left node ptr
 };
-typedef struct _binTree_node* _binTree_node;
+typedef struct bintree_node* bintree_node;
 
 
-//BINTREE INIT FUNCTION
-void binTree_init();
+//bintree INIT FUNCTION
+void bintree_init();
 
-//BINTREE DISPOSE FUNCTION
-void binTree_dispose(struct _binTree_node*);
-//BINTREE DISPOSE AUX FUNCTION
-void binTree_dispose_internal(struct _binTree_node*);
+//bintree DISPOSE FUNCTION
+void bintree_dispose(struct bintree_node*);
+//bintree DISPOSE AUX FUNCTION
+void bintree_dispose_internal(struct bintree_node*);
 
-//BINTREE NODE INSERT FUNCTION
-struct _binTree_node* binTree_insert(struct _binTree_node*, int, char[]);
+//bintree NODE INSERT FUNCTION
+struct bintree_node* bintree_insert(struct bintree_node*, int, char[]);
 
-//BINTREE NODE DELETE BY ID FUNCTION
-void binTree_delete_by_id(struct _binTree_node*, int);
-//BINTREE NODE DELETE BY KEY FUNCTION
-void binTree_delete_by_key(struct _binTree_node*, char[]);
-//BINTREE NODE DELETE AUX FUNCTION
-void binTree_delete_aux(struct _binTree_node *ptr, struct _binTree_node *par);
+//bintree NODE DELETE BY ID FUNCTION
+struct bintree_node* bintree_delete_by_id(struct bintree_node*, int);
+//bintree NODE DELETE BY KEY FUNCTION
+struct bintree_node* bintree_delete_by_key(struct bintree_node*, char[]);
+void bintree_delete_aux(struct bintree_node *ptr, struct bintree_node *parent, char position_from_parent[]);
 
-//BINTREE NODE SEARCH BY ID FUNCTION
-struct _binTree_node* binTree_search_by_id(struct _binTree_node*, int);
+//bintree NODE SEARCH BY ID FUNCTION
+struct bintree_node* bintree_search_by_id(struct bintree_node*, int);
 
-//BINTREE NODE SEARCH BY KEY FUNCTION
-struct _binTree_node* binTree_search_by_key(struct _binTree_node*, char[]);
+//bintree NODE SEARCH BY KEY FUNCTION
+struct bintree_node* bintree_search_by_key(struct bintree_node*, char[]);
 
-//BINTREE INORDER PRINT FUNCTION
-void binTree_inorder(struct _binTree_node*);
+//bintree INORDER PRINT FUNCTION
+void bintree_inorder(struct bintree_node*);
+//bintree INORDER PRINT FUNCTION WHICH SAVES OUTPUT INTO PASSED STRING
+void bintree_inorder_saveoutput(struct bintree_node*, char[]);
 
 #endif
