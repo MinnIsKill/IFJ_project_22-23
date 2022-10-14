@@ -7,7 +7,7 @@
  * 
  * UPDATE NOTES: 20-09-2022:  - basic functionality done
  *               28-09-2022:  - tried implementing deletes ("try" being the operative word here)
- *               14-10-2022:  - minor updates, testing (deletes are still not functional but won't probably even be used anyway)
+ *               14-10-2022:  - minor updates, testing (deletes are still not completely functional but won't probably even be used anyway)
  */
 
 /**
