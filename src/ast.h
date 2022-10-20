@@ -4,6 +4,8 @@
  * @author Jan Lutonský, xluton02
  *
  * AST nodes are used by both parsers.
+ * compile with -DDEBUG to get additional debugging
+ * messages.
  **/
 
 #ifndef INCLUDED_AST_H
@@ -27,7 +29,18 @@ typedef enum
     EXPR_FCALL,  // FID ( expr or expr_list ) ; function call
     EXPR_LIST,   // expr,expr,... ; list of at least two expressions.
                  //                 can only be found under EXPR_FCALL node
-    PROG_BODY 
+    BODY,
+    FUN_BODY,
+    PROG_BODY, 
+    ASSIGNMENT,
+    WHILE_N,
+    IF_N,
+    ELSE_N,
+    RETURN_N,
+    RET_TYPE,
+    TYPE_N,
+    FDEF,
+    PAR_LIST,
 }node_type;
 
 struct ast_node

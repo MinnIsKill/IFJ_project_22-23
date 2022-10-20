@@ -113,7 +113,18 @@ const char* node_type_str(node_type t)
     "(expression)",
     "function call",
     "expression list",
-    "prog_body"
+    "body",
+    "fun_body",
+    "prog_body",
+    "assignment",
+    "while",
+    "if",
+    "else",
+    "return",
+    "return type",
+    "type",
+    "function definition",
+    "parametr list",
     };
     return(s[t]);
 }
@@ -148,7 +159,7 @@ void _tree_dot_print(FILE* f,ast_node* n)
         if(n->children[i] != NULL)
         {
             fprintf(f,"%llu->%llu;\n",n->id,n->children[i]->id);
-            tree_dot_print(f,n->children[i]);
+            _tree_dot_print(f,n->children[i]);
         }
     }
 }

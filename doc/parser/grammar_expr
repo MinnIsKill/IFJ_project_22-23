@@ -1,0 +1,39 @@
+# Grammar for expression parser
+# file : grammar_expr
+# author : Jan Lutonský, xluton02
+
+BINOP -> MUL
+       | DIV
+       | ADD
+       | SUB
+       | STRCAT
+       | LT
+       | GT
+       | LTE
+       | GTE
+       | EQ
+       | NEQ
+
+TERMS -> IVAL
+       | FVAL
+       | SVAL
+       | NUL
+       | ID
+
+EXPRS -> EXPR
+       | EXPR_PAR
+       | EXPR_FCALL
+
+EXPRS_PLUS -> EXPRS
+            | EXPR_LIST
+
+EXPR_FCALL -> FID LPAR RPAR
+            | FID LPAR EXPRS_PLUS RPAR
+
+EXPR_PAR -> LPAR EXPRS RPAR
+
+EXPR_LIST -> EXPRS_PLUS COMMA EXPRS
+
+EXPR -> EXPRS BINOP EXPRS
+      | TERMS
+

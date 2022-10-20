@@ -1,6 +1,6 @@
 /**
  * @brief Stack implemented using vector
- * @file ast_stack.h
+ * @file ast_stack.c
  * @author Jan Lutonský, xluton02
  **/
 

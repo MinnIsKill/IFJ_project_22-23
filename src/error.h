@@ -1,3 +1,9 @@
+/**
+ * @brief Errors and return codes
+ * @file error.h
+ * @author Jan Lutonský, xluton02
+ **/
+
 #ifndef INCLUDE_ERROR_H
 #define INCLUDE_ERROR_H
 

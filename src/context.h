@@ -1,23 +1,29 @@
+/**
+ * @brief Collection of datastructures that need to be shared betwen 
+ *        modules
+ * @file context.h
+ * @author Jan Lutonský, xluton02
+ **/
+
 #ifndef INCLUDE_CONTEXT_H
 #define INCLUDE_CONTEXT_H
-
-
 
 #include"symtable.h"
 #include"ast.h"
 #include"ast_stack.h"
 #include"token.h"
 
-// this may change
-#include"char_buffer.h"
+// TODO implement
+//#include"char_buffer.h"
 
 typedef struct
 {
-    ast_node*   root;
-    symtable*   global_symtab;
-    ast_stack   expr_stack;
-    token_type  token;
-    char_buffer atrib_buffer;
+    ast_node* root;
+    struct _binTree_node* global_symtab;
+    ast_stack expr_stack;
+    token_type token;
+    char* attrib;
+//    char_buffer attrib; this will replace line above
 }context;
 
 #endif

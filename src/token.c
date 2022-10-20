@@ -1,3 +1,9 @@
+/**
+ * @brief Token data type + functions
+ * @file token.c
+ * @author Jan Lutonský, xluton02
+ **/
+
 #include"token.h"
 
 const char* token_str(token_type t)

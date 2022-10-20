@@ -1,0 +1,62 @@
+# Grammar for recursive descend parser
+# file : grammar_expr
+# authors : Jan Lutonský, xluton02
+#           Vojťech Kališ, xkalis03
+
+
+prog -> PS_MARK PC_MARK prog_body
+
+prog_body -> body_part prog_body
+           | fun_def prog_body
+           | EPS
+
+prog_end -> PE_MARK EOS
+          | EOS
+
+body -> body_part body
+      | EPS
+
+body_part -> if_n
+           | while_n
+           | assign
+           | fcall
+           | ret
+
+             /-- první se zkontroluje jestli je FID přítomný
+            /    ale lexer se neposune a token se tam nechá 
+           /     pro exr parser
+          /
+fcall -> FID EXPR_FCALL SEM <--- expr parser se volá jen pokud je na vstupu FID
+
+ret -> RETURN ret_cont
+ret_cont -> EXPR_PAR SEM
+          | SEM
+
+assign -> ID ASSIG asignment_body SEM
+assign_body -> EXPR_FCALL \
+            | EXPR_PAR     |= expr parser musí vrátit jeden z nich
+            | EXPR        /
+
+while_n -> WHILE EXPR_PAR LBRC body RBRC
+
+if_n -> IF EXPR_PAR LBRC body RBRC else_n
+else_n -> ELSE LBRC body RBRC
+        | EPS
+	  
+fun_def -> FUNC F_ID LPAR par_list RPAR TYPE ret_type LBRC fun_body RBRC
+
+par_list -> type_n ID par_list_cont
+
+par_list_cont -> COMMA par_list
+                | EPS
+			
+ret_type -> type_n
+          | VTYPE
+
+type_n -> STYPE
+        | ITYPE
+	    | FTYPE
+		| NSTYPE
+		| NITYPE
+		| NFTYPE
+

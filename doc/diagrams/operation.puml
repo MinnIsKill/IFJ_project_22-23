@@ -1,3 +1,7 @@
+/'
+ ' High level overview of compiler function 
+ ' author : Jan Lutonský, xluton02
+ '/
 @startuml
 
 main -> main : context_init()

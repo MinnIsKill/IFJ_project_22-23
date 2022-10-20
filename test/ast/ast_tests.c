@@ -1,3 +1,7 @@
+/**
+ *  @file ast_tests.c
+ *  @author Jan Lutonský, xluton02
+ **/
 #include"./../../src/ast.h"
 
 #include<stdio.h>

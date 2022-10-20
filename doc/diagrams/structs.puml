@@ -1,3 +1,7 @@
+/'
+ ' Collection of structures used in compiler
+ ' author : Jan Lutonský, xluton02
+ '/
 @startuml
 
 enum node_type

@@ -1,0 +1,49 @@
+/* 
+ *  Diagram of state machine which
+ *  reduces nonterminals on stack
+ *  of a operator precedence parser. 
+ *  implemented in :
+ *      ./src/parser_expr.c : reduce_FSM(...)
+ *  grammar used for reductions:
+ *      ./doc/parse/grammar_expr
+ *
+ *  author : Jan Lutonský, xluton02
+ */
+digraph fsm {
+graph [nodesep = 0.45]
+node [shape = circle fixedsize=shape width=0.71]
+
+"EXPRF"[shape = doublecircle fixedsize=shape]
+"EXPRF2"[shape = doublecircle fixedsize=shape]
+"PAR"[shape = doublecircle fixedsize=shape]
+"FCALL"[shape = doublecircle fixedsize=shape]
+"LIST"[shape = doublecircle fixedsize=shape]
+"INVIS_NODE" [style = invis]
+
+"INVIS_NODE" -> "START"
+"STATE7" -> "EXPRF" [style = invis]
+"STATE1" -> "STATE5" [style = invis]
+
+
+"STATE1" -> "START" [label = ")" dir=back]
+"STATE1" -> "STATE2" [label = "   (" ]
+"STATE1" -> "STATE4" [xlabel = "EXPR_LIST"]
+"STATE2" -> "FCALL" [xlabel = "FID  "]
+"STATE3" -> "STATE1" [label = "EXPRS" dir=back]
+"STATE3" -> "PAR" [xlabel = "( "]
+"STATE4" -> "STATE2" [label = ")"]
+"PAR" -> "FCALL" [xlabel = "FID  "]
+
+"START" -> "EXPRF" [label = "TERMS"]
+"START" -> "STATE5" [label = "  EXPRS"]
+"STATE5" -> "STATE7" [xlabel = "BINOP" splines=line]
+"STATE5" -> "STATE6" [label = "  COMMA"]
+"STATE6" -> "LIST" [label = "EXPRS_PLUS"]
+"STATE7" -> "EXPRF2" [xlabel = "EXPRS  " splines=line]
+
+{rank = same; "STATE5"[group=g2]; "STATE7"[group=g1]; "EXPRF2";};
+{rank = same; "STATE4"; "STATE2"[group=g3];};
+{rank = same; "STATE3"[group=g4] ; "STATE1"[group=g3] ; "START"[group=g2]; "EXPRF"[group=g1];};
+{rank = same; "STATE6"[group=g2]; "LIST"[group=g1];};
+{rank = same; "PAR"[group=g4]; "FCALL"[group=g3];};
+}

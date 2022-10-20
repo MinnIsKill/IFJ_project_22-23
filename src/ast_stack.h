@@ -8,6 +8,9 @@
  *           with ast_stack_init()
  * @warning only push root nodes into stack otherwise 
  *          undefined beahavior
+ *
+ * compile with -DDEBUG to get additional debugging
+ * messages.
  **/
 #ifndef INCLUDE_AST_STACK_H
 #define INCLUDE_AST_STACK_H

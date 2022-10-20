@@ -1,9 +1,11 @@
 #Makefile
+# author Jan Lutonský, xluton02
 
 BIN=test_run
 CC=gcc
-CFLAGS= -std=gnu11 -g -O0
-LFLAGS= --coverage -lcmocka -Wl,--wrap=malloc,--wrap=realloc,--wrap=strdup
+CFLAGS=-std=gnu11 -g -O0
+LFLAGS=--coverage -lcmocka -Wl,--wrap=malloc,--wrap=realloc,--wrap=strdup
+ERFLAGS=-Werror -Wall -Wextra -pedantic
 
 $(BIN): ast_tests.o ast.o token.o
 	$(CC) $(LFLAGS) $^ -o $@
@@ -12,7 +14,7 @@ ast_test.o: ast_test.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 ast.o: ./../../src/ast.c 
-	$(CC) -DDEBUG --coverage $(CFLAGS) -c $< -o $@
+	$(CC) $(ERFLAGS) -DDEBUG --coverage $(CFLAGS) -c $< -o $@
 
 token.o: ./../../src/token.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -1,3 +1,9 @@
+/**
+ * @brief Token data type + functions
+ * @file token.h
+ * @author Jan Lutonský, xluton02
+ **/
+
 #ifndef INCLUDE_TOKEN_H
 #define INCLUDE_TOKEN_H
 

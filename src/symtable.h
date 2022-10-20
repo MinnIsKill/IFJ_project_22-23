@@ -18,7 +18,8 @@ struct _binTree_data{
     int id;
     char key[32];
 };
-typedef struct _binTree_data* _binTree_data;
+// what is this used for ?
+//typedef struct _binTree_data* _binTree_data;
 
 /* node structure */
 struct _binTree_node{
@@ -26,7 +27,8 @@ struct _binTree_node{
     struct _binTree_node *r; //right node ptr
     struct _binTree_node *l; //left node ptr
 };
-typedef struct _binTree_node* _binTree_node;
+// what is this used for ?
+//typedef struct _binTree_node* _binTree_node;
 
 
 //BINTREE INIT FUNCTION

@@ -1,3 +1,7 @@
+/**
+ *  @file ast_stack_tests.c
+ *  @author Jan Lutonský, xluton02
+ **/
 #include"./../../src/ast_stack.h"
 #include"./../../src/ast.h"
 

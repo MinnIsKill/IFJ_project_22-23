@@ -1,9 +1,10 @@
-# AST test
+# Abstract syntax tree test
+Simple test suite for ast data structure.
 
 ## Dependencies
 `cmocka` - testing framework\
 `valgrind` - memory leak detection\
-`lcov` - code coverage reports
+`gcov`+`lcov` - code coverage reports
 
 ## Makefile
 make - compiles tests\

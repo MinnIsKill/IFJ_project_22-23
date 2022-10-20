@@ -1,9 +1,11 @@
-# AST stack test
+# Abstract syntax tree stack test
+Simple suite of tests for stack of abstract syntax trees.\
+**Tests expects that ast works correctly**
 
 ## Dependencies
 `cmocka` - testing framework\
 `valgrind` - memory leak detection\
-`lcov` - code coverage reports
+`gcov`+`lcov` - code coverage reports
 
 ## Makefile
 make - compiles tests\
