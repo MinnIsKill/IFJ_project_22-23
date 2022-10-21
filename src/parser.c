@@ -345,13 +345,16 @@ p_codes ret(ast_node* root, context* con)
    
     if(!node_add(root,node))
     {
+        node_delete(&node);
         return(P_AST_ERROR);
     }
     return(P_SUCCESS);
 }
 
 /**
- *  ret_cont -> EXPR_PAR SEMIC
+ *  ret_cont -> EXPR SEMIC
+ *            | EXPR_PAR SEMIC
+ *            | EXPR_FCALL SEMIC
  *            | SEMIC
  **/
 p_codes ret_cont(ast_node* root, context* con)
@@ -365,7 +368,9 @@ p_codes ret_cont(ast_node* root, context* con)
 
     switch(parse_expr(root,con))
     {
+        case(EP_EXPR):
         case(EP_EXPR_PAR):
+        case(EP_EXPR_FCALL):
             break;
 
         case(EP_AST_ERROR):

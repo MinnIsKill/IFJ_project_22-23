@@ -29,13 +29,15 @@ body_part -> if_n
 fcall -> FID EXPR_FCALL SEM <--- expr parser se volá jen pokud je na vstupu FID
 
 ret -> RETURN ret_cont
-ret_cont -> EXPR_PAR SEM
-          | SEM
+ret_cont -> EXPR SEMIC
+          | EXPR_PAR SEMIC
+          | EXPR_FCALL SEMIC
+          | SEMIC
 
 assign -> ID ASSIG asignment_body SEM
-assign_body -> EXPR_FCALL \
-            | EXPR_PAR     |= expr parser musí vrátit jeden z nich
-            | EXPR        /
+assign_body -> EXPR_FCALL  \
+             | EXPR_PAR     |= expr parser musí vrátit jeden z nich
+             | EXPR        /
 
 while_n -> WHILE EXPR_PAR LBRC body RBRC
 

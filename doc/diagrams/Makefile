@@ -7,4 +7,4 @@ all:
 .PHONY: clean
 
 clean:
-	re ./*.png
+	rm ./*.png
