@@ -17,7 +17,8 @@ typedef enum{
 // input symbol precedence classes 
 typedef enum{
     F,   // function = {FID}
-    T,   // term = {ID,IVAL,FVAL,SVAL,NUL}
+    I,   // ID 
+    T,   // term = {IVAL,FVAL,SVAL,NUL}
     CL1, // class1 = {*, \ }
     CL2, // class2 = {+, -,  .}
     CL3, // class3 = {<, >, <=, >=}
@@ -25,24 +26,27 @@ typedef enum{
     LP,  // (
     RP,  // )
     CM,  // ,
+    CEQ, // =
     DOL  // $
 }tab_index;
 
 // dimmension of precedence table
-#define tab_dim 10
+#define tab_dim 12
 // precedence table
 tab_op tab[tab_dim][tab_dim]={
-//          F       T       CL1      CL2      CL3      CL4      LPAR     RPAR           ,        $
-/* F   */ { ERROR , ERROR , ERROR  , ERROR  , ERROR  , ERROR  , SHIFT  , ERROR        , ERROR  , ERROR  },
-/* T   */ { ERROR , ERROR , REDUCE , REDUCE , REDUCE , REDUCE , REDUCE , REDUCE       , REDUCE , REDUCE },
-/* CL1 */ { SHIFT , SHIFT , REDUCE , REDUCE , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , REDUCE },
-/* CL2 */ { SHIFT , SHIFT , SHIFT  , REDUCE , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , REDUCE },
-/* CL3 */ { SHIFT , SHIFT , SHIFT  , SHIFT  , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , REDUCE },
-/* CL4 */ { SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , REDUCE , SHIFT  , REDUCE       , REDUCE , REDUCE },
-/* (   */ { SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT_REDUCE , SHIFT  , ERROR  },
-/* )   */ { ERROR , ERROR , ERROR  , ERROR  , ERROR  , ERROR  , ERROR  , ERROR        , REDUCE , ERROR  },
-/* ,   */ { SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , REDUCE       , REDUCE , ERROR  },
-/* $   */ { SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , ERROR        , SHIFT  , ACCEPT }
+//          F       I       T       CL1      CL2      CL3      CL4      LPAR     RPAR           ,        =         $
+/* F   */ { ERROR , ERROR , ERROR , ERROR  , ERROR  , ERROR  , ERROR  , SHIFT  , ERROR        , ERROR  , ERROR , ERROR  },
+/* I   */ { ERROR , ERROR , ERROR , REDUCE , REDUCE , REDUCE , REDUCE , ERROR  , REDUCE       , REDUCE , SHIFT , REDUCE },
+/* T   */ { ERROR , ERROR , ERROR , REDUCE , REDUCE , REDUCE , REDUCE , ERROR  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* CL1 */ { SHIFT , SHIFT , SHIFT , REDUCE , REDUCE , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* CL2 */ { SHIFT , SHIFT , SHIFT , SHIFT  , REDUCE , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* CL3 */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , REDUCE , REDUCE , SHIFT  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* CL4 */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , REDUCE , SHIFT  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* (   */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT_REDUCE , SHIFT  , ERROR , ERROR  },
+/* )   */ { ERROR , ERROR , ERROR , ERROR  , ERROR  , ERROR  , ERROR  , ERROR  , ERROR        , REDUCE , ERROR , ERROR  },
+/* ,   */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , REDUCE       , REDUCE , ERROR , ERROR  },
+/* =   */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , REDUCE       , REDUCE , ERROR , REDUCE },
+/* $   */ { SHIFT , SHIFT , SHIFT , SHIFT  , SHIFT  , SHIFT  , SHIFT  , SHIFT  , ERROR        , SHIFT  , SHIFT , ACCEPT }
 };
 
 // inner function
@@ -53,43 +57,61 @@ tab_index token_to_tab_index(token_type t)
     {
         case(FID):
             return(F);
+            break;
+        
+        case(ID):
+            return(I);
+            break;
 
         case(IVAL):
         case(FVAL):
         case(SVAL):
-        case(ID):
+        case(VVAL):
             return(T);
+            break;
 
         case(MUL):
         case(DIV):
             return(CL1);
+            break;
 
         case(ADD):
         case(SUB):
         case(STRCAT):
             return(CL2);
+            break;
 
         case(LT):
         case(GT):
         case(LTE):
         case(GTE):
             return(CL3);
+            break;
 
         case(EQ):
         case(NEQ):
             return(CL4);
+            break;
 
         case(LPAR):
             return(LP);
+            break;
 
         case(RPAR):
             return(RP);
+            break;
 
         case(COMMA):
             return(CM);
+            break;
+        
+        case(ASSIG):
+            return(CEQ);
+            break;
 
         default:
             return(DOL);
+            break;
     }
 }
 
@@ -159,10 +181,12 @@ ep_codes reduce_FSM(ast_stack* s)
         STATE5,
         STATE6,
         STATE7,
+        STATE8,
         EXPRF2,
         EXPRF,  // embedded in START
         LIST,   // embedded in STATE6
         FCALL,
+        ASSIGN,
         PAR,
     }state = START;
     
@@ -332,6 +356,10 @@ ep_codes reduce_FSM(ast_stack* s)
                 {
                     state = STATE6;
                 }
+                else if(middle->sub_type == ASSIG && middle->type == TERM)
+                {
+                    state = STATE8;
+                }
                 else
                 {
                     state = ERROR;
@@ -426,7 +454,59 @@ ep_codes reduce_FSM(ast_stack* s)
                     state = ERROR;
                 }
                 break;
+
+            case(STATE8):
+                infoprint("state : STATE8");
+                left = ast_stack_peel(s);
+                if(left == NULL)
+                {
+                    dbgprint("stack error.");
+                    state = ERROR;
+                    break;
+                }
+                if(left->sub_type == ID && left->type == TERM)
+                {
+                    state = ASSIGN;
+                }
+                else
+                {
+                    state = ERROR;
+                }
+                break;
             
+            case(ASSIGN):
+                infoprint("state : assign");
+                middle->type = EXPR_ASSIGN;
+                if(!node_add(middle,left))
+                {
+                    dbgprint("ast errror.");
+                    state = ERROR;
+                    break;
+                }
+                
+                if(!node_add(middle,right))
+                {
+                    // left is already attached
+                    // to middle so error state
+                    // must not free it
+                    left = NULL;
+                    dbgprint("ast errror.");
+                    state = ERROR;
+                    break;
+                }
+                if(!ast_stack_push(s,middle))
+                {
+                    // left and righ are already attached
+                    // to middle so error state
+                    // must not free them
+                    left = NULL;
+                    right = NULL;
+                    dbgprint("stack errror.");
+                    state = ERROR;
+                    break;
+                }
+                return(EP_SUCCESS);
+                break;
 
             case(EXPRF2):
                 infoprint("state : EXPR1");
@@ -670,6 +750,11 @@ ep_codes parse_expr(ast_node* root, context* con)
                             case(EXPR_FCALL):
                                 infoprint("return EXPR_FCALL");
                                 ret = EP_EXPR_FCALL;
+                                break;
+                            
+                            case(EXPR_ASSIGN):
+                                infoprint("return EXPR_ASSIGN");
+                                ret = EP_EXPR_ASSIGN;
                                 break;
 
                             default:

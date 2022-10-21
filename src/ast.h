@@ -28,7 +28,8 @@ typedef enum
     EXPR_PAR,    // ( expression ) ; expression surrounded with parenthesis 
     EXPR_FCALL,  // FID ( expr or expr_list ) ; function call
     EXPR_LIST,   // expr,expr,... ; list of at least two expressions.
-                 //                 can only be found under EXPR_FCALL node
+                 //  can only be found under EXPR_FCALL node
+    EXPR_ASSIGN, // ID = EXPR
     BODY,
     FUN_BODY,
     PROG_BODY, 

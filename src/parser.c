@@ -14,10 +14,9 @@ p_codes prog_body(ast_node* root,context* con);
 p_codes prog_end(ast_node* root,context* con);
 p_codes body(ast_node* root,context* con);
 p_codes body_part(ast_node* root,context* con);
-p_codes fcall(ast_node* root,context* con);
+p_codes extended_expr(ast_node* root, context* con);
 p_codes ret(ast_node* root,context* con);
 p_codes ret_cont(ast_node* root,context* con);
-p_codes assign(ast_node* root,context* con);
 p_codes while_n(ast_node* root,context* con);
 p_codes if_n(ast_node* root,context* con);
 p_codes else_n(ast_node* root,context* con);
@@ -31,6 +30,10 @@ p_codes type_n(ast_node* root,context* con);
 // and if is then consume it(load next token)
 bool consume(token_type t, context* con)
 {
+    if(con == NULL)
+    {
+        return(false);
+    }
     if(con->token != t)
     {
         infoprint("%s was not consumed",token_str(t));
@@ -44,6 +47,10 @@ bool consume(token_type t, context* con)
 // test if current token is of type t
 bool peek(token_type t, context* con)
 {
+    if(con == NULL)
+    {
+        return(false);
+    }
     if(con->token != t)
     {
         infoprint("%s was not found",token_str(t));
@@ -231,11 +238,10 @@ p_codes body(ast_node* root, context* con)
 /**
  *  body_part -> if_n 
  *             | while_n 
- *             | assign
- *             | fcall 
+ *             | extended_expr
  *             | ret
  **/
-#define fnc_cnt 5 // carefull undefined after function
+#define fnc_cnt 4 // carefull undefined after function
 p_codes body_part(ast_node* root, context* con)
 {
     infoprint("body");
@@ -244,8 +250,7 @@ p_codes body_part(ast_node* root, context* con)
     {
         &if_n,
         &while_n,
-        &assign,
-        &fcall,
+        &extended_expr,
         &ret,
     };
    
@@ -279,28 +284,55 @@ p_codes body_part(ast_node* root, context* con)
 }
 #undef fnc_cnt
 
+bool can_skip_expr(context* con)
+{
+    if(con == NULL)
+    {
+        return(false);
+    }
+    // falltrought filter
+    switch(con->token)
+    {
+        case(FID):
+        case(ID):
+        case(IVAL):
+        case(FVAL):
+        case(SVAL):
+        case(VVAL):
+        case(LPAR):
+            return(false);
+            break;
+        default:
+            return(true);
+            break;
+    }
+}
 
 /**
- *  fcall -> FID EXPR_FCALL SEM 
+ *  extended_expr -> EXPR SEMIC
+ *                 | EXPR_FCALL SEMIC
+ *                 | EXPR_PAR SEMIC
+ *                 | EXPR_ASSIGN SEMIC
  **/
-p_codes fcall(ast_node* root, context* con)
+p_codes extended_expr(ast_node* root, context* con)
 {
-    infoprint("fcall");
-
-    if(!peek(FID,con))
+    if(can_skip_expr(con))
     {
         return(P_CAN_SKIP);
     }
-
+    
     switch(parse_expr(root,con))
     {
+        case(EP_EXPR):
         case(EP_EXPR_FCALL):
+        case(EP_EXPR_PAR):
+        case(EP_EXPR_ASSIGN):
             break;
 
         case(EP_AST_ERROR):
             return(P_AST_ERROR);
             break;
-
+        
         case(EP_STACK_ERROR):
             return(P_STACK_ERROR);
             break;
@@ -308,8 +340,7 @@ p_codes fcall(ast_node* root, context* con)
         default:
             return(P_SYNTAX_ERROR);
             break;
-    }
-
+    }    
     if(!consume(SEMIC,con))
     {
         return(P_SYNTAX_ERROR);
@@ -317,6 +348,8 @@ p_codes fcall(ast_node* root, context* con)
 
     return(P_SUCCESS);
 }
+
+
 
 /**
  *  ret -> RETURN ret_cont
@@ -391,75 +424,6 @@ p_codes ret_cont(ast_node* root, context* con)
         return(P_SYNTAX_ERROR);
     }
     
-    return(P_SUCCESS);
-}
-
-/**
- *  combination of two rules assign assign_body
- *
- *  assign -> ID ASSIG -> | EXPR        | -> SEM
- *                        | EXPR_FCALL  |   
- *                        | EXPR_PAR    |  
- *                        /-------------\
- *                        | assign_body |
- **/
-p_codes assign(ast_node* root,context* con)
-{
-    infoprint("assign");
-
-    if(!peek(ID,con)) 
-    {
-        return(P_CAN_SKIP);
-    }
-
-    ast_node* node = node_new(ASSIGNMENT,ID,con->attrib);
-    if(node == NULL)
-    {
-        return(P_AST_ERROR);
-    }
-
-    lex_next(con);
-
-    if(!consume(ASSIG,con))
-    {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
-    }
-
-    // fall trought filter
-    switch(parse_expr(node,con))
-    {
-        case(EP_EXPR):
-        case(EP_EXPR_PAR):
-        case(EP_EXPR_FCALL):
-            break;
-       
-        case(EP_AST_ERROR):
-            node_delete(&node);
-            return(P_AST_ERROR);
-            break;
-
-        case(EP_STACK_ERROR):
-            node_delete(&node);
-            return(P_STACK_ERROR);
-            break;
-
-        default:
-            node_delete(&node);
-            return(P_SYNTAX_ERROR);
-            break;
-    }
-    
-    if(!consume(SEMIC,con))
-    {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
-    }
-    
-    if(!node_add(root,node))
-    {
-        return(P_AST_ERROR);
-    }
     return(P_SUCCESS);
 }
 

@@ -23,9 +23,10 @@
 typedef enum
 {
     EP_SUCCESS,         // inner use, parse_expr() will not return this
-    EP_EXPR,            // expr was parsed        |
-    EP_EXPR_PAR,        // expr_par was parsed    |>-- expression was added to root
-    EP_EXPR_FCALL,      // expr_fcall was parsed  |
+    EP_EXPR,            // expr was parsed         |
+    EP_EXPR_PAR,        // expr_par was parsed     |>-- expression was added to root
+    EP_EXPR_FCALL,      // expr_fcall was parsed   |
+    EP_EXPR_ASSIGN,     // expr_assign was parsed  |
     EP_SYNTAX_ERROR,    // syntax error
     EP_STACK_ERROR,     // error while manipulating with stack
     EP_AST_ERROR,       // error while manipulating with ast

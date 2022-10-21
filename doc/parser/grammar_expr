@@ -17,8 +17,7 @@ BINOP -> MUL
 TERMS -> IVAL
        | FVAL
        | SVAL
-       | NUL
-       | ID
+       | VVAL
 
 EXPRS -> EXPR
        | EXPR_PAR
@@ -27,6 +26,10 @@ EXPRS -> EXPR
 EXPRS_PLUS -> EXPRS
             | EXPR_LIST
 
+EXPR -> EXPRS BINOP EXPRS
+      | ID
+      | TERMS
+
 EXPR_FCALL -> FID LPAR RPAR
             | FID LPAR EXPRS_PLUS RPAR
 
@@ -34,6 +37,4 @@ EXPR_PAR -> LPAR EXPRS RPAR
 
 EXPR_LIST -> EXPRS_PLUS COMMA EXPRS
 
-EXPR -> EXPRS BINOP EXPRS
-      | TERMS
-
+EXPR_ASSIGN -> ID ASIG EXPRS

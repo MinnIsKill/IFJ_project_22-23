@@ -1,49 +1,61 @@
 /* 
- *  Diagram of state machine which
- *  reduces nonterminals on stack
- *  of a operator precedence parser. 
- *  implemented in :
- *      ./src/parser_expr.c : reduce_FSM(...)
- *  grammar used for reductions:
- *      ./doc/parse/grammar_expr
- *
- *  author : Jan Lutonský, xluton02
- */
+*  Diagram of state machine which
+*  reduces nonterminals on stack
+*  of a operator precedence parser. 
+*  implemented in :
+*      ./src/parser_expr.c : reduce_FSM(...)
+*  grammar used for reductions:
+*      ./doc/parse/grammar_expr
+*
+*  author : Jan Lutonský, xluton02
+*/
 digraph fsm {
-graph [nodesep = 0.45]
-node [shape = circle fixedsize=shape width=0.71]
+graph [nodesep = 0.45 splines = false]
+node  [shape = circle fixedsize = shape width = 0.71]
 
-"EXPRF"[shape = doublecircle fixedsize=shape]
-"EXPRF2"[shape = doublecircle fixedsize=shape]
-"PAR"[shape = doublecircle fixedsize=shape]
-"FCALL"[shape = doublecircle fixedsize=shape]
-"LIST"[shape = doublecircle fixedsize=shape]
-"INVIS_NODE" [style = invis]
+"START"  [group = g6]
+"EXPRF"  [shape = doublecircle fixedsize = shape group = g1]
+"EXPRF2" [shape = doublecircle fixedsize = shape group = g4]
+"PAR"    [shape = doublecircle fixedsize = shape group = g3]
+"FCALL"  [shape = doublecircle fixedsize = shape group = g2]
+"LIST"   [shape = doublecircle fixedsize = shape group = g6]
+"ASSIGN" [shape = doublecircle fixedsize = shape group = g1]
+"STATE1" [group = g3]
+"STATE2" [group = g2]
+"STATE3" [group = g3]
+"STATE4" [group = g2] 
+"STATE5" [group = g6]
+"STATE6" [group = g6] 
+"STATE7" [group = g4] 
+"STATE8" [group = g1]
 
-"INVIS_NODE" -> "START"
-"STATE7" -> "EXPRF" [style = invis]
-"STATE1" -> "STATE5" [style = invis]
+"I1"     [style = invis]
 
+"I1"     -> "START"
+"STATE8" -> "STATE6" [style = invis]
+"STATE6" -> "STATE7" [style = invis]
 
-"STATE1" -> "START" [label = ")" dir=back]
-"STATE1" -> "STATE2" [label = "   (" ]
-"STATE1" -> "STATE4" [xlabel = "EXPR_LIST"]
-"STATE2" -> "FCALL" [xlabel = "FID  "]
-"STATE3" -> "STATE1" [label = "EXPRS" dir=back]
-"STATE3" -> "PAR" [xlabel = "( "]
-"STATE4" -> "STATE2" [label = ")"]
-"PAR" -> "FCALL" [xlabel = "FID  "]
+"START"  -> "STATE1" [label  = ")" minlen=2]
+"START"  -> "STATE5" [label  = "  EXPRS  "]
+"STATE1" -> "STATE2" [label  = "   (" ]
+"STATE1" -> "STATE3" [xlabel = "EXPRS "]
+"STATE1" -> "STATE4" [label  = "EXPR_LIST"]
+"STATE2" -> "FCALL"  [xlabel = "FID "]
+"STATE3" -> "PAR"    [xlabel = "(  "]
+"STATE4" -> "STATE2" [xlabel = ")  "]
+"STATE5" -> "STATE6" [label  = "COMMA"]
+"STATE5" -> "STATE7" [xlabel = " BINOP  "]
+"STATE5" -> "STATE8" [xlabel = "ASSIG"]
+"STATE6" -> "LIST"   [label  = "  EXPRS_PLUS"]
+"STATE7" -> "EXPRF2" [label  = " EXPRS"]
+"STATE8" -> "ASSIGN" [xlabel = "ID "]
+"PAR"    -> "FCALL"  [label  = "FID"]
+"EXPRF"  -> "START"  [label  = "TERMS" dir = back]
 
-"START" -> "EXPRF" [label = "TERMS"]
-"START" -> "STATE5" [label = "  EXPRS"]
-"STATE5" -> "STATE7" [xlabel = "BINOP" splines=line]
-"STATE5" -> "STATE6" [label = "  COMMA"]
-"STATE6" -> "LIST" [label = "EXPRS_PLUS"]
-"STATE7" -> "EXPRF2" [xlabel = "EXPRS  " splines=line]
+{rank = same; "STATE8"; "STATE7"; "STATE6"; "PAR"   ; "FCALL";}
+{rank = same; "START" ; "EXPRF" ; "STATE1"; "STATE4";}
+{rank = same; "ASSIGN"; "LIST"  ; "EXPRF2";}
+{rank = same; "STATE3"; "STATE2";}
+{rank = same; "PAR"   ; "FCALL" ;}
 
-{rank = same; "STATE5"[group=g2]; "STATE7"[group=g1]; "EXPRF2";};
-{rank = same; "STATE4"; "STATE2"[group=g3];};
-{rank = same; "STATE3"[group=g4] ; "STATE1"[group=g3] ; "START"[group=g2]; "EXPRF"[group=g1];};
-{rank = same; "STATE6"[group=g2]; "LIST"[group=g1];};
-{rank = same; "PAR"[group=g4]; "FCALL"[group=g3];};
 }

@@ -3,7 +3,6 @@
 # authors : Jan Lutonský, xluton02
 #           Vojťech Kališ, xkalis03
 
-
 prog -> PS_MARK PC_MARK prog_body
 
 prog_body -> body_part prog_body
@@ -18,26 +17,19 @@ body -> body_part body
 
 body_part -> if_n
            | while_n
-           | assign
-           | fcall
+           | extended_expr
            | ret
 
-             /-- první se zkontroluje jestli je FID přítomný
-            /    ale lexer se neposune a token se tam nechá 
-           /     pro exr parser
-          /
-fcall -> FID EXPR_FCALL SEM <--- expr parser se volá jen pokud je na vstupu FID
+extended_expr -> EXPR SEMIC 
+               | EXPR_FCALL SEMIC
+               | EXPR_PAR SEMIC
+               | EXPR_ASSIGN SEMIC
 
 ret -> RETURN ret_cont
 ret_cont -> EXPR SEMIC
           | EXPR_PAR SEMIC
           | EXPR_FCALL SEMIC
           | SEMIC
-
-assign -> ID ASSIG asignment_body SEM
-assign_body -> EXPR_FCALL  \
-             | EXPR_PAR     |= expr parser musí vrátit jeden z nich
-             | EXPR        /
 
 while_n -> WHILE EXPR_PAR LBRC body RBRC
 

@@ -113,6 +113,7 @@ const char* node_type_str(node_type t)
     "(expression)",
     "function call",
     "expression list",
+    "assignment",
     "body",
     "fun_body",
     "prog_body",

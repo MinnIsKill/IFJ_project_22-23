@@ -35,6 +35,7 @@ int main()
         case(EP_EXPR):
         case(EP_EXPR_PAR):
         case(EP_EXPR_FCALL):
+        case(EP_EXPR_ASSIGN):
             tree_dot_print(stdout,con.root);
             rc = SUCCESS;
             break;
