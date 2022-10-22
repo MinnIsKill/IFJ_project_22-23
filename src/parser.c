@@ -643,10 +643,16 @@ p_codes fun_def(ast_node* root, context* con)
     }
 
     p_codes p = par_list(node,con);
-    if( p != P_SUCCESS)
+    switch( p )
     {
-        node_delete(&node);
-        return(p);
+        case(P_SUCCESS):
+        case(P_CAN_SKIP):
+            break;
+
+        default:
+            node_delete(&node);
+            return(p);
+            break;
     }
 
     if(!consume(RPAR,con))
@@ -695,6 +701,30 @@ p_codes fun_def(ast_node* root, context* con)
     return(P_SUCCESS);
 }
 
+bool can_par_list_skip(context* con)
+{
+    if(con == NULL)
+    {
+        return(false);
+    }
+    // falltrough filter
+    switch(con->token)
+    {
+        case(STYPE):
+        case(ITYPE):
+        case(FTYPE):
+        case(NSTYPE):
+        case(NITYPE):
+        case(NFTYPE):
+            return(false);
+            break;
+
+        default:
+            return(true);
+            break;
+    }
+}
+
 /**                                         
  *  this rule is combination of rules par_list and par_list_cont
  *  recursive rule implemented using while cycle
@@ -702,11 +732,17 @@ p_codes fun_def(ast_node* root, context* con)
  *  /-----------------------------------------------\
  * |                                                 |
  *  \--> par_list -> type_n ID -> COMMA par_list ---/
- *                              | ESP-------------------->
+ *                 | EPS-\      | EPS-------------------->
+ *                        \----------------->      
  **/
 p_codes par_list(ast_node* root, context* con)
 {
     infoprint("par list");
+
+    if(can_par_list_skip(con))
+    {
+        return(P_CAN_SKIP);
+    }
 
     ast_node* node = node_new(PAR_LIST,TYPE,"");
     if(node == NULL)
