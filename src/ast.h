@@ -33,14 +33,13 @@ typedef enum
     BODY,
     FUN_BODY,
     PROG_BODY, 
-    ASSIGNMENT,
     WHILE_N,
     IF_N,
     ELSE_N,
     RETURN_N,
     RET_TYPE,
-    TYPE_N,
     FDEF,
+    PARAM,
     PAR_LIST,
 }node_type;
 

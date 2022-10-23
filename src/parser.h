@@ -5,6 +5,8 @@
  * 
  * compile with -DDEBUG -DINFO to get additional debugging
  * messages.
+ *
+ * TODO unifi error codes with expression parser
  **/
 #ifndef INCLUDE_PARSER_H
 #define INCLUDE_PARSER_H
@@ -25,6 +27,7 @@ typedef enum
     P_CAN_SKIP,     // inner use parse() will not return this
     P_AST_ERROR,    // error while manipulating with stack
     P_STACK_ERROR,  // error while manipulating with ast
+    P_PARAM_ERROR,  // wrong parameters
 }p_codes;
 
 /**

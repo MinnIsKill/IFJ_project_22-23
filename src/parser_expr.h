@@ -3,8 +3,8 @@
  * @file parser_expr.h
  * @author Jan Lutonský, xluton02
  * 
- * TODO remove support for unart +-
  * TODO add support for bool( || && !)
+ * TODO unify error codes with parser 
  *
  * compile with -DDEBUG -DINFO to get additional debugging
  * messages.

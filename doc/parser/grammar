@@ -40,6 +40,7 @@ else_n -> ELSE LBRC body RBRC
 fun_def -> FUNC F_ID LPAR par_list RPAR TYPE ret_type LBRC fun_body RBRC
 
 par_list -> type_n ID par_list_cont
+          | EPS
 
 par_list_cont -> COMMA par_list
                 | EPS

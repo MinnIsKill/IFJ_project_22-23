@@ -66,6 +66,12 @@ bool peek(token_type t, context* con)
 p_codes parse(context* con)
 {
     infoprint("root");
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
+
     if(!consume(PS_MARK,con))
     {
         return(P_SYNTAX_ERROR);
@@ -94,9 +100,20 @@ p_codes parse(context* con)
  *                   | fun_def -----/
  *                   | EPS-------------->
  **/                      
+#define fnc_cnt 2
 p_codes prog_body(ast_node* root, context* con)
 {
     infoprint("prog body");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
     
     ast_node* node = node_new(PROG_BODY,SEMIC,"body");
     if(node == NULL)
@@ -104,59 +121,34 @@ p_codes prog_body(ast_node* root, context* con)
         return(P_AST_ERROR);
     }
     
-    //TODO better loop
-
+    static parser_fnc fnc[fnc_cnt] =
+    {
+        &body_part,
+        &fun_def,
+    };
+   
     bool should_loop = true;
     while(should_loop)
     {
         should_loop = false;
-        switch(body_part(node,con))
+        for(size_t i = 0; (i < fnc_cnt) && (!should_loop); ++i)
         {
-            case(P_SUCCESS):
-                should_loop = true;
-                break;
+            // function will atach new node
+            p_codes p = fnc[i](node,con);
+            switch(p)
+            {
+                case(P_CAN_SKIP):
+                    continue;
 
-            case(P_CAN_SKIP):
-                switch(fun_def(node,con))
-                {
-                    case(P_CAN_SKIP):
-                        break;
-                    
-                    case(P_SUCCESS):
-                        should_loop = true;
-                        break;
-            
-                    case(P_AST_ERROR):
-                        node_delete(&node);
-                        return(P_AST_ERROR);
-                        break;
-                    
-                    case(P_STACK_ERROR):
-                        node_delete(&node);
-                        return(P_STACK_ERROR);
-                        break;
+                case(P_SUCCESS):
+                    should_loop = true;
+                    break;
 
-                    default:
-                        node_delete(&node);
-                        return(P_SYNTAX_ERROR);
-                        break;
-                }
-                break;
-
-            case(P_AST_ERROR):
-                node_delete(&node);
-                return(P_AST_ERROR);
-                break;
-
-            case(P_STACK_ERROR):
-                node_delete(&node);
-                return(P_STACK_ERROR);
-                break;
-                
-            default:
-                node_delete(&node);
-                return(P_SYNTAX_ERROR);
-                break;
+                default:
+                    node_delete(&node);
+                    return(p);
+                    break;
+            }
         }
     }
 
@@ -167,7 +159,7 @@ p_codes prog_body(ast_node* root, context* con)
     }
     return(P_SUCCESS);
 }
-
+#undef fnc_cnt
 
 /**
  *  prog_end -> EOS
@@ -175,8 +167,17 @@ p_codes prog_body(ast_node* root, context* con)
  **/
 p_codes prog_end(ast_node* root,context* con)
 {
-    (void)root; // not used
     infoprint("prog end");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(consume(EOS,con))
     {
@@ -207,6 +208,16 @@ p_codes prog_end(ast_node* root,context* con)
 p_codes body(ast_node* root, context* con)
 {
     infoprint("body");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     ast_node* node = node_new(BODY,SEMIC,"body");
     if(node == NULL)
@@ -245,6 +256,16 @@ p_codes body(ast_node* root, context* con)
 p_codes body_part(ast_node* root, context* con)
 {
     infoprint("body");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     static parser_fnc fnc[fnc_cnt] =
     {
@@ -257,7 +278,8 @@ p_codes body_part(ast_node* root, context* con)
     for(size_t i = 0; i < fnc_cnt ; ++i)
     {
         // function will atach new node
-        switch(fnc[i](root,con))
+        p_codes p = fnc[i](root,con);
+        switch(p)
         {
             case(P_CAN_SKIP):
                 continue;
@@ -266,16 +288,8 @@ p_codes body_part(ast_node* root, context* con)
                 return(P_SUCCESS);
                 break;
 
-            case(P_AST_ERROR):
-                return(P_AST_ERROR);
-                break;
-            
-            case(P_STACK_ERROR):
-                return(P_STACK_ERROR);
-                break;
-
             default:
-                return(P_SYNTAX_ERROR);
+                return(p);
                 break;
         }
     }
@@ -316,6 +330,17 @@ bool can_skip_expr(context* con)
  **/
 p_codes extended_expr(ast_node* root, context* con)
 {
+    infoprint("extended_expr");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
     if(can_skip_expr(con))
     {
         return(P_CAN_SKIP);
@@ -357,6 +382,16 @@ p_codes extended_expr(ast_node* root, context* con)
 p_codes ret(ast_node* root, context* con)
 {
     infoprint("ret");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(!consume(RETURN,con))
     {
@@ -393,6 +428,16 @@ p_codes ret(ast_node* root, context* con)
 p_codes ret_cont(ast_node* root, context* con)
 {
     infoprint("ret cont");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(consume(SEMIC,con))
     {
@@ -433,6 +478,16 @@ p_codes ret_cont(ast_node* root, context* con)
 p_codes while_n(ast_node* root, context* con)
 {   
     infoprint("while");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(!consume(WHILE,con))
     {
@@ -499,6 +554,16 @@ p_codes while_n(ast_node* root, context* con)
 p_codes if_n(ast_node* root, context* con)
 {
     infoprint("if");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(!consume(IF,con))
     {
@@ -550,25 +615,16 @@ p_codes if_n(ast_node* root, context* con)
         return(P_SYNTAX_ERROR);
     }
 
-    switch(else_n(node,con))
+    p = else_n(node,con);
+    switch(p)
     {
         case(P_SUCCESS):
         case(P_CAN_SKIP):
             break;
 
-        case(P_AST_ERROR):
-            node_delete(&node);
-            return(P_AST_ERROR);
-            break;
-        
-        case(P_STACK_ERROR):
-            node_delete(&node);
-            return(P_STACK_ERROR);
-            break;
-
         default:
             node_delete(&node);
-            return(P_SYNTAX_ERROR);
+            return(p);
             break;
     }
 
@@ -587,6 +643,16 @@ p_codes if_n(ast_node* root, context* con)
 p_codes else_n(ast_node* root, context* con)
 {
     infoprint("else");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(!consume(ELSE,con))
     {
@@ -618,6 +684,16 @@ p_codes else_n(ast_node* root, context* con)
 p_codes fun_def(ast_node* root, context* con)
 {
     infoprint("function def");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(!consume(FUNC,con))
     {
@@ -738,6 +814,16 @@ bool can_par_list_skip(context* con)
 p_codes par_list(ast_node* root, context* con)
 {
     infoprint("par list");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
     if(can_par_list_skip(con))
     {
@@ -753,30 +839,38 @@ p_codes par_list(ast_node* root, context* con)
     bool should_loop = true;
     while(should_loop)
     {
-        p_codes p = type_n(node,con);
+        ast_node* par = node_new(PARAM,INVALID,"");
+        if(par == NULL)
+        {
+            return(P_AST_ERROR);
+        }
+        p_codes p = type_n(par,con);
         if(p != P_SUCCESS)
         {
+            node_delete(&par);
             node_delete(&node);
             return(p);
         }
 
         if(!peek(ID,con))
         {
+            node_delete(&par);
             node_delete(&node);
             return(P_SYNTAX_ERROR);
         }
-
-        ast_node* id = node_new(TERM,ID,con->attrib);
-        if(id == NULL)
-        {
-            node_delete(&node);
-            return(P_AST_ERROR);
-        }
+        
+        // TODO CHECEK IF THIS WORK AFTER LEXER IS FINNISHED
+        // TODO make set method for ast
+        free(par->attrib);
+        par->attrib = con->attrib;
+        // this should cause lexet to not free 
+        // attrib string
+        con->attrib = NULL;
         lex_next(con);
     
-        if(!node_add(node,id))
+        if(!node_add(node,par))
         {
-            node_delete(&id);
+            node_delete(&par);
             node_delete(&node);
             return(P_AST_ERROR);
         }
@@ -802,14 +896,25 @@ p_codes par_list(ast_node* root, context* con)
 p_codes ret_type(ast_node* root, context* con)
 {
     infoprint("ret type");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
 
-    ast_node* node = node_new(RET_TYPE,ADD,"");
+    ast_node* node = node_new(RET_TYPE,INVALID,"");
     if(node == NULL)
     {
         return(P_AST_ERROR);
     }
     
-    switch(type_n(node,con))
+    p_codes p = type_n(node,con);
+    switch(p)
     {
         case(P_SUCCESS):
             if(!node_add(root,node))
@@ -820,29 +925,24 @@ p_codes ret_type(ast_node* root, context* con)
             return(P_SUCCESS);
             break;
 
-        case(P_AST_ERROR):
-            node_delete(&node);
-            return(P_AST_ERROR);
+        // syntax error here means that 
+        // type_n was not matched
+        // so we still need to test if 
+        // input is vtype
+        case(P_SYNTAX_ERROR):
             break;
 
-        case(P_STACK_ERROR):
-            node_delete(&node);
-            return(P_STACK_ERROR);
-            break;
-
+        // all other errors are stil errors
         default:
+            node_delete(&node);
+            return(p);
             break;
     }
 
-    node_delete(&node);
 
     if(consume(VTYPE,con))
     {
-        ast_node* node = node_new(RET_TYPE,VTYPE,"");
-        if(node == NULL)
-        {
-            return(P_AST_ERROR);
-        }
+        node->sub_type = VTYPE;
         if(!node_add(root,node))
         {
             node_delete(&node);
@@ -865,8 +965,17 @@ p_codes ret_type(ast_node* root, context* con)
 p_codes type_n(ast_node* root, context* con)
 {
     infoprint("type");
+    if(root == NULL)
+    {
+        dbgprint("received null pointer(root)");
+        return(P_PARAM_ERROR);
+    }
+    if(con == NULL)
+    {
+        dbgprint("received null pointer(con)");
+        return(P_PARAM_ERROR);
+    }
     
-    ast_node* node;
     // fall trought filter
     switch(con->token)
     {
@@ -876,22 +985,13 @@ p_codes type_n(ast_node* root, context* con)
         case(NSTYPE):
         case(NITYPE):
         case(NFTYPE):
-            node = node_new(TYPE_N,con->token,"");
-            if(node == NULL)
-            {
-                return(P_AST_ERROR);
-            }
-            if(!node_add(root,node))
-            {
-                node_delete(&node);
-                return(P_AST_ERROR);
-            }
+            root->sub_type = con->token;
             lex_next(con);
+            return(P_SUCCESS);
             break;
         default:
             return(P_SYNTAX_ERROR);
-
+            break;  
     }
-    return(P_SUCCESS);
 }
 

@@ -117,14 +117,13 @@ const char* node_type_str(node_type t)
     "body",
     "fun_body",
     "prog_body",
-    "assignment",
     "while",
     "if",
     "else",
     "return",
     "return type",
-    "type",
     "function definition",
+    "parameter",
     "parametr list",
     };
     return(s[t]);

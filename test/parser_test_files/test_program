@@ -25,5 +25,12 @@ function pp(int $a) : void
 {
 }
 
+function bb() : string
+{
+    return "all" ;
+}
+
+return(42);
+
 ?>
 
