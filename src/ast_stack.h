@@ -3,14 +3,11 @@
  * @file ast_stack.h
  * @author Jan Lutonský, xluton02
  *
- * @warning before using any function
- *           stack must be first initialized
- *           with ast_stack_init()
- * @warning only push root nodes into stack otherwise 
- *          undefined beahavior
+ * @warning push only root nodes to stack
+ * @warning do not use g_stack function directly
  *
- * compile with -DDEBUG to get additional debugging
- * messages.
+ * typed wrapper for g_stack
+ * @see g_stack.h
  **/
 #ifndef INCLUDE_AST_STACK_H
 #define INCLUDE_AST_STACK_H
@@ -20,27 +17,17 @@
 #include<stdbool.h>
 
 #include"ast.h"
+#include"g_stack.h"
 #include"dbg.h"
 
-// default 24
-#define AST_STACK_CHUNK 24
-// must be in range <1,size_t-max>
-// default 8
-#define AST_STACK_MIN_SIZE 8 
-
 typedef struct{
-    size_t size;     // amount of allocated slots
-    size_t index;    // index of currently free slot
-    ast_node** data; // vector of Node pointers
+    // private do not acces this
+    g_stack stack; 
 }ast_stack;
 
-/**
- * @brief Initialize stack with init_size slots
- * @param[in] s stack that will be initialized
- * @param[in] init_size amount of slots that will be initialized
- * @return false if you pass NULL or if memory allocation failed
- * @return true if stack was initialize properrly
- **/
+/*
+ * @see g_stack.h
+ */
 bool ast_stack_init(ast_stack* s, size_t init_size);
 
 /**

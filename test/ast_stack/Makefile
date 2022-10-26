@@ -7,13 +7,16 @@ CFLAGS=-std=gnu11 -g -O0
 LFLAGS=--coverage -lcmocka -Wl,--wrap=realloc,--wrap=calloc
 ERFLAGS=-Werror -Wall -Wextra -pedantic
 
-$(BIN): ast_stack_tests.o ast.o token.o ast_stack.o
+$(BIN): ast_stack_tests.o g_stack.o ast.o token.o ast_stack.o
 	$(CC) $(LFLAGS) $^ -o $@
 
 ast_stack_test.o: ast_stack_test.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 ast_stack.o: ./../../src/ast_stack.c 
+	$(CC) $(ERFLAGS) -DDEBUG --coverage $(CFLAGS) -c $< -o $@
+
+g_stack.o: ./../../src/g_stack.c 
 	$(CC) $(ERFLAGS) -DDEBUG --coverage $(CFLAGS) -c $< -o $@
 
 ast.o: ./../../src/ast.c

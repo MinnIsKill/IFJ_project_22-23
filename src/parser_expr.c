@@ -608,11 +608,14 @@ ast_node* find_term(ast_stack* stk)
         return(NULL);
     }
 
-    for(size_t i = stk->index-1; i+1 > 0 ; --i)
+    // TODO implement getter for index
+    // TODO use dive here instead of direct acces to data
+    for(size_t i = stk->stack.index-1; i+1 > 0 ; --i)
     {
-        if(stk->data[i]->type == TERM)
+        ast_node* node = stk->stack.data[i];
+        if( node->type == TERM)
         {
-            return(stk->data[i]);
+            return(node);
         }
     }
     return(NULL);

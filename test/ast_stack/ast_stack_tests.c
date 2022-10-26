@@ -1,5 +1,5 @@
 /**
- *  @file ast_stack_tests.c
+ *  @file ast_stack_tests.stack.c
  *  @author Jan Lutonský, xluton02
  **/
 #include"./../../src/ast_stack.h"
@@ -64,28 +64,28 @@ static void test_ast_stack_init(void** state)
     ast_stack s;
     // test if allocation will allocate minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE-1));
-    assert_non_null(s.data);
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index, 0);
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE-1));
+    assert_non_null(s.stack.data);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index, 0);
 
     ast_stack_destroy(&s);
     
     // test if allocation will allocate more than minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE+1));
-    assert_non_null(s.data);
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE+1);
-    assert_int_equal(s.index, 0);
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE+1));
+    assert_non_null(s.stack.data);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE+1);
+    assert_int_equal(s.stack.index, 0);
     
     ast_stack_destroy(&s);
     
     // exact minimal size just in case
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
-    assert_non_null(s.data);
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index, 0);
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
+    assert_non_null(s.stack.data);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index, 0);
     
     ast_stack_destroy(&s);
 }
@@ -100,32 +100,31 @@ static void test_ast_stack_init_fails(void** state)
     ast_stack s;
     // minimal size
     will_return(__wrap_calloc,0);
-    assert_false(ast_stack_init(&s,AST_STACK_MIN_SIZE-1));
-    assert_null(s.data);
-    assert_int_equal(s.size, 0);
-    assert_int_equal(s.index, 0);
+    assert_false(ast_stack_init(&s,G_STACK_MIN_SIZE-1));
+    assert_null(s.stack.data);
+    assert_int_equal(s.stack.size, 0);
+    assert_int_equal(s.stack.index, 0);
 
     ast_stack_destroy(&s);
     
     // more than minimal size
     will_return(__wrap_calloc,0);
-    assert_false(ast_stack_init(&s,AST_STACK_MIN_SIZE+1));
-    assert_null(s.data);
-    assert_int_equal(s.size, 0);
-    assert_int_equal(s.index, 0);
+    assert_false(ast_stack_init(&s,G_STACK_MIN_SIZE+1));
+    assert_null(s.stack.data);
+    assert_int_equal(s.stack.size, 0);
+    assert_int_equal(s.stack.index, 0);
     
     ast_stack_destroy(&s);
     
     // exact minimal size just in case
     will_return(__wrap_calloc,0);
-    assert_false(ast_stack_init(&s,AST_STACK_MIN_SIZE));
-    assert_null(s.data);
-    assert_int_equal(s.size, 0);
-    assert_int_equal(s.index, 0);
+    assert_false(ast_stack_init(&s,G_STACK_MIN_SIZE));
+    assert_null(s.stack.data);
+    assert_int_equal(s.stack.size, 0);
+    assert_int_equal(s.stack.index, 0);
     
     ast_stack_destroy(&s);
 }
-
 
 /**
  *  test push
@@ -137,7 +136,7 @@ static void test_ast_stack_push(void** state)
     ast_stack s;
     // minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
 
     ast_node* n = NULL;
     n = node_new(TERM,ADD,"");
@@ -150,35 +149,35 @@ static void test_ast_stack_push(void** state)
     
     // test single insertion
     assert_true(ast_stack_push(&s,n));
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index, 1);
-    assert_ptr_equal(n,s.data[0]);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index, 1);
+    assert_ptr_equal(n,s.stack.data[0]);
 
     // !!! to eliminate multiple allocations i will insert one node multiple times
     // !!! DO NOT DO THIS 
     
     // tests repeated insertions
     assert_true(ast_stack_push(&s,n));
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index, 2);
-    assert_ptr_equal(n,s.data[1]);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index, 2);
+    assert_ptr_equal(n,s.stack.data[1]);
 
     // test inserting untli reallocation happen
     will_return(__wrap_realloc,1);
-    for(size_t i = 3 ; i < AST_STACK_MIN_SIZE+2 ; ++i)
+    for(size_t i = 3 ; i < G_STACK_MIN_SIZE+2 ; ++i)
     {
         assert_true(ast_stack_push(&s,n));
-        assert_int_equal(s.index, i);
-        assert_ptr_equal(n,s.data[i-1]);
+        assert_int_equal(s.stack.index, i);
+        assert_ptr_equal(n,s.stack.data[i-1]);
     }
     
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE+AST_STACK_CHUNK);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE+G_STACK_CHUNK);
 
     // DO NOT DO THIS THIS IS SPECIAL DEALOCATION
     node_delete(&n);
-    s.size = 0;
-    s.index = 0;
-    free(s.data);
+    s.stack.size = 0;
+    s.stack.index = 0;
+    free(s.stack.data);
 }
 
 /**
@@ -191,34 +190,34 @@ static void test_ast_stack_push_fails(void** state)
     ast_stack s;
     // minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
 
     ast_node* n = NULL;
     n = node_new(TERM,ADD,"");
     assert_non_null(n);
     
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
    
     // test inserting untli reallocation happen
-    for(size_t i = 1 ; i < AST_STACK_MIN_SIZE+1 ; ++i)
+    for(size_t i = 1 ; i < G_STACK_MIN_SIZE+1 ; ++i)
     {
         assert_true(ast_stack_push(&s,n));
-        assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-        assert_int_equal(s.index, i);
-        assert_ptr_equal(n,s.data[i-1]);
+        assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+        assert_int_equal(s.stack.index, i);
+        assert_ptr_equal(n,s.stack.data[i-1]);
     }
     
     will_return(__wrap_realloc,0);
     assert_false(ast_stack_push(&s,n));
-    assert_int_equal(s.size, AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index, AST_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.size, G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index, G_STACK_MIN_SIZE);
     
 
     // DO NOT DO THIS THIS IS SPECIAL DEALOCATION
     node_delete(&n);
-    s.size = 0;
-    s.index = 0;
-    free(s.data);
+    s.stack.size = 0;
+    s.stack.index = 0;
+    free(s.stack.data);
 }
 
 /**
@@ -233,7 +232,7 @@ static void test_ast_stack_top(void** state)
 
     // minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
 
     ast_node* n = NULL;
     n = node_new(TERM,ADD,"");
@@ -295,7 +294,7 @@ static void test_ast_stack_reset(void** state)
 
     // minimal size
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
 
     for(size_t i = 0 ; i < 6; ++i)
     {
@@ -304,15 +303,15 @@ static void test_ast_stack_reset(void** state)
         assert_non_null(n);
         assert_true(ast_stack_push(&s,n));
     }
-    assert_int_equal(s.size,AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index,6);
+    assert_int_equal(s.stack.size,G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index,6);
 
     //crash test
     ast_stack_reset(NULL);
 
     ast_stack_reset(&s);
-    assert_int_equal(s.size,AST_STACK_MIN_SIZE);
-    assert_int_equal(s.index,0);
+    assert_int_equal(s.stack.size,G_STACK_MIN_SIZE);
+    assert_int_equal(s.stack.index,0);
 
     ast_stack_destroy(&s);
 }
@@ -329,7 +328,7 @@ static void test_ast_stack_pop(void** state)
     assert_false(ast_stack_pop(NULL));
 
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
 
     // pop-ing from empty stack, crash test
     assert_false(ast_stack_pop(&s));
@@ -339,9 +338,9 @@ static void test_ast_stack_pop(void** state)
     n = node_new(TERM,IVAL,"1");
     assert_true(ast_stack_push(&s,n));
 
-    assert_int_equal(s.index,1);
+    assert_int_equal(s.stack.index,1);
     assert_true(ast_stack_pop(&s));
-    assert_int_equal(s.index,0);
+    assert_int_equal(s.stack.index,0);
     
     // try push 2 nodes and pop one 
     // if top will match the first pushed node
@@ -374,7 +373,7 @@ static void test_ast_stack_peel(void** state)
     ast_stack s;
 
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
     
     // crash tests
     assert_null(ast_stack_peel(NULL));
@@ -387,11 +386,11 @@ static void test_ast_stack_peel(void** state)
     assert_non_null(n);
     assert_true(ast_stack_push(&s,n));
 
-    assert_int_equal(s.index,1);
+    assert_int_equal(s.stack.index,1);
     ast_node* peel = NULL;
     peel = ast_stack_peel(&s);
     assert_non_null(peel);
-    assert_int_equal(s.index,0);
+    assert_int_equal(s.stack.index,0);
 
     // compare pushed and peeled nodes
     assert_ptr_equal(n,peel);
@@ -406,11 +405,11 @@ static void test_ast_stack_peel(void** state)
     assert_non_null(n);
     assert_true(ast_stack_push(&s,n));
 
-    assert_int_equal(s.index,2);
+    assert_int_equal(s.stack.index,2);
     peel = NULL;
     peel = ast_stack_peel(&s);
     assert_non_null(peel);
-    assert_int_equal(s.index,1);
+    assert_int_equal(s.stack.index,1);
     
     assert_ptr_equal(n,peel);
     assert_int_equal(n->type,peel->type);
@@ -432,7 +431,7 @@ static void test_ast_stack_is_empty(void** state)
     ast_stack s;
 
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
     
     // freshly initialized stack must be empty
     assert_true(ast_stack_is_empty(&s));
@@ -461,7 +460,7 @@ static void test_ast_stack_dive(void** state)
     ast_stack s;
 
     will_return(__wrap_calloc,1);
-    assert_true(ast_stack_init(&s,AST_STACK_MIN_SIZE));
+    assert_true(ast_stack_init(&s,G_STACK_MIN_SIZE));
     
     assert_null(ast_stack_dive(&s,42));
     
@@ -499,6 +498,37 @@ static void test_ast_stack_dive(void** state)
     ast_stack_destroy(&s);
 }
 
+/**
+ *  what happens if g_stack_delete gets non empty stack
+ *  then we will empty the stack and try again
+ *  this should not segfault or leak memory
+ **/
+static void test_g_stack_destroy(void** state)
+{
+    (void)state;
+    // NULL is already destroyed so we expect true
+    assert_true(g_stack_destroy(NULL));
+
+    g_stack s;
+    // minimal size
+    will_return(__wrap_calloc,1);
+    assert_true(g_stack_init(&s,G_STACK_MIN_SIZE-1));
+
+    // test destroying empty stack
+    assert_true(g_stack_destroy(&s));
+    
+    will_return(__wrap_calloc,1);
+    assert_true(g_stack_init(&s,0));
+    int data = 1;
+    assert_true(g_stack_push(&s,&data));
+    // stack with atleast one value should not delete itself
+    assert_false(g_stack_destroy(&s));
+    // remove the only pointer from stack
+    assert_ptr_equal(g_stack_peel(&s),&data);
+    // now deletion should pass
+    assert_true(g_stack_destroy(&s));
+}
+
 int main(int argc, char** argv)
 {
     const struct CMUnitTest tests [] =
@@ -513,6 +543,7 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_ast_stack_peel),
         cmocka_unit_test(test_ast_stack_is_empty),
         cmocka_unit_test(test_ast_stack_dive),
+        cmocka_unit_test(test_g_stack_destroy),
     };
 
     if((argc > 1))
