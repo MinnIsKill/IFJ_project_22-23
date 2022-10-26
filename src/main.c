@@ -11,7 +11,6 @@
 #include"semantic.h"
 #include"symtable.h"
 
-int retcode = SUCCESS;
 
 void clean_up(context con){
     lex_destroy();
@@ -23,19 +22,34 @@ void clean_up(context con){
 
 int main()
 {
+    int retcode = SUCCESS;
+
     context con;
     con.root = node_new(NTERM,PS_MARK,"ROOT");
     ast_stack_init(&(con.expr_stack),64);
     lex_init(&con);
 
-    if((retcode = parse(&con)) != P_SUCCESS){ INFORUN( fprintf(stderr,"!!!!!!!!!!\n    parser ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); clean_up(con); return(SYNTAX_ERROR); } 
-    else { INFORUN( fprintf(stderr,"!!!!!!!!!!\n    parser ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); tree_dot_print(stdout,con.root); }
+    p_codes p_rc = parse(&con);
+    infoprintt("!!!!!!!!!!\n    parser ended with code:  [%d]\n!!!!!!!!!!\n", p_rc); 
+    switch(p_rc)
+    { 
 
-    if((retcode = semantic(&con)) != SEM_SUCCESS){ INFORUN( fprintf(stderr,"!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); clean_up(con); return (retcode); }
-    else { INFORUN( fprintf(stderr,"!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); }
+        //TODO other error types
+        default:
+            clean_up(con); 
+            return(SYNTAX_ERROR); 
+        
+        case(P_SUCCESS):
+            tree_dot_print(stdout,con.root); 
+            break; // continue
+    } 
+
+    
+    semantic_retcodes s_rc = semantic(&con);
+    infoprintt("!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", s_rc);
 
     clean_up(con);
-    return(retcode);
+    return(s_rc);
 }
 
 

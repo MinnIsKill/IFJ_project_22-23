@@ -16,8 +16,10 @@
 #ifdef INFO
 #   include<stdlib.h>
 #   define infoprint(...) fprintf(stderr,"%s : %s @ %d : ",__FILE__,__func__,__LINE__);fprintf(stderr,__VA_ARGS__);fputc('\n',stderr);
+#   define infoprintt(...) fprintf(stderr,__VA_ARGS__);
 #   define INFORUN(...) do{__VA_ARGS__}while(0)
 #else
 #   define infoprint(...)
+#   define infoprintt(...)
 #   define INFORUN(...) 
 #endif
