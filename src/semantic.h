@@ -1,0 +1,49 @@
+/**
+ * @file semantic.h
+ * @author Vojtěch Kališ (xkalis03)
+ * @brief semantic analyzer implementation header
+ *        receives an AST passed by parser as input, walks through it to evaluate semantic
+ *        correctness, and if successful, passes the AST to code generator
+ *
+ * @date of last update:   18th October 2022
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include "context.h"
+#include "symtable.h"
+#include "dll.h"
+#include "ast.h"
+#include "vector.h"
+#include "dbg.h"
+
+typedef enum{
+    SEM_SUCCESS               = 0, //no error
+    FUNC_DEF_ERR              = 3, //undefined function, attempt at function redefinition
+    FUNC_CALL_OR_RETTYPE_ERR  = 4, //wrong number/type of parameters passed while calling a function, or wrong return type
+    UNDEF_VAR_ERR             = 5, //attempt at using an undefined variable
+    FUNC_RET_EXPR_ERR         = 6, //missing or excessive expression in return
+    INCOMP_TYPES_ERR          = 7, //type incompatibility in arithmetic, string or relational expressions
+    SEM_GENERAL_ERR           = 8, //others (division by zero, ...)
+    ERR_INTERNAL              = 99 //internal error not to do with semantics (malloc fail, etc.)
+}semantic_retcodes;
+
+void AST_dotprint(FILE* f, ast_node* root);
+void AST_dotprint_internal(FILE* f, ast_node* root);
+
+const char* node_type_tostr(node_type type);
+const char* node_subtype_tostr(token_type type);
+
+struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_node* global_symtab);
+struct bintree_node* AST_DF_firsttraversal(ast_node* node, struct bintree_node* global_symtab);
+
+int semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab);
+int semantic_check_assign(ast_node* node, struct bintree_node* global_symtab);
+void AST_DF_traversal(ast_node* node, struct bintree_node* global_symtab);
+
+int semantic_check_expr();
+
+int semantic(context* cont);

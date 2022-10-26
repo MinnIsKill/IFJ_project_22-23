@@ -19,7 +19,7 @@
 typedef struct
 {
     ast_node* root;
-    struct _binTree_node* global_symtab;
+    struct bintree_node* global_symtab;
     ast_stack expr_stack;
     token_type token;
     char* attrib;

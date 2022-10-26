@@ -11,7 +11,7 @@
  * valgrind --leak-check=full ./symtable_tests
 **/
 
-#include "symtable.h"
+#include "./../../src/symtable.h"
 #include <assert.h>
 
 //counters

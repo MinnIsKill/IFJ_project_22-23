@@ -7,8 +7,10 @@
 #ifdef DEBUG
 #   include<stdlib.h>
 #   define dbgprint(...) fprintf(stderr,"%s : %s @ %d : ",__FILE__,__func__,__LINE__);fprintf(stderr,__VA_ARGS__);fputc('\n',stderr);
+#   define dbgprint_nonl(...) fprintf(stderr,"%s : %s @ %d : ",__FILE__,__func__,__LINE__);fprintf(stderr,__VA_ARGS__);
 #else
 #   define dbgprint(...)
+#   define dbgprint_nonl(...)
 #endif
 
 #ifdef INFO

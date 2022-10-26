@@ -17,22 +17,26 @@
 #include "dll.h"
 
 //
-bool dll_is_empty(struct _dll *list){
+bool dll_is_empty(struct dll *list){
     if (list == NULL){
-        printf("ERROR:   DISCOVERED AN ATTEMPT AT ACCESSING A LIST THAT DOESN'T EXIST\n");
-        exit(1);
+        dbgprint("ERROR:   DISCOVERED AN ATTEMPT AT ACCESSING A LIST THAT DOESN'T EXIST\n");
+        exit(1); //!!!
     } else {
         return (list->head == NULL) ? true : false;
     }
 }
 
 //create double-linked list
-struct _dll* dll_create (){
-    struct _dll *list = NULL;
-    list = (struct _dll *)malloc(sizeof(struct _dll));
+struct dll* dll_create (){
+    struct dll *list = NULL;
+    list = (struct dll *)malloc(sizeof(struct dll));
+    if (list == NULL){
+        dbgprint("ERROR: malloc failed in dll_create\n");
+        exit(1); //!!!
+    }
 
-    struct _dll_link *head = NULL;
-    struct _dll_link *tail = NULL;
+    struct dll_link *head = NULL;
+    struct dll_link *tail = NULL;
 
     list->head = head;
     list->tail = tail;
@@ -41,14 +45,23 @@ struct _dll* dll_create (){
 }
 
 //
-void dll_insert_first(struct _dll *list, int id, char key[]){
-    struct _dll_link *new;
-    new = (struct _dll_link *)malloc(sizeof(struct _dll_link));
-    _dll_data data = (_dll_data)malloc(sizeof(struct _dll_data));
+void dll_insert_first(struct dll *list, size_t id, char key[], char type[]){
+    struct dll_link *new;
+    new = (struct dll_link *)malloc(sizeof(struct dll_link));
+    if (new == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_first\n");
+        exit(1); //!!!
+    }
+    dll_data data = (dll_data)malloc(sizeof(struct dll_data));
+    if (data == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_first\n");
+        exit(1); //!!!
+    }
     new->linkData = data;
     new->linkData->id = id;
-    //printf("new->linkData->id = %d\n", new->linkData->id);
+    //printf("new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
+    strcpy(new->linkData->type, type);
     //printf("new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
@@ -68,14 +81,23 @@ void dll_insert_first(struct _dll *list, int id, char key[]){
 }
 
 //
-void dll_insert_last(struct _dll *list, int id, char key[]){
-    struct _dll_link *new;
-    new = (struct _dll_link *)malloc(sizeof(struct _dll_link));
-    _dll_data data = (_dll_data)malloc(sizeof(struct _dll_data));
+void dll_insert_last(struct dll *list, size_t id, char key[], char type[]){
+    struct dll_link *new;
+    new = (struct dll_link *)malloc(sizeof(struct dll_link));
+    if (new == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_last\n");
+        exit(1); //!!!
+    }
+    dll_data data = (dll_data)malloc(sizeof(struct dll_data));
+    if (data == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_last\n");
+        exit(1); //!!!
+    }
     new->linkData = data;
     new->linkData->id = id;
-    //printf("new->linkData->id = %d\n", new->linkData->id);
+    //printf("new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
+    strcpy(new->linkData->type, type);
     //printf("new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
@@ -95,14 +117,23 @@ void dll_insert_last(struct _dll *list, int id, char key[]){
 }
 
 //
-void dll_insert_after(struct _dll *list, int id_searchedlink, int id_newlink, char key[]){
-    struct _dll_link *new;
-    new = (struct _dll_link *)malloc(sizeof(struct _dll_link));
-    _dll_data data = (_dll_data)malloc(sizeof(struct _dll_data));
+void dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
+    struct dll_link *new;
+    new = (struct dll_link *)malloc(sizeof(struct dll_link));
+    if (new == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_after\n");
+        exit(1); //!!!
+    }
+    dll_data data = (dll_data)malloc(sizeof(struct dll_data));
+    if (data == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_after\n");
+        exit(1); //!!!
+    }
     new->linkData = data;
     new->linkData->id = id_newlink;
-    //printf("new->linkData->id = %d\n", new->linkData->id);
+    //printf("new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
+    strcpy(new->linkData->type, type);
     //printf("new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
@@ -111,12 +142,12 @@ void dll_insert_after(struct _dll *list, int id_searchedlink, int id_newlink, ch
         list->head = new;
         list->tail = new;
     } else { //if list is not empty
-        struct _dll_link *curr = list->head;
+        struct dll_link *curr = list->head;
 
         //navigate through list
         while (curr->linkData->id != id_searchedlink){
             if (curr->next == NULL){  //if we reached last link
-                printf("ERROR:   link  '[%d] %s'  not inserted because link with key [%d] not found\n", id_newlink, key, id_searchedlink);
+                dbgprint("ERROR:   link  '[%ld] %s'  not inserted because link with key [%ld] not found\n", id_newlink, key, id_searchedlink);
                 return;
             } else {           
                 //move to next link
@@ -143,14 +174,23 @@ void dll_insert_after(struct _dll *list, int id_searchedlink, int id_newlink, ch
 }
 
 //
-void dll_insert_before(struct _dll *list, int id_searchedlink, int id_newlink, char key[]){
-    struct _dll_link *new;
-    new = (struct _dll_link *)malloc(sizeof(struct _dll_link));
-    _dll_data data = (_dll_data)malloc(sizeof(struct _dll_data));
+void dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
+    struct dll_link *new;
+    new = (struct dll_link *)malloc(sizeof(struct dll_link));
+    if (new == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_before\n");
+        exit(1); //!!!
+    }
+    dll_data data = (dll_data)malloc(sizeof(struct dll_data));
+    if (data == NULL){
+        dbgprint("ERROR: malloc failed in dll_insert_before\n");
+        exit(1); //!!!
+    }
     new->linkData = data;
     new->linkData->id = id_newlink;
-    //printf("new->linkData->id = %d\n", new->linkData->id);
+    //printf("new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
+    strcpy(new->linkData->type, type);
     //printf("new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
@@ -159,12 +199,12 @@ void dll_insert_before(struct _dll *list, int id_searchedlink, int id_newlink, c
         list->head = new;
         list->tail = new;
     } else { //if list is not empty
-        struct _dll_link *curr = list->head;
+        struct dll_link *curr = list->head;
 
         //navigate through list
         while (curr->linkData->id != id_searchedlink){
             if (curr->next == NULL){  //if we reached last link
-                printf("ERROR:   link  '[%d] %s'  not inserted because link with key [%d] not found\n", id_newlink, key, id_searchedlink);
+                dbgprint("ERROR:   link  '[%ld] %s'  not inserted because link with key [%ld] not found\n", id_newlink, key, id_searchedlink);
                 return;
             } else {           
                 //move to next link
@@ -191,12 +231,12 @@ void dll_insert_before(struct _dll *list, int id_searchedlink, int id_newlink, c
 }
 
 //
-void dll_delete_first(struct _dll *list){
+void dll_delete_first(struct dll *list){
     if (dll_is_empty(list) == true){ //if list is empty
-        printf("ERROR:   discovered an attempt at link deletion in an empty list\n");
+        dbgprint("ERROR:   discovered an attempt at link deletion in an empty list\n");
         return;
     } else {
-        struct _dll_link* second;
+        struct dll_link* second;
         second = list->head->next;
 
         //remove pointer from second link to head
@@ -210,12 +250,12 @@ void dll_delete_first(struct _dll *list){
 }
 
 //
-void dll_delete_last(struct _dll *list){
+void dll_delete_last(struct dll *list){
     if (dll_is_empty(list) == true){ //if list is empty
-        printf("ERROR:   discovered an attempt at link deletion in an empty list\n");
+        dbgprint("ERROR:   discovered an attempt at link deletion in an empty list\n");
         return;
     } else {
-        struct _dll_link* second_to_last;
+        struct dll_link* second_to_last;
         second_to_last = list->tail->prev;
 
         //remove pointer from second-to-last link to tail
@@ -229,17 +269,17 @@ void dll_delete_last(struct _dll *list){
 }
 
 //
-void dll_delete_by_id(struct _dll *list, int id){
+void dll_delete_by_id(struct dll *list, size_t id){
     if (dll_is_empty(list) == true){ //if list is empty
-        printf("ERROR:   discovered an attempt at link deletion in an empty list %d\n", id);
+        dbgprint("ERROR:   discovered an attempt at link deletion in an empty list %ld\n", id);
         return;
     } else {
-        struct _dll_link *curr = list->head;
+        struct dll_link *curr = list->head;
 
         //navigate through list
         while (curr->linkData->id != id){
             if (curr->next == NULL){  //if we reached last link
-                printf("ERROR:   link with key [%d] not deleted because it wasn't found\n", id);
+                dbgprint("ERROR:   link with key [%ld] not deleted because it wasn't found\n", id);
                 return;
             } else {           
                 //move to next link
@@ -248,7 +288,7 @@ void dll_delete_by_id(struct _dll *list, int id){
         }
 
         if (curr == list->head){
-            struct _dll_link* second;
+            struct dll_link* second;
             second = list->head->next;
 
             //remove pointer from second link to head
@@ -259,7 +299,7 @@ void dll_delete_by_id(struct _dll *list, int id){
             //set second link as head
             list->head = second;
         } else if (curr == list->tail){
-            struct _dll_link* second_to_last;
+            struct dll_link* second_to_last;
             second_to_last = list->tail->prev;
 
             //remove pointer from second-to-last link to tail
@@ -270,8 +310,8 @@ void dll_delete_by_id(struct _dll *list, int id){
             //set second-to-last link as tail
             list->tail = second_to_last;
         } else {
-            struct _dll_link* prev_link;
-            struct _dll_link* next_link;
+            struct dll_link* prev_link;
+            struct dll_link* next_link;
 
             prev_link = curr->prev;
             next_link = curr->next;
@@ -286,13 +326,37 @@ void dll_delete_by_id(struct _dll *list, int id){
 }
 
 //
-void dll_destroy(struct _dll *list){
-    struct _dll_link *next; //pointer to next link
-    struct _dll_link *curr; //pointer to currently deleted link
+struct dll_link* dll_search_by_key(struct dll *list, char key[]){
+    if (dll_is_empty(list) == true){ //if list is empty
+        fprintf(stderr,"ERROR:   discovered an attempt at search in an empty list\n");
+        return NULL;
+    } else {
+        struct dll_link *curr = list->head;
+
+        //navigate through list
+        while (strcmp(curr->linkData->key, key) != 0){
+            if (curr->next == NULL){  //if we reached last link
+                fprintf(stderr,"ERROR:   link with key [%s] not found\n", key);
+                return NULL;
+            } else {           
+                //move to next link
+                curr = curr->next;
+            }
+        }
+
+        return curr;
+    }
+}
+
+//
+void dll_destroy(struct dll *list){
+    struct dll_link *next; //pointer to next link
+    struct dll_link *curr; //pointer to currently deleted link
 
     curr = list->head;
     
     if (dll_is_empty(list)){
+        free(list);
         return;
     } else {
         while (curr != NULL){
@@ -307,31 +371,31 @@ void dll_destroy(struct _dll *list){
 }
 
 //
-void dll_print_forwards(struct _dll *list){
+void dll_print_forwards(struct dll *list){
     if (dll_is_empty(list) == false){
-        struct _dll_link *ptr = list->head;
+        struct dll_link *ptr = list->head;
 
         while (ptr != list->tail){
-            printf("    [%d] %s\n", ptr->linkData->id, ptr->linkData->key);
+            fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
             ptr = ptr->next;
         }
 
         //print the tail as well
-        printf("    [%d] %s\n", ptr->linkData->id, ptr->linkData->key);
+        fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
     }
 }
 
 //
-void dll_print_backwards(struct _dll *list){
+void dll_print_backwards(struct dll *list){
     if (dll_is_empty(list) == false){
-        struct _dll_link *ptr = list->tail;
+        struct dll_link *ptr = list->tail;
 
         while (ptr != list->head){
-            printf("    [%d] %s\n", ptr->linkData->id, ptr->linkData->key);
+            fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
             ptr = ptr->prev;
         }
 
         //print the head as well
-        printf("    [%d] %s\n", ptr->linkData->id, ptr->linkData->key);
+        fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
     }
 }

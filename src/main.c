@@ -8,7 +8,18 @@
 #include"parser.h"
 #include"context.h"
 #include"fake_lex.h"
+#include"semantic.h"
+#include"symtable.h"
 
+int retcode = SUCCESS;
+
+void clean_up(context con){
+    lex_destroy();
+    node_delete(&(con.root));
+    bintree_dispose(con.global_symtab);
+    ast_stack_destroy(&(con.expr_stack));
+    free(con.attrib);
+}
 
 int main()
 {
@@ -17,14 +28,14 @@ int main()
     ast_stack_init(&(con.expr_stack),64);
     lex_init(&con);
 
-    if(parse(&con) != P_SUCCESS) return(SYNTAX_ERROR);
-    tree_dot_print(stdout,con.root);
+    if((retcode = parse(&con)) != P_SUCCESS){ INFORUN( fprintf(stderr,"!!!!!!!!!!\n    parser ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); clean_up(con); return(SYNTAX_ERROR); } 
+    else { INFORUN( fprintf(stderr,"!!!!!!!!!!\n    parser ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); tree_dot_print(stdout,con.root); }
 
-    lex_destroy();
-    node_delete(&(con.root));
-    ast_stack_destroy(&(con.expr_stack));
-    free(con.attrib);
-    return(SUCCESS);
+    if((retcode = semantic(&con)) != SEM_SUCCESS){ INFORUN( fprintf(stderr,"!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); clean_up(con); return (retcode); }
+    else { INFORUN( fprintf(stderr,"!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", retcode); ); }
+
+    clean_up(con);
+    return(retcode);
 }
 
 

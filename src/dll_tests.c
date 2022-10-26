@@ -14,7 +14,7 @@ int main(){
     printf("                   TEST #1 - dll_create                   \n");
     printf("==========================================================\n");
     printf("-- try initializing a double-linked list, then printing it\n");
-    _dll test = dll_create();
+    dll test = dll_create();
     dll_print_forwards(test);
     dll_print_backwards(test);
     printf("  -- if nothing was printed, everything's fine\n");
@@ -25,11 +25,11 @@ int main(){
     printf("==========================================================\n");
 /**/
     printf("-- try inserting a few links\n");
-    dll_insert_first(test, 0, "first");
-    dll_insert_last(test, 10, "second");
-    dll_insert_first(test, -5, "third");
-    dll_insert_last(test, -80, "fourth");
-    dll_insert_first(test, 100, "fifth");
+    dll_insert_first(test, 0, "first", int_t);
+    dll_insert_last(test, 10, "second", int_t);
+    dll_insert_first(test, -5, "third", int_t);
+    dll_insert_last(test, -80, "fourth", int_t);
+    dll_insert_first(test, 100, "fifth", int_t);
 //
     printf("  -- try printing the list forwards\n");
     dll_print_forwards(test);
@@ -41,10 +41,10 @@ int main(){
     printf("==========================================================\n");
 /**/
     printf("-- try inserting a few links\n");
-    dll_insert_before(test, 0, 1, "before_first");
-    dll_insert_after(test, 10, 11, "after_second");
-    dll_insert_before(test, -5, -6, "before_third");
-    dll_insert_after(test, -80, -81, "after_fourth");
+    dll_insert_before(test, 0, 1, "before_first", int_t);
+    dll_insert_after(test, 10, 11, "after_second", int_t);
+    dll_insert_before(test, -5, -6, "before_third", int_t);
+    dll_insert_after(test, -80, -81, "after_fourth", int_t);
 //
     printf("  -- try printing the list forwards\n");
     dll_print_forwards(test);
