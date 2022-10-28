@@ -16,7 +16,7 @@
 #include<stdio.h>
 #include"ast.h"
 #include"ast_stack.h"
-#include"fake_lex.h"
+#include"lex.h"
 #include"context.h"
 
 // return codes of parser and its inner functions

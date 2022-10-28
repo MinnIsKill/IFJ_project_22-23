@@ -14,7 +14,7 @@
 #include<stdbool.h>
 
 #include"stdio.h"
-#include"fake_lex.h"
+#include"lex.h"
 #include"ast.h"
 #include"parser_expr.h"
 #include"token.h"

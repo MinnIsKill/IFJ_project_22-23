@@ -1,0 +1,6 @@
+.vscode/
+obj/
+
+src/flex/lex.yy.c
+compiler
+compiler_dbg
