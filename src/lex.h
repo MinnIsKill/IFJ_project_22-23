@@ -40,6 +40,7 @@ typedef enum lex_state
     LEX_STATE_NEQ_1,
 
     LEX_STATE_PS_MARK_0,
+    LEX_STATE_PS_MARK_1,
     LEX_STATE_PC_MARK_0,
     LEX_STATE_PE_MARK_0,
 
@@ -98,10 +99,10 @@ typedef enum lex_state
     LEX_STATE_EOS
 } lex_state;
 
-typedef lex_state (*lex_state_function)(context* context);
+typedef lex_state (*lex_state_function)(context* context, FILE* input);
 
-bool lex_init(context* context);
-bool lex_next(context* context);
+bool lex_init(context* context, FILE* input);
+bool lex_next(context* context, FILE* input);
 void lex_destroy(context* context);
 
 #endif

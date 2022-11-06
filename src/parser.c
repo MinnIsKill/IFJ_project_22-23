@@ -40,7 +40,7 @@ bool consume(token_type t, context* con)
         return(false);
     }
     infoprint("[%s|%s] was consumed",token_str(t),con->attrib.buffer);
-    lex_next(con);
+    lex_next(con,stdin);
     return(true);
 }
 
@@ -710,7 +710,7 @@ p_codes fun_def(ast_node* root, context* con)
     {
         return(P_AST_ERROR);
     }
-    lex_next(con);
+    lex_next(con,stdin);
     
     if(!consume(LPAR,con))
     {
@@ -873,7 +873,7 @@ p_codes par_list(ast_node* root, context* con)
         // this should cause lexet to not free 
         // attrib string
         // con->attrib = NULL;
-        lex_next(con);
+        lex_next(con,stdin);
     
         if(!node_add(node,par))
         {
@@ -993,7 +993,7 @@ p_codes type_n(ast_node* root, context* con)
         case(NITYPE):
         case(NFTYPE):
             root->sub_type = con->token;
-            lex_next(con);
+            lex_next(con,stdin);
             return(P_SUCCESS);
             break;
         default:

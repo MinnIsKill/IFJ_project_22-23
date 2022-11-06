@@ -692,7 +692,7 @@ ep_codes parse_expr(ast_node* root, context* con)
                     node_delete(&shift_node);
                     return(EP_STACK_ERROR);
                 }
-                lex_next(con);
+                lex_next(con,stdin);
                 break;
 
             case(REDUCE):
@@ -714,7 +714,7 @@ ep_codes parse_expr(ast_node* root, context* con)
                     node_delete(&shift_node);
                     return(EP_STACK_ERROR);
                 }
-                lex_next(con);
+                lex_next(con,stdin);
 
                 // reduce
                 tmp = reduce_FSM(stk);

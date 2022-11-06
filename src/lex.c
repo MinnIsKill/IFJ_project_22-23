@@ -31,37 +31,38 @@
             return state;                                   \
         }
 
-lex_state lex_state_start(context* context);
+lex_state lex_state_start(context* context, FILE* input);
 
-lex_state lex_state_com_0(context* context);
-lex_state lex_state_lcom_0(context* context);
-lex_state lex_state_bcom_0(context* context);
-lex_state lex_state_bcom_1(context* context);
+lex_state lex_state_com_0(context* context, FILE* input);
+lex_state lex_state_lcom_0(context* context, FILE* input);
+lex_state lex_state_bcom_0(context* context, FILE* input);
+lex_state lex_state_bcom_1(context* context, FILE* input);
 
-lex_state lex_state_id_0(context* context);
-lex_state lex_state_id_1(context* context);
-lex_state lex_state_fid_0(context* context);
-lex_state lex_state_nid_0(context* context);
+lex_state lex_state_id_0(context* context, FILE* input);
+lex_state lex_state_id_1(context* context, FILE* input);
+lex_state lex_state_fid_0(context* context, FILE* input);
+lex_state lex_state_nid_0(context* context, FILE* input);
 
-lex_state lex_state_ival_0(context* context);
-lex_state lex_state_fval_0(context* context);
-lex_state lex_state_fval_1(context* context);
-lex_state lex_state_fval_2(context* context);
-lex_state lex_state_sval_0(context* context);
-lex_state lex_state_sval_1(context* context);
-lex_state lex_state_sval_x(context* context);
-lex_state lex_state_sval_o(context* context);
+lex_state lex_state_ival_0(context* context, FILE* input);
+lex_state lex_state_fval_0(context* context, FILE* input);
+lex_state lex_state_fval_1(context* context, FILE* input);
+lex_state lex_state_fval_2(context* context, FILE* input);
+lex_state lex_state_sval_0(context* context, FILE* input);
+lex_state lex_state_sval_1(context* context, FILE* input);
+lex_state lex_state_sval_x(context* context, FILE* input);
+lex_state lex_state_sval_o(context* context, FILE* input);
 
-lex_state lex_state_assig_0(context* context);
-lex_state lex_state_lt_0(context* context);
-lex_state lex_state_gt_0(context* context);
-lex_state lex_state_eq_0(context* context);
-lex_state lex_state_neq_0(context* context);
-lex_state lex_state_neq_1(context* context);
+lex_state lex_state_assig_0(context* context, FILE* input);
+lex_state lex_state_lt_0(context* context, FILE* input);
+lex_state lex_state_gt_0(context* context, FILE* input);
+lex_state lex_state_eq_0(context* context, FILE* input);
+lex_state lex_state_neq_0(context* context, FILE* input);
+lex_state lex_state_neq_1(context* context, FILE* input);
 
-lex_state lex_state_ps_mark_0(context* context);
-lex_state lex_state_pc_mark_0(context* context);
-lex_state lex_state_pe_mark_0(context* context);
+lex_state lex_state_ps_mark_0(context* context, FILE* input);
+lex_state lex_state_ps_mark_1(context* context, FILE* input);
+lex_state lex_state_pc_mark_0(context* context, FILE* input);
+lex_state lex_state_pe_mark_0(context* context, FILE* input);
 
 const lex_state_function LEX_TABLE[] =
 {
@@ -94,6 +95,7 @@ const lex_state_function LEX_TABLE[] =
     /* LEX_STATE_NEQ_1 */ lex_state_neq_1,
 
     /* LEX_STATE_PS_MARK_0 */ lex_state_ps_mark_0,
+    /* LEX_STATE_PS_MARK_1 */ lex_state_ps_mark_1,
     /* LEX_STATE_PC_MARK_0 */ lex_state_pc_mark_0,
     /* LEX_STATE_PE_MARK_0 */ lex_state_pe_mark_0
 };
@@ -177,19 +179,19 @@ lex_state lex_validate_float(context* context)
     return LEX_STATE_FVAL;
 }
 
-bool lex_get_hex(int* out)
+bool lex_get_hex(FILE* input, int* out)
 {
     char str[LEX_ESC_HEX_LEN + 1];
     str[LEX_ESC_HEX_LEN] = '\0';
 
     for (int i = 0; i < LEX_ESC_HEX_LEN; i++)
     {
-        str[i] = fgetc(stdin);
+        str[i] = fgetc(input);
 
         if (str[i] == EOF || !lex_is_hex(str[i]))
         {
             for (int j = i; j >= 0; j--)
-                ungetc(str[j], stdin);
+                ungetc(str[j], input);
 
             return false;
         }
@@ -200,7 +202,7 @@ bool lex_get_hex(int* out)
     if (errno != 0 || *out < 0x01 || *out > 0xFF)
     {
         for (int i = LEX_ESC_HEX_LEN - 1; i >= 0; i--)
-            ungetc(str[i], stdin);
+            ungetc(str[i], input);
 
         return false;
     }
@@ -208,19 +210,19 @@ bool lex_get_hex(int* out)
     return true;
 }
 
-bool lex_get_octal(int* out)
+bool lex_get_octal(FILE* input, int* out)
 {
     char str[LEX_ESC_OCT_LEN + 1];
     str[LEX_ESC_OCT_LEN] = '\0';
 
     for (int i = 0; i < LEX_ESC_OCT_LEN; i++)
     {
-        str[i] = fgetc(stdin);
+        str[i] = fgetc(input);
 
         if (str[i] == EOF || !lex_is_octal(str[i]))
         {
             for (int j = i; j >= 0; j--)
-                ungetc(str[j], stdin);
+                ungetc(str[j], input);
 
             return false;
         }
@@ -231,7 +233,7 @@ bool lex_get_octal(int* out)
     if (errno != 0 || *out < 0001 || *out > 0377)
     {
         for (int i = LEX_ESC_OCT_LEN - 1; i >= 0; i--)
-            ungetc(str[i], stdin);
+            ungetc(str[i], input);
 
         return false;
     }
@@ -239,15 +241,15 @@ bool lex_get_octal(int* out)
     return true;
 }
 
-bool lex_init(context* context)
+bool lex_init(context* context, FILE* input)
 {
     if (!char_buffer_init(&context->attrib))
         return false;
 
-    return lex_next(context);
+    return lex_next(context, input);
 }
 
-bool lex_next(context* context)
+bool lex_next(context* context, FILE* input)
 {
     lex_state state = LEX_STATE_START;
     char_buffer_clear(&context->attrib);
@@ -255,12 +257,12 @@ bool lex_next(context* context)
     while (state < LEX_STATE_END)
     {
         lex_state_function fun = LEX_TABLE[state];
-        state = fun(context);
+        state = fun(context, input);
 
         if (state == LEX_STATE_ERROR)
         {
             dbgprint("Lexical analysis failed!");
-            context->token = EOS; //?
+            context->token = INVALID;
             return false;
         }
     }
@@ -286,12 +288,21 @@ void lex_destroy(context* context)
     char_buffer_destroy(&context->attrib);
 }
 
-lex_state lex_state_start(context* context)
+lex_state lex_state_start(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_whitespace(current))
         return LEX_STATE_START;
+
+    switch (current)
+    {
+        case '$':
+            return LEX_STATE_ID_0;
+
+        case '"':
+            return LEX_STATE_SVAL_0;
+    }
 
     char_buffer_add(&context->attrib, current);
 
@@ -332,12 +343,6 @@ lex_state lex_state_start(context* context)
 
         case '?':
             return LEX_STATE_PE_MARK_0;
-
-        case '$':
-            return LEX_STATE_ID_0;
-
-        case '"':
-            return LEX_STATE_SVAL_0;
 
         case '(':
             context->token = LPAR;
@@ -381,9 +386,9 @@ lex_state lex_state_start(context* context)
     }
 }
 
-lex_state lex_state_com_0(context* context)
+lex_state lex_state_com_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '/')
         return LEX_STATE_LCOM_0;
@@ -391,19 +396,19 @@ lex_state lex_state_com_0(context* context)
     if (current == '*')
         return LEX_STATE_BCOM_0;
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = DIV;
     return LEX_STATE_DIV;
 }
 
-lex_state lex_state_lcom_0(context* context)
+lex_state lex_state_lcom_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '\n' || current == EOF)
     {
-        ungetc(current, stdin);
+        ungetc(current, input);
 
         char_buffer_clear(&context->attrib);
         return LEX_STATE_START;
@@ -412,10 +417,10 @@ lex_state lex_state_lcom_0(context* context)
     return LEX_STATE_LCOM_0;
 }
 
-lex_state lex_state_bcom_0(context* context)
+lex_state lex_state_bcom_0(context* context, FILE* input)
 {
     (void) context;
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '*')
         return LEX_STATE_BCOM_1;
@@ -423,9 +428,9 @@ lex_state lex_state_bcom_0(context* context)
     return LEX_STATE_BCOM_0;
 }
 
-lex_state lex_state_bcom_1(context* context)
+lex_state lex_state_bcom_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '/')
     {
@@ -436,9 +441,9 @@ lex_state lex_state_bcom_1(context* context)
     return LEX_STATE_BCOM_0;
 }
 
-lex_state lex_state_id_0(context* context)
+lex_state lex_state_id_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_first_identifier(current))
     {
@@ -450,9 +455,9 @@ lex_state lex_state_id_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_id_1(context* context)
+lex_state lex_state_id_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_identifier(current))
     {
@@ -460,15 +465,15 @@ lex_state lex_state_id_1(context* context)
         return LEX_STATE_ID_1;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = ID;
     return LEX_STATE_ID;
 }
 
-lex_state lex_state_fid_0(context* context)
+lex_state lex_state_fid_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_identifier(current))
     {
@@ -482,7 +487,7 @@ lex_state lex_state_fid_0(context* context)
         return LEX_STATE_PC_MARK_0;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     LEX_KEYWORD_CHECK(context, LEX_KEYWORD_FUNCTION, FUNC, LEX_STATE_FUNC);
     LEX_KEYWORD_CHECK(context, LEX_KEYWORD_IF, IF, LEX_STATE_IF);
@@ -500,9 +505,9 @@ lex_state lex_state_fid_0(context* context)
     return LEX_STATE_FID;
 }
 
-lex_state lex_state_nid_0(context* context)
+lex_state lex_state_nid_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_identifier(current))
     {
@@ -510,7 +515,7 @@ lex_state lex_state_nid_0(context* context)
         return LEX_STATE_NID_0;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     LEX_KEYWORD_CHECK(context, LEX_TYPE_NINT, NITYPE, LEX_STATE_NITYPE);
     LEX_KEYWORD_CHECK(context, LEX_TYPE_NFLOAT, NFTYPE, LEX_STATE_NFTYPE);
@@ -521,9 +526,9 @@ lex_state lex_state_nid_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_ival_0(context* context)
+lex_state lex_state_ival_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_digit(current))
     {
@@ -543,15 +548,15 @@ lex_state lex_state_ival_0(context* context)
         return LEX_STATE_FVAL_1;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = IVAL;
     return lex_validate_int(context);
 }
 
-lex_state lex_state_fval_0(context* context)
+lex_state lex_state_fval_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_digit(current))
     {
@@ -565,15 +570,15 @@ lex_state lex_state_fval_0(context* context)
         return LEX_STATE_FVAL_1;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = FVAL;
     return lex_validate_float(context);
 }
 
-lex_state lex_state_fval_1(context* context)
+lex_state lex_state_fval_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_digit(current))
     {
@@ -591,9 +596,9 @@ lex_state lex_state_fval_1(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_fval_2(context* context)
+lex_state lex_state_fval_2(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (lex_is_digit(current))
     {
@@ -601,20 +606,18 @@ lex_state lex_state_fval_2(context* context)
         return LEX_STATE_FVAL_2;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = FVAL;
     return lex_validate_float(context);
 }
 
-lex_state lex_state_sval_0(context* context)
+lex_state lex_state_sval_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '"')
     {
-        char_buffer_add(&context->attrib, current);
-
         context->token = SVAL;
         return LEX_STATE_SVAL;
     }
@@ -638,9 +641,9 @@ lex_state lex_state_sval_0(context* context)
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_sval_1(context* context)
+lex_state lex_state_sval_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '"' || current == '$' || current == '\\')
     {
@@ -665,21 +668,21 @@ lex_state lex_state_sval_1(context* context)
 
     if (lex_is_digit(current))
     {
-        ungetc(current, stdin);
+        ungetc(current, input);
         return LEX_STATE_SVAL_O;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
     char_buffer_add(&context->attrib, '\\');
 
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_sval_x(context* context)
+lex_state lex_state_sval_x(context* context, FILE* input)
 {
     int value;
 
-    if (lex_get_hex(&value))
+    if (lex_get_hex(input, &value))
     {
         char_buffer_add(&context->attrib, value);
         return LEX_STATE_SVAL_0;
@@ -689,11 +692,11 @@ lex_state lex_state_sval_x(context* context)
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_sval_o(context* context)
+lex_state lex_state_sval_o(context* context, FILE* input)
 {
     int value;
 
-    if (lex_get_octal(&value))
+    if (lex_get_octal(input, &value))
     {
         char_buffer_add(&context->attrib, value);
         return LEX_STATE_SVAL_0;
@@ -703,9 +706,9 @@ lex_state lex_state_sval_o(context* context)
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_assig_0(context* context)
+lex_state lex_state_assig_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -713,15 +716,15 @@ lex_state lex_state_assig_0(context* context)
         return LEX_STATE_EQ_0;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = ASSIG;
     return LEX_STATE_ASSIG;
 }
 
-lex_state lex_state_lt_0(context* context)
+lex_state lex_state_lt_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -737,15 +740,15 @@ lex_state lex_state_lt_0(context* context)
         return LEX_STATE_PS_MARK_0;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = LT;
     return LEX_STATE_LT;
 }
 
-lex_state lex_state_gt_0(context* context)
+lex_state lex_state_gt_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -755,15 +758,15 @@ lex_state lex_state_gt_0(context* context)
         return LEX_STATE_GTE;
     }
 
-    ungetc(current, stdin);
+    ungetc(current, input);
 
     context->token = GT;
     return LEX_STATE_GT;
 }
 
-lex_state lex_state_eq_0(context* context)
+lex_state lex_state_eq_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -777,9 +780,9 @@ lex_state lex_state_eq_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_neq_0(context* context)
+lex_state lex_state_neq_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -791,9 +794,9 @@ lex_state lex_state_neq_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_neq_1(context* context)
+lex_state lex_state_neq_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '=')
     {
@@ -807,9 +810,9 @@ lex_state lex_state_neq_1(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_ps_mark_0(context* context)
+lex_state lex_state_ps_mark_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
     size_t len = char_buffer_len(&context->attrib);
 
     if (current == LEX_PHP_PS_MARK[len])
@@ -817,10 +820,7 @@ lex_state lex_state_ps_mark_0(context* context)
         char_buffer_add(&context->attrib, current);
 
         if (char_buffer_equals(&context->attrib, LEX_PHP_PS_MARK))
-        {
-            context->token = PS_MARK;
-            return LEX_STATE_PS_MARK;
-        }
+            return LEX_STATE_PS_MARK_1;
 
         return LEX_STATE_PS_MARK_0;
     }
@@ -829,9 +829,23 @@ lex_state lex_state_ps_mark_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_pc_mark_0(context* context)
+lex_state lex_state_ps_mark_1(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
+
+    if (lex_is_whitespace(current))
+    {
+        context->token = PS_MARK;
+        return LEX_STATE_PS_MARK;
+    }
+
+    dbgprint("Unexpected symbol '%c'!", current);
+    return LEX_STATE_ERROR;
+}
+
+lex_state lex_state_pc_mark_0(context* context, FILE* input)
+{
+    int current = fgetc(input);
     size_t len = char_buffer_len(&context->attrib);
 
     if (current == LEX_PHP_PC_MARK[len])
@@ -851,9 +865,9 @@ lex_state lex_state_pc_mark_0(context* context)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_pe_mark_0(context* context)
+lex_state lex_state_pe_mark_0(context* context, FILE* input)
 {
-    int current = fgetc(stdin);
+    int current = fgetc(input);
 
     if (current == '>')
     {
