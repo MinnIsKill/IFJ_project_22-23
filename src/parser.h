@@ -19,6 +19,7 @@
 #include"parser_expr.h"
 #include"token.h"
 #include"context.h"
+#include"error.h"
 
 typedef enum
 {

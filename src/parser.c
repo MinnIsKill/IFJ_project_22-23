@@ -115,7 +115,7 @@ p_codes prog_body(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
     
-    ast_node* node = node_new(PROG_BODY,SEMIC,"body");
+    ast_node* node = node_new(PROG_BODY,NOT_USED,"");
     if(node == NULL)
     {
         return(P_AST_ERROR);
@@ -219,7 +219,7 @@ p_codes body(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    ast_node* node = node_new(BODY,SEMIC,"body");
+    ast_node* node = node_new(BODY,NOT_USED,"");
     if(node == NULL)
     {
         return(P_AST_ERROR);
@@ -704,7 +704,7 @@ p_codes fun_def(ast_node* root, context* con)
     {
         return(P_SYNTAX_ERROR);
     }
-        
+    
     ast_node* node = node_new(FDEF,FID,con->attrib.buffer);
     if(node == NULL)
     {
@@ -859,6 +859,8 @@ p_codes par_list(ast_node* root, context* con)
             return(P_SYNTAX_ERROR);
         }
         
+/** THIS PROBABLY SHOULD NOT BE HERE
+
         // TODO CHECEK IF THIS WORK AFTER LEXER IS FINNISHED
         // TODO make set method for ast
         // free(par->attrib);
@@ -873,6 +875,7 @@ p_codes par_list(ast_node* root, context* con)
         // this should cause lexet to not free 
         // attrib string
         // con->attrib = NULL;
+**/
         lex_next(con,stdin);
     
         if(!node_add(node,par))

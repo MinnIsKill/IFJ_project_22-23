@@ -1,5 +1,6 @@
 #include"context.h"
-#include"fake_lex.h"
+#include"lex.h"
+#include"assert.h"
 
 bool context_new(context* c)
 {
@@ -16,9 +17,15 @@ bool context_new(context* c)
         node_delete(&c->root);
         return(false);
     }
+
+    //if(!char_buffer_init(&(c->attrib)))
+    //{
+    //    return(false); 
+    //}
+
     // TODO init symtable
     // TODO HANDLE LEX ERORR
-    lex_init(c);
+    lex_init(c,stdin);
     return(true);
 }
 
@@ -26,11 +33,11 @@ void context_delete(context* c)
 {
     assert(c != NULL);
 
-    lex_destroy();
     node_delete(&(c->root));
     ast_stack_destroy(&(c->expr_stack));
+    lex_destroy(c);
     
     // TODO clean symtable
-    // the free should be part of lex_clean
-    free(c->attrib);
+
+    //char_buffer_destroy(&c->attrib);
 }

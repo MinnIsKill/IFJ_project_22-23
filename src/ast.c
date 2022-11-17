@@ -110,7 +110,7 @@ const char* node_type_str(node_type t)
     "terminal",
     "non-terminal",
     "expression",
-    "(expression)",
+    "parenthesis",
     "function call",
     "expression list",
     "assignment",

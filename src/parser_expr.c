@@ -584,7 +584,7 @@ ep_codes reduce_FSM(ast_stack* s)
                     }
                     //if(right->type == EXPR_FCALL)
                     //{
-                        ast_node* new_node = node_new(EXPR_PAR,NOT_USED,"");
+                        ast_node* new_node = node_new(EXPR_PAR,NOT_USED,"()");
                         if(new_node == NULL)
                         {
                             dbgprint("ast_error");
@@ -707,7 +707,7 @@ ep_codes parse_expr(ast_node* root, context* con)
             fprintf(stderr,"tab[%u][%u] = %s\n",y,x,tab_op_to_str(tab[y][x]));
             fprintf(stderr,"++==++==++==++==++==\n");
         );
-
+        //char* new_attrib;
         switch(tab[y][x])
         {
             default:
