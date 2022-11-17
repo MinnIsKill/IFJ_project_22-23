@@ -703,7 +703,7 @@ ep_codes parse_expr(ast_node* root, context* con)
         (
             fprintf(stderr,"--==--==--==--==--==\n");
             fprintf(stderr,"stack : ");node_print(stderr,top);fputc('\n',stderr);
-            fprintf(stderr,"input : ");fprintf(stderr,"[ %s | %s ]",token_str(con->token),con->attrib);fputc('\n',stderr);
+            fprintf(stderr,"input : ");fprintf(stderr,"[ %s | %s ]",token_str(con->token),con->attrib.buffer);fputc('\n',stderr);
             fprintf(stderr,"tab[%u][%u] = %s\n",y,x,tab_op_to_str(tab[y][x]));
             fprintf(stderr,"++==++==++==++==++==\n");
         );
@@ -723,7 +723,7 @@ ep_codes parse_expr(ast_node* root, context* con)
                 break;
 
             case(SHIFT):
-                if((shift_node = node_new(TERM,con->token,con->attrib)) == NULL)
+                if((shift_node = node_new(TERM,con->token,con->attrib.buffer)) == NULL)
                 {
                     return(EP_AST_ERROR);
                 }
@@ -732,7 +732,7 @@ ep_codes parse_expr(ast_node* root, context* con)
                     node_delete(&shift_node);
                     return(EP_STACK_ERROR);
                 }
-                lex_next(con);
+                lex_next(con,stdin);
                 break;
 
             case(REDUCE):
@@ -745,7 +745,7 @@ ep_codes parse_expr(ast_node* root, context* con)
 
             case(SHIFT_REDUCE):
                 //shift
-                if((shift_node = node_new(TERM,con->token,con->attrib)) == NULL)
+                if((shift_node = node_new(TERM,con->token,con->attrib.buffer)) == NULL)
                 {
                     return(EP_AST_ERROR);
                 }
@@ -754,7 +754,7 @@ ep_codes parse_expr(ast_node* root, context* con)
                     node_delete(&shift_node);
                     return(EP_STACK_ERROR);
                 }
-                lex_next(con);
+                lex_next(con,stdin);
 
                 // reduce
                 tmp = reduce_FSM(stk);

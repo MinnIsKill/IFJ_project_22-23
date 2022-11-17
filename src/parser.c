@@ -39,8 +39,8 @@ bool consume(token_type t, context* con)
         infoprint("%s was not consumed",token_str(t));
         return(false);
     }
-    infoprint("[%s|%s] was consumed",token_str(t),con->attrib);
-    lex_next(con);
+    infoprint("[%s|%s] was consumed",token_str(t),con->attrib.buffer);
+    lex_next(con,stdin);
     return(true);
 }
 
@@ -56,7 +56,7 @@ bool peek(token_type t, context* con)
         infoprint("%s was not found",token_str(t));
         return(false);
     }
-    infoprint("[%s|%s] was found",token_str(t),con->attrib);
+    infoprint("[%s|%s] was found",token_str(t),con->attrib.buffer);
     return(true);
 }
 /**
@@ -705,12 +705,12 @@ p_codes fun_def(ast_node* root, context* con)
         return(P_SYNTAX_ERROR);
     }
         
-    ast_node* node = node_new(FDEF,FID,con->attrib);
+    ast_node* node = node_new(FDEF,FID,con->attrib.buffer);
     if(node == NULL)
     {
         return(P_AST_ERROR);
     }
-    lex_next(con);
+    lex_next(con,stdin);
     
     if(!consume(LPAR,con))
     {
@@ -861,12 +861,19 @@ p_codes par_list(ast_node* root, context* con)
         
         // TODO CHECEK IF THIS WORK AFTER LEXER IS FINNISHED
         // TODO make set method for ast
+        // free(par->attrib);
+        // par->attrib = con->attrib;
+
+        // TODO Temporary fix
         free(par->attrib);
-        par->attrib = con->attrib;
+        
+        par->attrib = malloc(con->attrib.len + 1);
+        strncpy(par->attrib, con->attrib.buffer, con->attrib.len);
+
         // this should cause lexet to not free 
         // attrib string
-        con->attrib = NULL;
-        lex_next(con);
+        // con->attrib = NULL;
+        lex_next(con,stdin);
     
         if(!node_add(node,par))
         {
@@ -986,7 +993,7 @@ p_codes type_n(ast_node* root, context* con)
         case(NITYPE):
         case(NFTYPE):
             root->sub_type = con->token;
-            lex_next(con);
+            lex_next(con,stdin);
             return(P_SUCCESS);
             break;
         default:

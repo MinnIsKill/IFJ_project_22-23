@@ -1,5 +1,5 @@
 
-#line 2 "lex.yy.c"
+#line 3 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -531,8 +531,8 @@ char *yytext;
 #line 1 "lexer.l"
 #line 2 "lexer.l"
 #include"./../token.h"
-#line 534 "lex.yy.c"
 #line 535 "lex.yy.c"
+#line 536 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -751,7 +751,7 @@ YY_DECL
 	{
 #line 13 "lexer.l"
 
-#line 754 "lex.yy.c"
+#line 755 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1023,7 +1023,7 @@ YY_RULE_SETUP
 #line 56 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1026 "lex.yy.c"
+#line 1027 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -10,6 +10,7 @@
 #include"fake_lex.h"
 #include"semantic.h"
 #include"symtable.h"
+#include"lex.h"
 
 
 int main()
