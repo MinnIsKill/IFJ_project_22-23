@@ -138,6 +138,35 @@ void node_print(FILE* f,ast_node* n)
     fprintf(f,"[%s|%s|%s]",node_type_str(n->type),token_str(n->sub_type),n->attrib);
 }
 
+void print_escape(FILE* f, const char* source)
+{
+    char c;
+    for(;(c = *source) != '\0'; ++source)
+    {
+        switch(c)
+        {
+            default:
+                fputc(c,f);
+                break;
+            
+            case('"'):
+                fputc('\\',f);
+                fputc(c,f);
+                break;
+
+            case('<'):
+                fputc('\\',f);
+                fputc(c,f);
+                break;
+
+            case('>'):
+                fputc('\\',f);
+                fputc(c,f);
+                break;
+        } 
+    }
+}
+
 // private function
 // real recursive inmplementation of tree_dot_print()
 void _tree_dot_print(FILE* f,ast_node* n)
@@ -147,10 +176,15 @@ void _tree_dot_print(FILE* f,ast_node* n)
     {
         return;
     }
-    fprintf(f,"%llu[shape=record;label=\"{{%s|%s}",n->id,node_type_str(n->type),token_str(n->sub_type));
+    fprintf(f,"%llu[shape=record;label=\"{{",n->id);
+    print_escape(f,node_type_str(n->type));
+    fprintf(f,"|");
+    print_escape(f,token_str(n->sub_type));
+    fprintf(f,"}");
     if(n->attrib[0] != '\0')
     {
-        fprintf(f,"|%s",n->attrib);
+        fprintf(f,"|");
+        print_escape(f,n->attrib);
     }
     fprintf(f,"}\"];\n");
 

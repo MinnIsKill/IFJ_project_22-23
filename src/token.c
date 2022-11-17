@@ -10,7 +10,7 @@ const char* token_str(token_type t)
 {
     static const char* s[]=
     {
-        "\\<EOS\\>",    // end of source == EOF
+        "<EOS>",    // end of source == EOF
         "function",  // function
         "if",
         "else",
@@ -46,10 +46,10 @@ const char* token_str(token_type t)
         "*",    // *
         "/",    // /
         ".", // .
-        "\\<",     // <
-        "\\>",     // >
-        "\\<=",    // <=
-        "\\>=",    // >=
+        "<",     // <
+        ">",     // >
+        "<=",    // <=
+        ">=",    // >=
         "===",     // ===
         "!==",    // !==
         ",",  // ,
@@ -64,11 +64,12 @@ const char* token_str(token_type t)
         ";",     // ;
 
         // other
-        "\\<?php", // <?php
+        "<?php", // <?php
         "declare(strict_types=1);", // declare(strict_types=1); 
-        "?\\>", // ?>, optional
+        "?>", // ?>, optional
 
         // special 
+        "not used",
         "you shoul not see dis", // this token signify error
         "$"          // $ used by operator precedence parser
         };

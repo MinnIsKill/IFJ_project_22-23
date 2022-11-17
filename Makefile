@@ -9,11 +9,11 @@ ERFLAGS=-Werror -Wall -Wextra -pedantic
 
 all: $(BIN) $(BIN)_dbg
 
-$(BIN): ./obj/fake_lex.o
-	$(CC) $(CFLAGS) $(ERFLAGS) ./obj/fake_lex.o ./src/token.c ./src/g_stack.c ./src/ast_stack.c ./src/ast.c ./src/parser_expr.c ./src/parser.c ./src/main.c ./src/symtable.c ./src/dll.c ./src/semantic.c  -o $@
+$(BIN): ./obj/fake_lex.o ./src/token.c ./src/g_stack.c ./src/ast_stack.c ./src/ast.c ./src/parser_expr.c ./src/parser.c ./src/main.c ./src/symtable.c ./src/dll.c ./src/semantic.c ./src/context.c
+	$(CC) $(CFLAGS) $(ERFLAGS) $^ -o $@
 
-$(BIN)_dbg: ./obj/fake_lex.o
-	$(CC) $(CFLAGS) $(DBGFLAGS) $(ERFLAGS) ./obj/fake_lex.o ./src/token.c ./src/g_stack.c ./src/ast_stack.c ./src/ast.c ./src/parser_expr.c ./src/parser.c ./src/main.c ./src/symtable.c  ./src/dll.c ./src/semantic.c  -o $@
+$(BIN)_dbg: ./obj/fake_lex.o ./obj/fake_lex.o ./src/token.c ./src/g_stack.c ./src/ast_stack.c ./src/ast.c ./src/parser_expr.c ./src/parser.c ./src/main.c ./src/symtable.c  ./src/dll.c ./src/semantic.c ./src/parser_dbg.c ./src/context.c
+	$(CC) $(CFLAGS) $(DBGFLAGS) $(ERFLAGS)  $^ -o $@
 
 ./obj/fake_lex.o: ./src/fake_lex.c
 	$(CC) $(CFLAGS) -c $< -o $@

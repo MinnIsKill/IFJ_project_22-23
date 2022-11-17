@@ -995,3 +995,18 @@ p_codes type_n(ast_node* root, context* con)
     }
 }
 
+// inspired by xlakis03
+const char* p_codes_str(const p_codes p)
+{
+    switch(p)
+    {
+        case(P_SUCCESS)      : return("succes"); 
+        case(P_SYNTAX_ERROR) : return("syntax error"); 
+        case(P_AST_ERROR)    : return("ast error"); 
+        case(P_STACK_ERROR)  : return("stack error"); 
+        case(P_PARAM_ERROR)  : return("invalid parameter"); 
+        default              : return("~NOT MATCHED~");
+    }
+}
+
+

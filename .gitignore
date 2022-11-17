@@ -1,0 +1,5 @@
+compiler
+compiler_dbg
+obj
+./test/parser_expr/parser_test
+./test/parser_expr/parser_test_dbg

@@ -572,7 +572,38 @@ ep_codes reduce_FSM(ast_stack* s)
                 }
                 else
                 {
-                    right->type = EXPR_PAR;
+                    if(right->type == EXPR_PAR)
+                    {
+                        if(!ast_stack_push(s,right))
+                        {
+                            dbgprint("stack_error");
+                            state = ERROR;
+                            break;
+                        }
+                        return(EP_SUCCESS);
+                    }
+                    //if(right->type == EXPR_FCALL)
+                    //{
+                        ast_node* new_node = node_new(EXPR_PAR,NOT_USED,"");
+                        if(new_node == NULL)
+                        {
+                            dbgprint("ast_error");
+                            state = ERROR;
+                            break;
+                        }
+                        if(!node_add(new_node,right))
+                        {
+                            dbgprint("ast_error");
+                            state = ERROR;
+                            break;
+                        }
+                        right = new_node;
+                    //}
+                    //else
+                    //{
+                    //    right->type = EXPR_PAR;
+                    //}
+
                     if(!ast_stack_push(s,right))
                     {
                         dbgprint("stack_error");
@@ -656,7 +687,7 @@ ep_codes parse_expr(ast_node* root, context* con)
     while(run)
     {
         ast_node* top = find_term(stk);
-        ast_node* shift_node;
+        ast_node* shift_node = NULL;
         // this should happen only when ast_stack fails
         if(top == NULL)
         {
@@ -679,6 +710,12 @@ ep_codes parse_expr(ast_node* root, context* con)
 
         switch(tab[y][x])
         {
+            default:
+                dbgprint("Precedence table invalid index");
+                ret = EP_UNKNOWN_ERROR;
+                run = false;
+                break;
+            
             case(ERROR):
                 dbgprint("EP syntax error according to precedence table.\n");
                 ret = EP_SYNTAX_ERROR;
@@ -729,57 +766,50 @@ ep_codes parse_expr(ast_node* root, context* con)
 
             case(ACCEPT):
                 shift_node = ast_stack_peel(stk);
-                if(shift_node != NULL)
-                {
-                    if(!node_add(root,shift_node))
-                    {
-                        node_delete(&shift_node);
-                        ret = EP_STACK_ERROR;
-                    }
-                    else
-                    {
-                        switch(shift_node->type)
-                        {
-                            case(EXPR):
-                                infoprint("return EXPR");
-                                ret = EP_EXPR;
-                                break;
-
-                            case(EXPR_PAR):
-                                infoprint("return EXPR_PAR");
-                                ret = EP_EXPR_PAR;
-                                break;
-
-                            case(EXPR_FCALL):
-                                infoprint("return EXPR_FCALL");
-                                ret = EP_EXPR_FCALL;
-                                break;
-                            
-                            case(EXPR_ASSIGN):
-                                infoprint("return EXPR_ASSIGN");
-                                ret = EP_EXPR_ASSIGN;
-                                break;
-
-                            default:
-                                infoprint("return SYNTAX ERROR");
-                                node_delete(&shift_node);
-                                ret = EP_SYNTAX_ERROR;
-                                break;
-                        }
-                    }
-                }
-                else
+                if(shift_node == NULL)
                 {
                     // ther must be node on the ast_stacke at the end of parse, atleast $
-                    ret = EP_STACK_ERROR;
+                    infoprint("return ACCEPT BUT STACK IS EMPTY");
+                    return(EP_STACK_ERROR);
                 }
-                run = false;
-                break;
+ 
+                switch(shift_node->type)
+                {
+                    default:
+                        infoprint("return SYNTAX ERROR, invalid node on top of stack");
+                        node_delete(&shift_node);
+                        return(EP_SYNTAX_ERROR);
+                        break;
+                    
+                    case(EXPR):
+                        infoprint("return EXPR");
+                        ret = EP_EXPR;
+                        break;
 
-            default:
-                dbgprint("EP indexing out of table.");
-                ret = EP_UNKNOWN_ERROR;
-                run = false;
+                    case(EXPR_PAR):
+                        infoprint("return EXPR_PAR");
+                        ret = EP_EXPR_PAR;
+                        break;
+
+                    case(EXPR_FCALL):
+                        infoprint("return EXPR_FCALL");
+                        ret = EP_EXPR_FCALL;
+                        break;
+
+                    case(EXPR_ASSIGN):
+                        infoprint("return EXPR_ASSIGN");
+                        ret = EP_EXPR_ASSIGN;
+                        break;
+                }
+                
+                // try add the node to sack
+                if(!node_add(root,shift_node))
+                {
+                    node_delete(&shift_node);
+                    return(EP_STACK_ERROR);
+                }
+                return(ret);
+                break;
         }
     }
     return(ret);

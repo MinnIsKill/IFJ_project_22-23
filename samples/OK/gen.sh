@@ -3,5 +3,5 @@
 
 for f in ./*.php; do
     dst=${f%.*}  
-    ./../compiler <./$f | dot -Tpng >$dst.png
+    ./../../compiler <./$f | dot -Tpng >$dst.png
 done

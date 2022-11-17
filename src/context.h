@@ -12,6 +12,7 @@
 #include"ast.h"
 #include"ast_stack.h"
 #include"token.h"
+#include"error.h"
 
 // TODO implement
 //#include"char_buffer.h"
@@ -25,5 +26,19 @@ typedef struct
     char* attrib;
 //    char_buffer attrib; this will replace line above
 }context;
+
+/*
+ * @brief Allocate data for and initialize compiler context
+ * @param[in] c context to be initialized
+ * @return true if context was initialized correctly
+ *              else return false
+ */
+bool context_new(context* c);
+
+/*
+ * @brief Free data alocated for compiler context
+ * @param[in] c context to be freed
+ */
+void context_delete(context* c);
 
 #endif

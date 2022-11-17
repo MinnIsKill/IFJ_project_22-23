@@ -21,5 +21,6 @@
 #else
 #   define infoprint(...)
 #   define infoprintt(...)
+#   define info_praser_resault() 
 #   define INFORUN(...) 
 #endif

@@ -66,10 +66,12 @@ typedef enum{
     PS_MARK, // <?php
     PC_MARK, // declare(strict_types=1); 
     PE_MARK, // ?>, optional
+    
 
     // special 
-    INVALID, // this token signify error
-    STOP          // $ used by operator precedence parser
+    NOT_USED, // used in syntax tree for node that does't need subtype
+    INVALID,  // this token signify error
+    STOP      // $ used by operator precedence parser
 }token_type;
 
 const char* token_str(token_type t);
