@@ -5,8 +5,11 @@
  *        receives an AST passed by parser as input, walks through it to evaluate semantic
  *        correctness, and if successful, passes the AST to code generator
  *
- * @date of last update:   18th October 2022
+ * @date of last update:   18th November 2022
  */
+
+#ifndef SEMANTIC_H
+#define SEMANTIC_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +22,7 @@
 #include "ast.h"
 #include "vector.h"
 #include "dbg.h"
+#include "symtable_stack.h"
 
 typedef enum{
     SEM_SUCCESS               = 0, //no error
@@ -36,14 +40,21 @@ void AST_dotprint_internal(FILE* f, ast_node* root);
 
 const char* node_type_tostr(node_type type);
 const char* node_subtype_tostr(token_type type);
+arg_type token_type_to_arg_type(token_type token);
+arg_type token_type_to_arg_type_forvals(token_type token);
+
+arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symtab);
 
 struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_node* global_symtab);
 struct bintree_node* AST_DF_firsttraversal(ast_node* node, struct bintree_node* global_symtab);
 
-int semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab);
-int semantic_check_assign(ast_node* node, struct bintree_node* global_symtab);
+void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab);
+void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab);
+void semantic_check_expr(ast_node* node, struct bintree_node* global_symtab);
+void semantic_check_return(ast_node* node, struct bintree_node* global_symtab);
+
 void AST_DF_traversal(ast_node* node, struct bintree_node* global_symtab);
 
-int semantic_check_expr();
-
 int semantic(context* cont);
+
+#endif

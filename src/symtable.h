@@ -33,7 +33,6 @@ typedef enum{
 
 /* type of node */
 typedef enum{
-    prog_b, //main
     function,
     variable
 }bintree_node_type;
@@ -43,12 +42,14 @@ struct bintree_data{
     size_t id;     //id
     char key[64];  //string (var/fnc name)
 
-    arg_type type; //for variables
-    float value;   //for int/float variables
-    char string[512]; //for string variables
-                      //!!!dynamic strings would maybe be nice
+    size_t vars_cnt; //for functions, counter for variables
+    arg_type init_type; //for variables, type assigned during declaration
+    arg_type curr_type; //for variables, current type
+    float value;        //for int/float variables
+    char string[512];   //for string variables
+                        //!!!dynamic strings would maybe be nice
 
-    struct dll *args_list;   //names of arguments for functions (in order)
+    struct dll *args_list; //names of arguments for functions (in order)
     arg_type rtype; //return type for functions
     size_t arg_cnt; //arguments counter for functions
 };
@@ -95,7 +96,6 @@ struct bintree_node* bintree_search_by_id(struct bintree_node *root, size_t id);
 
 //bintree NODE SEARCH BY KEY FUNCTION
 struct bintree_node* bintree_search_by_key(struct bintree_node *root, char key[]);
-struct bintree_node* bintree_search_by_key_withprogb(struct bintree_node *root, char key[]);
 
 //bintree enums string conversions
 const char* bintree_fnc_arg_type_tostr(arg_type type);

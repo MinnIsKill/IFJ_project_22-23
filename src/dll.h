@@ -6,8 +6,8 @@
  * @date of last update:   4th August 2022
  */
 
-#ifndef BINTREE_H
-#define BINTREE_H
+#ifndef DLL_H
+#define DLL_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "symtable.h"
 #include "dbg.h"
 
 struct dll_data{
@@ -47,16 +46,16 @@ bool dll_is_empty (struct dll *list);
 struct dll* dll_create ();
 
 //
-void dll_insert_first (struct dll *list, size_t id, char key[], char type[]);
+int dll_insert_first (struct dll *list, size_t id, char key[], char type[]);
 
 //
-void dll_insert_last (struct dll *list, size_t id, char key[], char type[]);
+int dll_insert_last (struct dll *list, size_t id, char key[], char type[]);
 
 //
-void dll_insert_after (struct dll *list, size_t id_oldlink, size_t id_newlink, char key[], char type[]);
+int dll_insert_after (struct dll *list, size_t id_oldlink, size_t id_newlink, char key[], char type[]);
 
 //
-void dll_insert_before (struct dll *list, size_t id_oldlink, size_t id_newlink, char key[], char type[]);
+int dll_insert_before (struct dll *list, size_t id_oldlink, size_t id_newlink, char key[], char type[]);
 
 //
 void dll_delete_first(struct dll *list);

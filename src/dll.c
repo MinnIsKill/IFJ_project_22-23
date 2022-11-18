@@ -20,7 +20,7 @@
 bool dll_is_empty(struct dll *list){
     if (list == NULL){
         dbgprint("ERROR:   DISCOVERED AN ATTEMPT AT ACCESSING A LIST THAT DOESN'T EXIST\n");
-        exit(1); //!!!
+        return false; //!!!
     } else {
         return (list->head == NULL) ? true : false;
     }
@@ -32,7 +32,7 @@ struct dll* dll_create (){
     list = (struct dll *)malloc(sizeof(struct dll));
     if (list == NULL){
         dbgprint("ERROR: malloc failed in dll_create\n");
-        exit(1); //!!!
+        return NULL; //!!!
     }
 
     struct dll_link *head = NULL;
@@ -45,17 +45,17 @@ struct dll* dll_create (){
 }
 
 //
-void dll_insert_first(struct dll *list, size_t id, char key[], char type[]){
+int dll_insert_first(struct dll *list, size_t id, char key[], char type[]){
     struct dll_link *new;
     new = (struct dll_link *)malloc(sizeof(struct dll_link));
     if (new == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_first\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     dll_data data = (dll_data)malloc(sizeof(struct dll_data));
     if (data == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_first\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     new->linkData = data;
     new->linkData->id = id;
@@ -78,20 +78,21 @@ void dll_insert_first(struct dll *list, size_t id, char key[], char type[]){
         //set new link as head
         list->head = new;
     }
+    return 0;
 }
 
 //
-void dll_insert_last(struct dll *list, size_t id, char key[], char type[]){
+int dll_insert_last(struct dll *list, size_t id, char key[], char type[]){
     struct dll_link *new;
     new = (struct dll_link *)malloc(sizeof(struct dll_link));
     if (new == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_last\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     dll_data data = (dll_data)malloc(sizeof(struct dll_data));
     if (data == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_last\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     new->linkData = data;
     new->linkData->id = id;
@@ -114,20 +115,21 @@ void dll_insert_last(struct dll *list, size_t id, char key[], char type[]){
         //set new link as tail
         list->tail = new;
     }
+    return 0;
 }
 
 //
-void dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
+int dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
     struct dll_link *new;
     new = (struct dll_link *)malloc(sizeof(struct dll_link));
     if (new == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_after\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     dll_data data = (dll_data)malloc(sizeof(struct dll_data));
     if (data == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_after\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     new->linkData = data;
     new->linkData->id = id_newlink;
@@ -148,7 +150,7 @@ void dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlin
         while (curr->linkData->id != id_searchedlink){
             if (curr->next == NULL){  //if we reached last link
                 dbgprint("ERROR:   link  '[%ld] %s'  not inserted because link with key [%ld] not found\n", id_newlink, key, id_searchedlink);
-                return;
+                return 99;
             } else {           
                 //move to next link
                 curr = curr->next;
@@ -170,21 +172,21 @@ void dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlin
         }
     }
 
-    return;
+    return 0;
 }
 
 //
-void dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
+int dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newlink, char key[], char type[]){
     struct dll_link *new;
     new = (struct dll_link *)malloc(sizeof(struct dll_link));
     if (new == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_before\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     dll_data data = (dll_data)malloc(sizeof(struct dll_data));
     if (data == NULL){
         dbgprint("ERROR: malloc failed in dll_insert_before\n");
-        exit(1); //!!!
+        return 99; //!!!
     }
     new->linkData = data;
     new->linkData->id = id_newlink;
@@ -205,7 +207,7 @@ void dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newli
         while (curr->linkData->id != id_searchedlink){
             if (curr->next == NULL){  //if we reached last link
                 dbgprint("ERROR:   link  '[%ld] %s'  not inserted because link with key [%ld] not found\n", id_newlink, key, id_searchedlink);
-                return;
+                return 99;
             } else {           
                 //move to next link
                 curr = curr->next;
@@ -227,7 +229,7 @@ void dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newli
         }
     }
 
-    return;
+    return 0;
 }
 
 //
