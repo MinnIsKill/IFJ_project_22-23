@@ -57,22 +57,22 @@ void char_buffer_clear(char_buffer* buf)
 bool char_buffer_resize(char_buffer* buf, size_t size)
 {
     infoprint("Reallocating for size %ld ...", size);
+    char* buffer = realloc(buf->buffer, size);
 
-    if (buf->buffer)
-        buf->buffer = realloc(buf->buffer, size);
-
-    else
-        buf->buffer = malloc(size);
-
-    if (!buf->buffer)
+    if (!buffer)
     {
+        free(buf->buffer);
+
         dbgprint("Failed to allocate %ld bytes for char_buffer!", size);
+        buf->buffer = NULL;
         buf->size = 0;
 
         return false;
     }
 
+    buf->buffer = buffer;
     buf->size = size;
+
     return true;
 }
 
