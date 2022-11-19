@@ -1,4 +1,4 @@
-\<?php
+<?php
 declare(strict_types=1);
 ID
 var_string
@@ -105,4 +105,4 @@ sval
 x
 )
 ;
-?\>
+?>

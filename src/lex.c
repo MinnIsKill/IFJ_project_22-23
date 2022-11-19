@@ -422,6 +422,14 @@ lex_state lex_state_bcom_0(context* context, FILE* input)
     (void) context;
     int current = fgetc(input);
 
+    if (current == EOF)
+    {
+        ungetc(current, input);
+
+        char_buffer_clear(&context->attrib);
+        return LEX_STATE_START;
+    }
+
     if (current == '*')
         return LEX_STATE_BCOM_1;
 
@@ -631,7 +639,7 @@ lex_state lex_state_sval_0(context* context, FILE* input)
         return LEX_STATE_ERROR;
     }
 
-    if (current < 32)
+    if (current < 32) // Catches even EOF
     {
         dbgprint("Unexpected symbol '%c'!", current);
         return LEX_STATE_ERROR;

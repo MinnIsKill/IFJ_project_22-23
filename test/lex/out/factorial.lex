@@ -1,4 +1,4 @@
-\<?php
+<?php
 declare(strict_types=1);
 FID
 write
@@ -40,7 +40,7 @@ if
 (
 ID
 a
-\<
+<
 ival
 0
 )
@@ -66,7 +66,7 @@ while
 (
 ID
 a
-\>
+>
 ival
 0
 )

@@ -4,7 +4,9 @@
 
 bool char_buffer_init(char_buffer* buf)
 {
+    buf->buffer = NULL;
     buf->len = 0;
+
     return char_buffer_resize(buf, CHAR_BUFFER_INIT_SIZE);
 }
 

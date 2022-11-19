@@ -27,7 +27,7 @@ const test_pair FILES[] =
     TEST_FILE("ps_mark_valid")
 };
 
-#define FILE_COUNT              6
+#define FILE_COUNT              sizeof(FILES) / sizeof(test_pair)
 
 void fgets_but_better(char* target, size_t size, FILE* stream)
 {
