@@ -859,23 +859,18 @@ p_codes par_list(ast_node* root, context* con)
             return(P_SYNTAX_ERROR);
         }
         
-/** THIS PROBABLY SHOULD NOT BE HERE
-
-        // TODO CHECEK IF THIS WORK AFTER LEXER IS FINNISHED
-        // TODO make set method for ast
-        // free(par->attrib);
-        // par->attrib = con->attrib;
-
-        // TODO Temporary fix
         free(par->attrib);
-        
-        par->attrib = malloc(con->attrib.len + 1);
-        strncpy(par->attrib, con->attrib.buffer, con->attrib.len);
+        char* tmp = strdup(con->attrib.buffer);
+        if(tmp == NULL)
+        {
+            node_delete(&par);
+            node_delete(&node);
+            return(P_AST_ERROR);
+        }
+        par->attrib = tmp;
 
-        // this should cause lexet to not free 
-        // attrib string
-        // con->attrib = NULL;
-**/
+        //TODO CHECK
+
         lex_next(con,stdin);
     
         if(!node_add(node,par))

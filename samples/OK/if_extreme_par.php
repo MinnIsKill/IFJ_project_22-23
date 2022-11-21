@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
-if( ( foo() ) )
+$a = 1;
+$b = 0;
+if( 3 )
 {
     $a = 1;
 }

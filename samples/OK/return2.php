@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $a = 5-1;
 
-while($a !== $b)
+while($a !== 3)
 {
     if(1)
     {
@@ -13,5 +13,5 @@ while($a !== $b)
     return(1);
 }
 
-return($ret);
+return($a);
 ?>

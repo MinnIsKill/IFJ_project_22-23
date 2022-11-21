@@ -5,7 +5,6 @@ function foo() : void
 }
 if(foo())
 {
-    $a = 1;
     return($a);
 }
 ?>

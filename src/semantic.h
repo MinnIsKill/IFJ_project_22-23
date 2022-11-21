@@ -35,8 +35,8 @@ typedef enum{
     ERR_INTERNAL              = 99 //internal error not to do with semantics (malloc fail, etc.)
 }semantic_retcodes;
 
-void AST_dotprint(FILE* f, ast_node* root);
-void AST_dotprint_internal(FILE* f, ast_node* root);
+void AST_dotprint(ast_node* root);
+void AST_dotprint_internal(ast_node* root);
 
 const char* node_type_tostr(node_type type);
 const char* node_subtype_tostr(token_type type);
@@ -52,6 +52,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab);
 void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab);
 void semantic_check_expr(ast_node* node, struct bintree_node* global_symtab);
 void semantic_check_return(ast_node* node, struct bintree_node* global_symtab);
+void semantic_check_conditionals(ast_node* node, struct bintree_node* global_symtab);
 
 void AST_DF_traversal(ast_node* node, struct bintree_node* global_symtab);
 

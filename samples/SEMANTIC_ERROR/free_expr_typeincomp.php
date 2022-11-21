@@ -14,7 +14,7 @@ foo() + 123;
 
 $a = foo();
 
-$a = foo() + 5;
+$a = foo() + "yo mama";
 
 function foo() : int
 {
