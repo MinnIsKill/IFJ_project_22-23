@@ -24,6 +24,7 @@ bool context_new(context* c)
     }
     
     // TODO init symtable
+    bintree_init(&c->global_symtab);
     
     return(true);
 }
@@ -37,5 +38,5 @@ void context_delete(context* c)
     lex_destroy(c);
     
     // TODO clean symtable
-
+    bintree_dispose(c->global_symtab);
 }

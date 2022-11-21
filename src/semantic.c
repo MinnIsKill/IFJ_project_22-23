@@ -824,12 +824,12 @@ int semantic(context* cont){
         fprintf(stdout," __) |_ |  | /--\\ | \\| |  _|_ \\_ __) \n\n");
     );
 //initialize global symtable
-    bintree_init(&cont->global_symtab);
+    //bintree_init(&cont->global_symtab);
 //create main body symtable node
     cont->global_symtab = bintree_insert(cont->global_symtab, generate_id(), ":b", function); //main program body
 //check if inserted and set curr scope to main body
     if ((curr_scope_func = bintree_search_by_key(cont->global_symtab, ":b")) == NULL){
-        dbgprint("ERROR:  failed to insert ':b' (aka main) node into global symtable");
+        dbgprint("ERROR:  failed to find ':b' (aka main) node in global symtable");
         return ERR_INTERNAL;
     }
     dll list = dll_create();

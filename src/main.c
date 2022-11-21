@@ -41,6 +41,7 @@ int main()
     if(s_rc != SEM_SUCCESS)
     {
         context_delete(&con);
+        
         return(s_rc);
     }
 
