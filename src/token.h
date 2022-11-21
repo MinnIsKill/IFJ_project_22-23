@@ -71,7 +71,22 @@ typedef enum{
     // special 
     NOT_USED, // used in syntax tree for node that does't need subtype
     INVALID,  // this token signify error
-    STOP      // $ used by operator precedence parser
+    STOP,      // $ used by operator precedence parser
+    
+    // used in type conversions
+    NULL_TO_INT,   // 0, return"0";
+    NULL_TO_FLOAT, // 0.0, return "0.0";
+    NULL_TO_BOOL,  // false, return "false";
+    NULL_TO_STR,   // "", return "";
+    INT_TO_FLOAT,  // INT2FLOAT
+    INT_TO_BOOL,   // if(val != 0 ) return TRUE else return FALSE
+    FLOAT_TO_INT,  // FLOAT2IN
+    FLOAT_TO_BOOL, // if(val != 0.0) return TRUE else RETURN FALSE 
+    BOOL_TO_INT,   // TRUE -> 1 , FALSE -> 0
+    BOOL_TO_FLOAT, // TRUE -> 1.0 , FALSE -> 0.0
+    BOOL_TO_STR,   // TRUE -> "1", FALSE -> ""
+    STR_TO_BOOL,   // "" -> FALSE else return true
+
 }token_type;
 
 const char* token_str(token_type t);

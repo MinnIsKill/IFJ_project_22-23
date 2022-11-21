@@ -41,6 +41,9 @@ typedef enum
     FDEF,
     PARAM,
     PAR_LIST,
+
+    CONVERT_TYPE, // these nodes are inserted into ast by semantic to aid code generator
+                  // in type conversions
 }node_type;
 
 struct ast_node
