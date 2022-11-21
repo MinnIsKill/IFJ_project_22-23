@@ -703,6 +703,8 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
 
         if (!((type_l == type_r) || (type_l == int_t && type_r == float_t) || (type_l == float_t && type_r == int_t))){
             dbgprint("ERROR[7]:  found type incompatibility in a(n) %s conditional", node_type_tostr(node->type));
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+            return;
         }
     }
     return;
@@ -774,9 +776,6 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                 dbgprint("ERROR[99]:  received IF_N AST node with only one child");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 break;
-            }
-            while (AST->children[0]->type == EXPR_PAR){ //get rid of EXPR_PAR nodes
-                AST = AST->children[0];
             }
             //checks ONLY the relational statement
             semantic_check_conditionals(AST->children[0], global_symtab);
