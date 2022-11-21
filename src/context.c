@@ -18,14 +18,13 @@ bool context_new(context* c)
         return(false);
     }
 
-    //if(!char_buffer_init(&(c->attrib)))
-    //{
-    //    return(false); 
-    //}
-
+    if(!lex_init(c,stdin))
+    {
+        return(false);
+    }
+    
     // TODO init symtable
-    // TODO HANDLE LEX ERORR
-    lex_init(c,stdin);
+    
     return(true);
 }
 
@@ -39,5 +38,4 @@ void context_delete(context* c)
     
     // TODO clean symtable
 
-    //char_buffer_destroy(&c->attrib);
 }

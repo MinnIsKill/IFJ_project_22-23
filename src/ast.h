@@ -82,6 +82,15 @@ void node_delete(ast_node** n);
  **/
 bool node_add(ast_node* dst,ast_node* src);
 
+/*
+ * @brief Insert node betwene parent child
+ * @param[in] parent after this node new node will be inserted
+ * @param[in] node this node will be inserted
+ * @param[in] child this node will be child of inserted node
+ * @return true if insertion succeded else false
+ *
+ */
+bool node_insert_betwene(ast_node* parent, ast_node* node, ast_node* child);
 
 //========== DEBUG AND PRINT FUNCTIONS ==========
 /**

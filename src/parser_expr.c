@@ -584,7 +584,7 @@ ep_codes reduce_FSM(ast_stack* s)
                     }
                     //if(right->type == EXPR_FCALL)
                     //{
-                        ast_node* new_node = node_new(EXPR_PAR,NOT_USED,"()");
+                        ast_node* new_node = node_new(EXPR_PAR,NOT_USED,"");
                         if(new_node == NULL)
                         {
                             dbgprint("ast_error");

@@ -1,16 +1,16 @@
 /**
- * @brief main function of compiler
+ * @brief Parser test
  * @author Jan Lutonský, xluton02
  **/
 #include<stdio.h>
 #include<stdbool.h>
-#include"error.h"
-#include"parser.h"
-#include"context.h"
-#include"fake_lex.h"
-#include"semantic.h"
-#include"symtable.h"
-#include"lex.h"
+#include"./../../src/error.h"
+#include"./../../src/parser.h"
+#include"./../../src/context.h"
+#include"./../../src/fake_lex.h"
+#include"./../../src/semantic.h"
+#include"./../../src/symtable.h"
+#include"./../../src/lex.h"
 
 
 int main()
@@ -22,7 +22,13 @@ int main()
     }
 
     p_codes p_rc = parse(&con);
-    INFORUN(parser_print_header(p_rc););
+
+#ifdef DEBUG
+        fputc('\n',stderr);
+        parser_print_header(p_rc);
+        fputc('\n',stderr);
+#endif
+
     switch(p_rc)
     { 
 
@@ -32,20 +38,16 @@ int main()
             return(SYNTAX_ERROR); 
         
         case(P_SUCCESS):
+            tree_dot_print(stdout,con.root); 
             break; // continue
     } 
 
     
     semantic_retcodes s_rc = semantic(&con);
     infoprintt("!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", s_rc);
-    if(s_rc != SEM_SUCCESS)
-    {
-        context_delete(&con);
-        return(s_rc);
-    }
 
     context_delete(&con);
-    return(SUCCESS);
+    return(s_rc);
 }
 
 

@@ -15,7 +15,7 @@ for f in ./*.php; do
     if [ $retval -eq 222 ]; then
         echo -e "$f :: ${TCWHITE}${BGCRED}failed${COFF} valgrind test"
     else
-        echo -e "$f :: ${TCBLACK}${BGCGREEN}failed${COFF} valgrind test"
+        echo -e "$f :: ${TCBLACK}${BGCGREEN}NO LEAKS${COFF}"
     fi
     echo ""
 done

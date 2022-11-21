@@ -300,6 +300,112 @@ static void test_node_add_fails(void** state)
     node_delete(&right); // this node was never added to root
 }
 
+// basic test, no time for more TODO
+static void test_insert_betwene(void ** state)
+{
+    const unsigned int ID_ROOT = 0;
+    const unsigned int ID_LEFT = 1;
+    const unsigned int ID_INSERT_LEFT = 2;
+    const unsigned int ID_RIGHT = 3;
+    const unsigned int ID_INSERT_RIGHT = 4;
+
+    will_return(__wrap_malloc,1);
+    will_return(__wrap_strdup,1);
+    ast_node* root = NULL;
+    root = node_new(EXPR,ADD,"");
+    assert_non_null(root);
+    // id counter keeps counting in every test, so manual reset
+    root->id = ID_ROOT;
+
+    will_return(__wrap_malloc,1);
+    will_return(__wrap_strdup,1);
+    ast_node* left = NULL;
+    left = node_new(TERM,ID,"$a");
+    assert_non_null(left);
+    // id counter keeps counting in every test, so manual reset
+    left->id = ID_LEFT;
+    
+    will_return(__wrap_malloc,1);
+    will_return(__wrap_strdup,1);
+    ast_node* right = NULL;
+    right = node_new(TERM,IVAL,"1");
+    assert_non_null(right);
+    // id counter keeps counting in every test, so manual reset
+    right->id = ID_RIGHT;
+    
+    will_return(__wrap_malloc,1);
+    will_return(__wrap_strdup,1);
+    ast_node* insert_right = NULL;
+    insert_right = node_new(EXPR,IVAL,"");
+    assert_non_null(insert_right);
+    // id counter keeps counting in every test, so manual reset
+    insert_right->id = ID_INSERT_RIGHT;
+
+    will_return(__wrap_malloc,1);
+    will_return(__wrap_strdup,1);
+    ast_node* insert_left = NULL;
+    insert_left = node_new(EXPR,IVAL,"");
+    assert_non_null(insert_left);
+    // id counter keeps counting in every test, so manual reset
+    insert_left->id = ID_INSERT_LEFT;
+   
+    // tests inserting NULL
+    assert_false(node_insert_betwene(root,NULL,NULL));
+    assert_false(node_insert_betwene(NULL,root,NULL));
+    assert_false(node_insert_betwene(NULL,NULL,root));
+    assert_false(node_insert_betwene(root,NULL,root));
+    assert_false(node_insert_betwene(root,root,NULL));
+    
+    // try insert self in betwene self
+    assert_false(node_insert_betwene(root,root,root));
+
+
+    will_return(__wrap_realloc,1);
+    assert_true(node_add(root,left));
+    assert_int_equal(root->children_cnt,1);
+    assert_int_equal(root->children[0]->id,ID_LEFT);
+    // test inserting non existing children
+    assert_false(node_insert_betwene(root,insert_left,right));
+    assert_int_equal(root->children_cnt,1);
+    assert_int_equal(root->children[0]->id,ID_LEFT);
+
+    // try insert self in betwene self no one children
+    assert_false(node_insert_betwene(root,root,root));
+    
+    // try to fail realoc inside of node_add inside node_insert_betwene
+    will_return(__wrap_realloc,0);
+    assert_false(node_insert_betwene(root,insert_left,left));
+    
+    assert_int_equal(root->children_cnt,1);
+    assert_int_equal(root->children[0]->id,ID_LEFT);
+
+    will_return(__wrap_realloc,1);
+    assert_true(node_add(root,right));
+    
+    assert_int_equal(root->children_cnt,2);
+    assert_int_equal(root->children[0]->id,ID_LEFT);
+    assert_int_equal(root->children[1]->id,ID_RIGHT);
+   
+    // test inserting left/ one
+    will_return(__wrap_realloc,1);
+    assert_true(node_insert_betwene(root,insert_left,left));
+    assert_int_equal(root->children_cnt,2);
+    assert_int_equal(root->children[0]->id,ID_INSERT_LEFT);
+    assert_int_equal(root->children[0]->children[0]->id,ID_LEFT);
+    assert_int_equal(root->children[1]->id,ID_RIGHT);
+
+    // test inserting right/ multiple
+    will_return(__wrap_realloc,1);
+    assert_true(node_insert_betwene(root,insert_right,right));
+    assert_int_equal(root->children_cnt,2);
+    assert_int_equal(root->children[0]->id,ID_INSERT_LEFT);
+    assert_int_equal(root->children[0]->children[0]->id,ID_LEFT);
+    assert_int_equal(root->children[1]->id,ID_INSERT_RIGHT);
+    assert_int_equal(root->children[1]->children[0]->id,ID_RIGHT);
+
+    node_delete(&root);
+}
+
 /**
  * probably useles test
  * testing if node_type enum is in-sync with node_type_str()
@@ -309,7 +415,7 @@ static void test_node_type_str(void** state)
     assert_string_equal(node_type_str(TERM),"terminal");
     assert_string_equal(node_type_str(NTERM),"non-terminal");
     assert_string_equal(node_type_str(EXPR),"expression");
-    assert_string_equal(node_type_str(EXPR_PAR),"(expression)");
+    assert_string_equal(node_type_str(EXPR_PAR),"parenthesis");
     assert_string_equal(node_type_str(EXPR_FCALL),"function call");
     assert_string_equal(node_type_str(EXPR_LIST),"expression list");
     assert_string_equal(node_type_str(PROG_BODY),"prog_body");
@@ -322,7 +428,7 @@ static void test_node_prints(void** state)
     will_return(__wrap_malloc,1);
     will_return(__wrap_strdup,1);
     ast_node* root = NULL;
-    root = node_new(EXPR,ADD,"");
+    root = node_new(EXPR,ADD,"\"<>\"");
     assert_non_null(root);
     
     will_return(__wrap_malloc,1);
@@ -356,6 +462,7 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_node_add_fails),
         cmocka_unit_test(test_node_type_str),
         cmocka_unit_test(test_node_prints),
+        cmocka_unit_test(test_insert_betwene),
     };
 
     if((argc > 1))

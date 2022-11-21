@@ -96,6 +96,43 @@ bool node_add(ast_node* dst,ast_node* src)
     return(true);
 }
 
+bool node_insert_betwene(ast_node* parent, ast_node* node, ast_node* child)
+{
+    // can not operate on NULL
+    if(parent == NULL || node == NULL || child == NULL)
+    {
+        infoprint("parent || node || child is NULL");
+        return(false);
+    }
+    // parent has no child
+    if(parent->children == NULL)
+    {
+        infoprint("parent has no children.");
+        return(false);
+    }
+
+    // find child and its slot  
+    ast_node** ptr = parent->children;
+    for(size_t i = 0; i < parent->children_cnt ; ++i)
+    {
+        if(ptr[i] == child)
+        {
+            // adding child to node
+            // and then insert node into child's slot
+            if(!node_add(node,child))
+            {
+                dbgprint("Insertion failed, because node_add.");
+                return(false);
+            }
+
+            ptr[i] = node;
+            return(true);
+        }
+    }
+    
+    dbgprint("Input child is not child of input parent.");
+    return(false);
+}
 
 //========== DEBUG AND PRINT FUNCTIONS ==========
 
