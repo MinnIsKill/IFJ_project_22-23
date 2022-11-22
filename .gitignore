@@ -10,3 +10,4 @@ test/parser_expr/parser_test_dbg
 test/parser/parser_test
 test/parser/parser_test_dbg
 samples/**/*.png
+IFJ22code_interpret

@@ -71,7 +71,19 @@ const char* token_str(token_type t)
         // special 
         "not used",
         "you shoul not see dis", // this token signify error
-        "$"          // $ used by operator precedence parser
+        "$",          // $ used by operator precedence parser
+        "NULL -> INT",   // 0, return"0";
+        "NULL -> FLOAT", // 0.0, return "0.0";
+        "NULL -> BOOL",  // false, return "false";
+        "NULL -> STR",   // "", return "";
+        "INT -> FLOAT",  // INT2FLOAT
+        "INT -> BOOL",   // if(val != 0 ) return TRUE else return FALSE
+        "FLOAT -> INT",  // FLOAT2IN
+        "FLOAT -> BOOL", // if(val != 0.0) return TRUE else RETURN FALSE 
+        "BOOL -> INT",   // TRUE -> 1 , FALSE -> 0
+        "BOOL -> FLOAT", // TRUE -> 1.0 , FALSE -> 0.0
+        "BOOL -> STR",   // TRUE -> "1", FALSE -> ""
+        "STR -> BOOL",   // "" -> FALSE else return true
         };
         return(s[t]);
 }

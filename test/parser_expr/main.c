@@ -11,23 +11,11 @@
 #include"./../../src/error.h"
 #include"./../../src/context.h"
 
-void context_clean(context* con)
-{
-    if(con == NULL)
-    {
-        return;
-    }
-    node_delete(&con->root);
-    ast_stack_destroy(&(con->expr_stack));
-    free(con->attrib);
-}
 
 int main()
 {
     context con;
-    con.root = node_new(NTERM,PS_MARK,"");
-    ast_stack_init(&(con.expr_stack),64);
-    lex_init(&con);
+    context_new(&con);
     
     int rc;
     switch(parse_expr(con.root,&con))
@@ -61,8 +49,7 @@ int main()
             break;
     }
     
-    context_clean(&con);
-    lex_destroy();
+    context_delete(&con);
     return(rc);
 }
 
