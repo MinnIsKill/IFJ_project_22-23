@@ -48,6 +48,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
 struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_node* global_symtab);
 struct bintree_node* AST_DF_firsttraversal(ast_node* node, struct bintree_node* global_symtab);
 
+void handle_conversions_arithmetics_strings(ast_node* parent, ast_node* child, struct bintree_node* global_symtab, arg_type type_l, arg_type type_r);
+void handle_conversions_conditionals(ast_node* parent, ast_node* child, struct bintree_node* global_symtab);
+
 void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab);
 void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab);
 void semantic_check_expr(ast_node* node, struct bintree_node* global_symtab);

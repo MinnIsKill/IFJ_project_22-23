@@ -8,9 +8,10 @@
 #include"ast.h"
 #include"stdio.h"
 
+//forward declarations
 void gen_expr(ast_node* root, char side);
 void gen_expr_assign(ast_node* root);
-void gen_main(ast_node* root);
+void gen_main(ast_node* root/*, struct bintree_node* global_symtab*/);
 
 void gen_prolog()
 {
@@ -40,7 +41,7 @@ void codegen(context* cont)
 
     // skip root
     root = root->children[0];
-    for(size_t n = 0; n < root->children_cnt; ++n)
+    for(size_t n = 0; n < root->children_cnt; n++)
     {
         gen_main(root->children[n]);
     }
@@ -49,7 +50,7 @@ void codegen(context* cont)
 }
 
 // basicly router to the correct generator gunction
-void gen_main(ast_node* root)
+void gen_main(ast_node* root/*, struct bintree_node* global_symtab*/)
 {
     switch(root->type)
     {
@@ -59,6 +60,7 @@ void gen_main(ast_node* root)
 
         case(EXPR):
             gen_expr(root,'F');
+            break;
 
         default:
             return;

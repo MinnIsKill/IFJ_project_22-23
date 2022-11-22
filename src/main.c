@@ -45,6 +45,8 @@ int main()
         return(s_rc);
     }
 
+    tree_dot_print(stdout, con.root);
+
     codegen(&con);
 
     context_delete(&con);

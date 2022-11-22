@@ -11,7 +11,7 @@
  */
 
 /**
- * TODO: - ???
+ * TODO: - strdup var and func names ('key' and 'string')
  */
 
 #include <stdio.h>

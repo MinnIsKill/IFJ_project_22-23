@@ -162,6 +162,7 @@ const char* node_type_str(node_type t)
     "function definition",
     "parameter",
     "parametr list",
+    "type conversion"
     };
     return(s[t]);
 }
