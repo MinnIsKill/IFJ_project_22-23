@@ -49,6 +49,8 @@ struct bintree_data{
     char string[512];   //for string variables
                         //!!!dynamic strings would maybe be nice
 
+    bool codegen_was_def; //for codegen, if var had been processed
+
     struct dll *args_list; //names of arguments for functions (in order)
     arg_type rtype; //return type for functions
     size_t arg_cnt; //arguments counter for functions
