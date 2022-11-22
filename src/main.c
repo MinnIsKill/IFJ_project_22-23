@@ -11,6 +11,7 @@
 #include"semantic.h"
 #include"symtable.h"
 #include"lex.h"
+#include"codegen.h"
 
 
 int main()
@@ -41,9 +42,10 @@ int main()
     if(s_rc != SEM_SUCCESS)
     {
         context_delete(&con);
-        
         return(s_rc);
     }
+
+    codegen(&con);
 
     context_delete(&con);
     return(SUCCESS);

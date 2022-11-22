@@ -9,8 +9,8 @@ ERFLAGS=-Werror -Wall -Wextra -pedantic
 
 all: $(BIN) $(BIN)_dbg
 
-$(BIN): ./main.c ./../../src/parser_expr.c ./../../src/fake_lex.c ./../../src/token.c ./../../src/ast.c ./../../src/g_stack.c ./../../src/ast_stack.c
+$(BIN): ./main.c ./../../src/parser_expr.c ./../../src/dll.c ./../../src/symtable.c ./../../src/lex.c ./../../src/char_buffer.c ./../../src/context.c ./../../src/token.c ./../../src/ast.c ./../../src/g_stack.c ./../../src/ast_stack.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(BIN)_dbg: ./main.c ./../../src/parser_expr.c ./../../src/fake_lex.c ./../../src/token.c ./../../src/ast.c ./../../src/g_stack.c ./../../src/ast_stack.c
+$(BIN)_dbg: ./main.c ./../../src/parser_expr.c ./../../src/dll.c ./../../src/symtable.c ./../../src/lex.c ./../../src/char_buffer.c ./../../src/context.c ./../../src/token.c ./../../src/ast.c ./../../src/g_stack.c ./../../src/ast_stack.c
 	$(CC) $(CFLAGS) $(DBGFLAGS) $^ -o $@
