@@ -216,7 +216,7 @@ void _tree_dot_print(FILE* f,ast_node* n)
     }
     fprintf(f,"%llu[shape=record;label=\"{{",n->id);
     print_escape(f,node_type_str(n->type));
-    fprintf(f,"|");
+    fprintf(f,"[%lu]|",n->children_cnt);
     print_escape(f,token_str(n->sub_type));
     fprintf(f,"}");
     if(n->attrib[0] != '\0')
