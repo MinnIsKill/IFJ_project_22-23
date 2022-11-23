@@ -578,7 +578,11 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
             return ARG_TYPE_ERROR;
         }
     } else if (node->type == EXPR_FCALL){
-        search3 = bintree_search_by_key(global_symtab, node->attrib);
+        if ((search3 = bintree_search_by_key(global_symtab, node->attrib)) == NULL){
+            dbgprint("ERROR[3]:  found an attempt at calling an undefined function");
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
+            return ARG_TYPE_ERROR;
+        }
         return search3->node_data->rtype;
     } else if (node->type == CONVERT_TYPE) {
         ;
@@ -836,6 +840,8 @@ void handle_conversions_conditionals(ast_node* parent, ast_node* child, struct b
     arg_type type = semantic_get_expr_type(child, global_symtab);
     if (sem_retcode != SEM_SUCCESS){return;}
 
+    dbgprint("type: %s", bintree_fnc_arg_type_tostr(type));
+
     ast_node* node;
     if (type == int_t || type == nint_t){
         node = node_new(CONVERT_TYPE, INT_TO_BOOL, NULL);
@@ -904,8 +910,8 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
         var->node_data->curr_type = type;
     } else {
         //CHECK CONVERSION COMPATIBILITY
-        dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
-        dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
+        //dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
+        //dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
         if (!(var->node_data->curr_type == type || //same types
            (var->node_data->curr_type == void_t) || //var is type void
            ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||          //?int = int/void
@@ -1054,11 +1060,11 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                     //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
                     if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
                         if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
-                                                        strcmp(ptr->linkData->type, "?float") == 0 ||
-                                                        strcmp(ptr->linkData->type, "?string") == 0)) ||
-                            ((strcmp(tmp, "int") == 0) && (strcmp(ptr->linkData->type, "?int") == 0)) ||
-                            ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
-                            ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
+                                                            strcmp(ptr->linkData->type, "?float") == 0 ||
+                                                            strcmp(ptr->linkData->type, "?string") == 0)) ||
+                            (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
+                            (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
+                            (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
                             dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call");
                             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                             return;
@@ -1101,16 +1107,16 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                     const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
                     fprintf(stdout,"![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
                 );**/
-                //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                //dbgprint("tmp:                               %s",tmp);
-                //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                dbgprint("tmp:                               %s",tmp);
+                dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
                 if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
                     if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
-                                                       strcmp(ptr->linkData->type, "?float") == 0 ||
-                                                       strcmp(ptr->linkData->type, "?string") == 0)) ||
-                         ((strcmp(tmp, "int") == 0) && (strcmp(ptr->linkData->type, "?int") == 0)) ||
-                         ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
-                         ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
+                                                        strcmp(ptr->linkData->type, "?float") == 0 ||
+                                                        strcmp(ptr->linkData->type, "?string") == 0)) ||
+                        (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
+                        (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
+                        (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
                         dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call");
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                         return;
@@ -1162,9 +1168,9 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
             if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
                                                   strcmp(ptr->linkData->type, "?float") == 0 ||
                                                   strcmp(ptr->linkData->type, "?string") == 0)) ||
-                  ((strcmp(tmp, "int") == 0) && (strcmp(ptr->linkData->type, "?int") == 0)) ||
-                  ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
-                  ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
+                  (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
+                  (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
+                  (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
                 dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call %s",search->node_data->key);
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                 return;
@@ -1274,13 +1280,16 @@ void semantic_check_return(ast_node* node, struct bintree_node* global_symtab){
 */
 void semantic_check_conditionals(ast_node* node, struct bintree_node* global_symtab){
     ast_node* parent = node;
-    node = node->children[0];
+    node = node->children[0]; //go inside relational statement
     while (node->type == EXPR_PAR){ //get rid of EXPR_PAR nodes
         node = node->children[0];
     }
-    if (node->children_cnt == 1){
-        semantic_get_expr_type(node->children[0], global_symtab); //this is here basically just because it already has fun and var def checks
+    dbgprint("node->children_cnt:  %ld",node->children_cnt);
+    if (node->children_cnt == 0){
+        dbgprint("1");
+        semantic_get_expr_type(node, global_symtab); //this is here basically just because it already has fun and var def checks
         if (sem_retcode != SEM_SUCCESS){return;}
+        handle_conversions_conditionals(parent, node, global_symtab);
     } else if (node->children_cnt == 2){
         arg_type type_l, type_r;
         ///NOTE: 'semantic_get_expr_type' already checks for compatibility
@@ -1289,8 +1298,8 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
         type_r = semantic_get_expr_type(node->children[1], global_symtab);
         if (sem_retcode != SEM_SUCCESS){return;}
 
-        dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
-        dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
+        //dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+        //dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
 
         if (!((type_l == type_r) || //same
               ((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) ||     //int and float
@@ -1396,12 +1405,12 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                     node_print(stderr, AST);
                     fprintf(stderr, "  after RETURN_N received\n");
                 );
-                size_t deleted = 0;
                 for (size_t j = i+1; j < AST->children_cnt; j++){
-                    node_delete(&AST->children[j]);
-                    deleted++;
+                    if (AST->children[j]->type != FDEF){
+                        node_remove_child(AST, AST->children[j]);
+                        j--;
+                    }
                 }
-                AST->children_cnt -= deleted;
                 //then return;
                 return;
             }

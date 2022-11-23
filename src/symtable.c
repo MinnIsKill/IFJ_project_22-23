@@ -49,6 +49,7 @@ void bintree_dispose_internal(struct bintree_node *root){
         bintree_dispose(root->local_symtab);
         dll_destroy(root->node_data->args_list);
     }
+    free (root->node_data->key);
     free (root->node_data); //free node data
     free (root); //free node
 }
@@ -65,7 +66,7 @@ struct bintree_node* bintree_node_nullifyinfo(struct bintree_node *root){
     root->node_data->rtype = ARG_TYPE_ERROR;
     root->node_data->init_type = ARG_TYPE_ERROR;
     root->node_data->curr_type = ARG_TYPE_ERROR;
-    root->node_data->string[0] = '\0';
+    //root->node_data->string[0] = '\0';
     root->node_data->value = 0;
     root->node_data->codegen_was_def = false;
     root->node_data->variadic_func = false;
@@ -116,7 +117,12 @@ struct bintree_node* bintree_insert(struct bintree_node *root, size_t id, char k
     tmp->node_data->id = id;
     tmp->node_type = type_of_node;
     //printf("tmp->node_data->id = %d\n", tmp->node_data->id);
-    strcpy(tmp->node_data->key, key);
+    if ((tmp->node_data->key = strdup(key)) == NULL){
+        dbgprint("ERROR:  in bintree_insert:  malloc failed");
+        free(tmp);
+        free(data);
+        return NULL;
+    }
     //printf("tmp->node_data->key = %s\n", tmp->node_data->key);
     tmp->l = NULL;
     tmp->r = NULL;

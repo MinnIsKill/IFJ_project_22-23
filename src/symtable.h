@@ -40,13 +40,13 @@ typedef enum{
 /* node data */
 struct bintree_data{
     size_t id;     //id
-    char key[64];  //string (var/fnc name)
+    char* key;  //string (var/fnc name)
 
     size_t vars_cnt; //for functions, counter for variables
     arg_type init_type; //for variables, type assigned during declaration
     arg_type curr_type; //for variables, current type
     float value;        //for int/float variables
-    char string[512];   //for string variables
+    char string[1024];   //for string variables
                         //!!!dynamic strings would maybe be nice
 
     bool codegen_was_def; //for codegen, if var had been processed
