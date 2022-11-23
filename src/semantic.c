@@ -216,6 +216,10 @@ arg_type token_type_to_arg_type_forvals(token_type token){
  *            99 - internal (AST structure in wrong format, ...)
 */
 arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symtab){
+    bool already_converted = false;
+    if (node->type == CONVERT_TYPE){
+        node = node->children[0];
+    }
     if (node->type == EXPR || node->type == EXPR_PAR){ //check if function truly received an 'EXPR' node
         arg_type type_l, type_r;
         if (node->type == EXPR_PAR){ //if node is 'EXPR_PAR', AST makes sure to insert the node with the actual value as its child, so just move into it
@@ -246,6 +250,10 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                 type_l = semantic_get_expr_type(node->children[0], global_symtab); //get type of left node recursively
                 type_r = semantic_get_expr_type(node->children[1], global_symtab); //get type of right node recursively
 
+                if (node->children[0]->type == CONVERT_TYPE || node->children[1]->type == CONVERT_TYPE){
+                    already_converted = true;
+                }
+
                 ///TODO: AST CONVERT_TYPE nodes insertion
 
                 //dbgprint("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
@@ -254,6 +262,11 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                 //string concatenation
                 if (node->sub_type == STRCAT){ //first check if STRCAT
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
+                        if (type_l == void_t || type_r == void_t){
+                            if (already_converted == false){
+                                handle_conversions_arithmetics_strings(node, type_l, type_r);
+                            }
+                        }
                         return string_t;
                     } else {
                         dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
@@ -262,7 +275,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     }
                 }
                 //division by zero
-                if ((type_l == type_r) && (type_l != string_t && type_r != string_t)){ //if types are equal and aren't strings
+                if ((type_l == type_r) && (type_l != string_t && type_r != string_t) && (type_l != void_t && type_r != void_t)){ //if types are equal and aren't strings
                     if (node->sub_type == DIV){ //if dividing, check if right value isn't a zero
                         if ((type_r == int_t && atoll(node->children[1]->attrib) == 0) ||
                             (type_r == float_t && atof(node->children[1]->attrib) == 0.0)){
@@ -278,16 +291,26 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     if (node->sub_type == DIV){ //if dividing, check if right value isn't a zero
                         if ((type_r == int_t && atoll(node->children[1]->attrib) == 0) ||
                             (type_r == float_t && atof(node->children[1]->attrib) == 0.0)){
-                                dbgprint("ERROR[8]:  found an attempt at division by zero");
-                                if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
-                                return ARG_TYPE_ERROR;
+                            dbgprint("ERROR[8]:  found an attempt at division by zero");
+                            if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
+                            return ARG_TYPE_ERROR;
                         }
+                    } //it's not DIV or division by zero, but still, both operands must be of type float
+                    if (already_converted == false){
+                        handle_conversions_arithmetics_strings(node, type_l, type_r);
                     }
                     return float_t; //return float
-                } else if (type_l == void_t || type_r == void_t){
+                } else if ((type_l == void_t || type_r == void_t) && ((type_l != string_t && type_l != nstring_t) && (type_r != string_t && type_r != nstring_t))){
+                    dbgprint("5");
                     if (type_l == void_t){
+                        if (already_converted == false){
+                            handle_conversions_arithmetics_strings(node, type_l, type_r);
+                        }
                         return type_r;
                     } else {
+                        if (already_converted == false){
+                            handle_conversions_arithmetics_strings(node, type_l, type_r);
+                        }
                         return type_l;
                     }
                 } else {
@@ -427,9 +450,135 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
 /**
  * AST CONVERSION NODE INSERTION FOR ARITHMETICS AND STRINGS
 */
-/**void handle_conversions_arithmetics_strings(ast_node* parent, ast_node* child, struct bintree_node* global_symtab, arg_type type_l, arg_type type_r){
-    
-}**/
+void handle_conversions_arithmetics_strings(ast_node* parent, arg_type type_l, arg_type type_r){
+    //if division, both operands have to be converted to float
+    if (parent->sub_type == DIV){
+        dbgprint("DIV");
+        if ((type_l != float_t) && (type_l != nfloat_t)){
+            ast_node* node_l;
+            if (type_l == int_t || type_l == nint_t){
+                node_l = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
+            } else if (type_l == void_t){
+                node_l = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
+            }
+            if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                return; 
+            }
+        }
+
+        if ((type_r != float_t) && (type_r != nfloat_t)){
+            ast_node* node_r;
+            if (type_r == int_t || type_r == nint_t){
+                node_r = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
+            } else if (type_r == void_t){
+                node_r = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
+            }
+            if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                return; 
+            }
+        }
+    //if string concatenation, both operands have to be converted to string
+    } else if (parent->sub_type == STRCAT){ //anything other than void is STRNUM extension
+        dbgprint("STRCAT");
+        if (type_l == void_t){
+            ast_node* node_l = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
+            if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                return; 
+            }
+        }
+
+        if (type_r == void_t){
+            ast_node* node_r = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
+            if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                return; 
+            }
+        }
+    //if other arithmetic operation, both types have to be of the same type (higher type has priority, float > int > void)
+    } else if (parent->sub_type == ADD || parent->sub_type == SUB || parent->sub_type == MUL){
+        dbgprint("ARITHMETIC");
+        if (type_l == void_t){
+            ast_node* node_l;
+            if (type_r == int_t || type_r == nint_t){
+                node_l = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
+                if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            } else if (type_r == float_t || type_r == nfloat_t){
+                node_l = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
+                if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            } else if (type_r == string_t){
+                node_l = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
+                if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            }
+        } else if (type_l == int_t || type_l == nint_t){
+            dbgprint("2");
+            ast_node* node_l;
+            if (type_r == float_t || type_r == nfloat_t){
+                node_l = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
+                if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            }
+        }
+
+        if (type_r == void_t){
+            ast_node* node_r;
+            if (type_l == int_t || type_l == nint_t){
+                node_r = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
+                if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            } else if (type_l == float_t || type_l == nfloat_t){
+                node_r = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
+                if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            } else if (type_l == string_t){
+                node_r = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
+                if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            }
+        } else if (type_r == int_t || type_r == nint_t){
+            dbgprint("3");
+            ast_node* node_r;
+            if (type_l == float_t || type_l == nfloat_t){
+                node_r = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
+                if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }
+            }
+        }
+    }
+}
 
 /**
  * AST CONVERSION NODE INSERTION FOR CONDITIONALS
@@ -506,13 +655,37 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
         var->node_data->curr_type = type;
     } else {
         //CHECK CONVERSION COMPATIBILITY
+        //dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
+        //dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
         if (!(var->node_data->curr_type == type || //same types
-           (var->node_data->curr_type == nint_t && (type == int_t || type == void_t)) ||       //?int = int/void
-           (var->node_data->curr_type == nfloat_t && (type == float_t || type == void_t)) ||   //?float = float/void
-           (var->node_data->curr_type == nstring_t && (type == string_t || type == void_t)))){ //?string = string/void
+           (var->node_data->curr_type == void_t) || //var is type void
+           ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == float_t || type == void_t)) ||          //?int = int/void
+           ((var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t) && (type == int_t || type == float_t || type == void_t)) ||    //?float = float/void
+           ((var->node_data->curr_type == string_t || var->node_data->curr_type == nstring_t) && (type == string_t || type == void_t)))){ //?string = string/void 
             dbgprint("ERROR[7]:  type incompatibility in assignment");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
             return;
+        } else {
+            if (type != void_t){
+                var->node_data->curr_type = type;
+            } else if (node->children[1]->sub_type == VVAL){
+                var->node_data->curr_type = void_t;
+                /**ast_node* node_r;
+                if (var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t){
+                    node_r = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
+                } else if (var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t){
+                    node_r = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
+                } else if (var->node_data->curr_type == string_t || var->node_data->curr_type == nstring_t){
+                    node_r = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
+                } else { //should never happen but just in case
+                    return;
+                }
+                if (node_insert_betwene(node, node_r, node->children[1]) == false){
+                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+                    return; 
+                }**/
+            }
         }
     }
 }
