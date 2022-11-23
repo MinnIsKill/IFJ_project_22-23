@@ -20,10 +20,11 @@ bool context_new(context* c)
 
     if(!lex_init(c,stdin))
     {
+        ast_stack_destroy(&(c->expr_stack));
+        node_delete(&c->root);
         return(false);
     }
     
-    // TODO init symtable
     bintree_init(&c->global_symtab);
     
     return(true);
@@ -37,6 +38,5 @@ void context_delete(context* c)
     ast_stack_destroy(&(c->expr_stack));
     lex_destroy(c);
     
-    // TODO clean symtable
     bintree_dispose(c->global_symtab);
 }

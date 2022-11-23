@@ -1,0 +1,226 @@
+.IFJcode22
+
+JUMP $$main
+
+
+
+
+
+
+# function reads() : ?string
+LABEL $$reads
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_out
+READ LF@_out string
+PUSHS LF@_out
+
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function readi() : ?int
+LABEL $$readi
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_out
+READ LF@_out int
+PUSHS LF@_out
+
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function readf() : ?float
+LABEL $$readf
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_out
+READ LF@_out float
+PUSHS LF@_out
+
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function write(<n>, term1, term2, ..., termn) : void
+LABEL $$write
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_n
+DEFVAR LF@_i
+DEFVAR LF@_current
+
+POPS LF@_n
+MOVE LF@_i int@0
+
+LABEL $$write!loop
+JUMPIFEQ $$write!success LF@_i LF@_n
+
+POPS LF@_current
+WRITE LF@_current
+ADD LF@_i LF@_i int@1
+
+JUMP $$write!loop
+
+LABEL $$write!success
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function strlen(string $x) : int
+LABEL $$strlen
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_str
+DEFVAR LF@_len
+POPS LF@_str
+STRLEN LF@_len LF@_str
+PUSHS LF@_len
+
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function substring(string $str, int $i, int $j) : ?string
+LABEL $$substring
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_str
+DEFVAR LF@_i
+DEFVAR LF@_j
+
+POPS LF@_str
+POPS LF@_i
+POPS LF@_j
+
+DEFVAR LF@_cmp
+LT LF@_cmp LF@_i int@0
+JUMPIFEQ $$substring!error LF@_cmp bool@true
+
+LT LF@_cmp LF@_j int@0
+JUMPIFEQ $$substring!error LF@_cmp bool@true
+
+GT LF@_cmp LF@_i LF@_j
+JUMPIFEQ $$substring!error LF@_cmp bool@true
+
+DEFVAR LF@_len
+STRLEN LF@_len LF@_str
+
+LT LF@_cmp LF@_i LF@_len
+NOT LF@_cmp LF@_cmp
+JUMPIFEQ $$substring!error LF@_cmp bool@true
+
+LT LF@_cmp LF@_j LF@_len
+NOT LF@_cmp LF@_cmp
+JUMPIFEQ $$substring!error LF@_cmp bool@true
+
+DEFVAR LF@_out
+DEFVAR LF@_current
+
+MOVE LF@_out string@
+
+LABEL $$substring!loop
+JUMPIFEQ $$substring!success LF@_i LF@_j
+
+GETCHAR LF@_current LF@_str LF@_i
+CONCAT LF@_out LF@_out LF@_current
+ADD LF@_i LF@_i int@1
+
+JUMP $$substring!loop
+
+LABEL $$substring!success
+PUSHS LF@_out
+JUMP $$substring!exit
+
+LABEL $$substring!error
+PUSHS nil@nil
+
+LABEL $$substring!exit
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function ord(string $c) : int
+LABEL $$ord
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_c
+POPS LF@_c
+
+DEFVAR LF@_len
+STRLEN LF@_len LF@_c
+
+DEFVAR LF@_cmp
+EQ LF@_cmp LF@_len int@0
+JUMPIFEQ $$ord!error LF@_cmp bool@true
+
+STRI2INT LF@_c LF@_c int@0
+PUSHS LF@_c
+
+JUMP $$ord!exit
+
+LABEL $$ord!error
+PUSHS int@0
+
+LABEL $$ord!exit
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function chr(int $i) : string
+LABEL $$chr
+CREATEFRAME
+PUSHFRAME
+
+DEFVAR LF@_i
+POPS LF@_i
+
+INT2CHAR LF@_i LF@_i
+PUSHS LF@_i
+
+POPFRAME
+RETURN
+
+
+
+
+
+
+# function main() : void
+LABEL $$main

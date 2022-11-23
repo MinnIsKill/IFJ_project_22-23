@@ -36,6 +36,9 @@ int main()
             break; // continue
     } 
 
+#ifdef DEBUG
+    tree_dot_print(stdout, con.root);
+#endif
     
     semantic_retcodes s_rc = semantic(&con);
     infoprintt("!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", s_rc);
@@ -45,7 +48,9 @@ int main()
         return(s_rc);
     }
 
+#ifdef DEBUG
     tree_dot_print(stdout, con.root);
+#endif
 
     codegen(&con);
 

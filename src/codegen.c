@@ -9,6 +9,10 @@
 #include<stdio.h>
 #include"token.h"
 
+#include"built_in_functions.c"
+
+static struct bintree_node* GLOBAL;
+
 //forward declarations
 void gen_expr(ast_node* root, char side);
 void gen_expr_assign(ast_node* root,struct bintree_node* tab);
@@ -38,15 +42,19 @@ void gen_prolog()
 
 void gen_epilog()
 {
-    // for gen_expr_purposes
+    
     printf("WRITE GF@_EF\n");
+    printf("JUMP $$$PROGRAM_END\n");
+    gen_built_ins();
+    printf("LABEL $$$PROGRAM_END\n");
 }
 
 
 void gen_fdef(ast_node* root, struct bintree_node* tab)
 {
+    (void)tab;
     char* fid = root->attrib;
-    struct bintree_node* table = bintree_delete_by_key(tab, fid);
+    struct bintree_node* table = bintree_search_by_key(GLOBAL, fid);
     printf("JUMP $$%s_SKIP\n",fid);
     printf("#================================ FUN DEF : %s\n",fid);
     printf("LABEL $$%s\n",fid);
@@ -88,7 +96,9 @@ void gen_fdef(ast_node* root, struct bintree_node* tab)
 void codegen(context* cont)
 {
     ast_node* root = cont->root;
-    struct bintree_node* tab = cont->global_symtab;
+    struct bintree_node* tab = bintree_search_by_key(cont->global_symtab, ":b");
+    GLOBAL = tab;
+    tab = tab->local_symtab;
     
     gen_prolog();
     putchar('\n');
@@ -144,6 +154,28 @@ void gen_if(ast_node* root,struct bintree_node* tab)
     if_body_id++;
 }
 
+void gen_while(ast_node* root,struct bintree_node* tab)
+{
+    static unsigned long long int while_id = 0;
+    printf("LABEL $$WHILE_START%llu\n",while_id);
+    
+    gen_expr(root->children[0],'F');
+    
+    // todo convert
+    printf("JUMPIFEQ $$WHILE_EXIT%llu GF@_EF bool@false\n",while_id);
+   
+    ast_node* body = root->children[1];
+    for(size_t n = 0; n < body->children_cnt; ++n)
+    {
+        gen_main(body->children[n], tab);
+        putchar('\n');
+    }
+   
+    printf("JUMP $$WHILE_START%llu\n",while_id);
+    printf("LABEL $$WHILE_EXIT%llu\n",while_id);
+    while_id++;
+}
+
 // basicly router to the correct generator gunction
 void gen_main(ast_node* root, struct bintree_node* tab)
 {
@@ -166,9 +198,15 @@ void gen_main(ast_node* root, struct bintree_node* tab)
         case(RETURN_N):
             gen_return(root);
             break;
+        
+        case(WHILE_N):
+            gen_while(root,tab);
+            break;
 
         case(IF_N):
             gen_if(root,tab);
+            break;
+
         default:
             return;
     }
@@ -177,11 +215,14 @@ void gen_main(ast_node* root, struct bintree_node* tab)
 void gen_expr_assign(ast_node* root,struct bintree_node* tab)
 {
     char* ID = root->children[0]->attrib;
-    struct bintree_node* var = bintree_delete_by_key(tab, ID);
+    struct bintree_node* var = bintree_search_by_key(tab, ID);
     if(!var->node_data->codegen_was_def)
     {
-        var->node_data->codegen_was_def = 1; 
+        var->node_data->codegen_was_def = true; 
         printf("DEFVAR LF@%s\n",ID);
+    }
+    else
+    {
     }
     gen_expr(root->children[1],'F');
     printf("MOVE LF@%s GF@_EF\n",ID);
@@ -337,7 +378,17 @@ void gen_expr(ast_node* root, char side)
             return;
         
         default:
-            printf("\n\n??? %s:%s ???\n\n",token_str(root->sub_type),root->attrib);
+            printf("# ========= ??? %s:%s ???\n",token_str(root->sub_type),root->attrib);
+            char side2;
+            if(side == 'L')
+            {
+                side2 = 'R';
+            }
+            else
+            {
+                side2 = 'L';
+            }
+            printf("MOVE GF@_E%c GF@_E%c\n",side,side2);
             return;
     
     }
@@ -345,4 +396,4 @@ void gen_expr(ast_node* root, char side)
     printf(" GF@_E%c GF@_EL GF@_ER\n",side);
     putchar('\n');
 }
-==== BASE ====
+
