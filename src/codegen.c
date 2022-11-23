@@ -48,7 +48,6 @@ void gen_prolog()
 void gen_epilog()
 {
     printf("\n\n#===================== EPILOG\n"); 
-    printf("WRITE GF@_EF\n");
     printf("JUMP $$$PROGRAM_END\n");
     gen_built_ins();
     printf("LABEL $$$PROGRAM_END\n");
@@ -134,8 +133,11 @@ void codegen(context* cont)
             
 void gen_return(ast_node* root)
 {
-    gen_expr(root->children[0],'F');    
-    printf("MOVE GF@_FF GF@_EF\n");
+    if(root->children_cnt > 1)
+    {
+        gen_expr(root->children[0],'F');    
+        printf("MOVE GF@_FF GF@_EF\n");
+    }
 }
         
 void gen_if(ast_node* root,struct bintree_node* tab)
@@ -278,6 +280,13 @@ void gen_fcall(ast_node* root)
         putchar('\n');
         printf("# pushing arg[%lu]\n",n);
         printf("PUSHS GF@_EF\n"); 
+    }
+
+    //TODO if variadic function push children count
+    struct bintree_node* tab = bintree_search_by_key(GLOBAL,fid);
+    if(tab->node_data->variadic_func)
+    {
+        printf("PUSHS int@%lu\n",root->children_cnt); 
     }
     
     putchar('\n');

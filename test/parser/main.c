@@ -45,6 +45,11 @@ int main()
     
     semantic_retcodes s_rc = semantic(&con);
     infoprintt("!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", s_rc);
+    
+    if(s_rc == 0)
+    {
+        tree_dot_print(stdout,con.root); 
+    }
 
     context_delete(&con);
     return(s_rc);

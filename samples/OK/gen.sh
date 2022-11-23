@@ -10,7 +10,7 @@ COFF='\033[0m'
 for f in ./*.php; do
     dst=${f%.*}  
     echo "START :: $f"
-    ./../../test/parser/parser_test <./$f #| dot -Tpng >$dst.png
+    ./../../test/parser/parser_test <./$f | dot -Tpng >$dst.png
     case "${PIPESTATUS[0]}" in
         0)
             echo -e "$f :: ${TCBLACK}${BGCGREEN}SUCCESS${COFF}"

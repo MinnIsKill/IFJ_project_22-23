@@ -16,8 +16,10 @@ bool char_buffer_add(char_buffer* buf, int c)
     {
         if (!char_buffer_resize(buf, buf->size * 2))
             return false;
-
-        buf->size *= 2;
+        
+        // TODO check, possible bug, 2x more memory that
+        // is actualy allocated
+        //buf->size *= 2;
     }
 
     buf->buffer[buf->len++] = c;
