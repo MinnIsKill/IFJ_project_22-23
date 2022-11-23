@@ -4,9 +4,10 @@
  * @author Jan Lutonský, xluton02
  *
  **/
+#include<stdio.h>
+#include<errno.h>
 #include"codegen.h"
 #include"ast.h"
-#include<stdio.h>
 #include"token.h"
 
 #include"built_in_functions.c"
@@ -18,6 +19,7 @@ void gen_expr(ast_node* root, char side);
 void gen_expr_assign(ast_node* root,struct bintree_node* tab);
 void gen_fcall(ast_node* root); 
 void gen_main(ast_node* root, struct bintree_node* tab);
+void gen_convert(token_type oper);
 
 void gen_prolog()
 {
@@ -30,6 +32,7 @@ void gen_prolog()
     printf("DEFVAR GF@_EBL\n");
     printf("DEFVAR GF@_EBR\n");
     printf("DEFVAR GF@_FF\n");
+    printf("DEFVAR GF@_STACK_DUMP\n");
 
     printf("MOVE GF@_EF  nil@nil\n");
     printf("MOVE GF@_EL  nil@nil\n");
@@ -37,16 +40,21 @@ void gen_prolog()
     printf("MOVE GF@_EBL nil@nil\n");
     printf("MOVE GF@_EBR nil@nil\n");
     printf("MOVE GF@_FF  nil@nil\n");
+    printf("MOVE GF@_STACK_DUMP  nil@nil\n");
+    printf("#===================== END OF PROLOG -> START OF MAIN\n\n"); 
 
 }
 
 void gen_epilog()
 {
-    
+    printf("\n\n#===================== EPILOG\n"); 
     printf("WRITE GF@_EF\n");
     printf("JUMP $$$PROGRAM_END\n");
     gen_built_ins();
     printf("LABEL $$$PROGRAM_END\n");
+    printf("POPFRAME\n");
+    printf("CLEARS\n");
+    
 }
 
 
@@ -66,17 +74,26 @@ void gen_fdef(ast_node* root, struct bintree_node* tab)
     
     //for each var in par_list def var + pop value in it
 
-    ast_node* pars = root->children[0];
-    for(size_t n = 0; n < pars->children_cnt; ++n)
+    if(root->children_cnt > 2)
     {
-        printf("DEFVAR LF@%s\n",pars->children[n]->attrib);
-        printf("POPS LF@%s\n",pars->children[n]->attrib);
-        
+        ast_node* pars = root->children[0];
+        for(size_t n = 0; n < pars->children_cnt; ++n)
+        {
+            printf("DEFVAR LF@%s\n",pars->children[n]->attrib);
+            printf("POPS LF@%s\n",pars->children[n]->attrib);
+        }
     }
 
     putchar('\n');
 
-    root = root->children[2];
+    if(root->children_cnt > 2)
+    {
+        root = root->children[2];
+    }
+    else
+    {
+        root = root->children[1];
+    }
     for(size_t n = 0; n < root->children_cnt; ++n)
     {
         gen_main(root->children[n], table->local_symtab);
@@ -123,6 +140,7 @@ void gen_return(ast_node* root)
         
 void gen_if(ast_node* root,struct bintree_node* tab)
 {
+    printf("#============================================== IF START\n");
     static unsigned long long int if_body_id = 0;
     gen_expr(root->children[0],'F');
     
@@ -139,7 +157,9 @@ void gen_if(ast_node* root,struct bintree_node* tab)
     
     printf("JUMP $$IF_SKIP%llu\n",if_body_id);
     printf("LABEL $$IF_ELSE%llu\n",if_body_id);
+    printf("#============================================== IF ELSE\n");
    
+    putchar('\n');
     if(root->children_cnt > 2)
     {
         ast_node* else_body = root->children[2];
@@ -151,6 +171,7 @@ void gen_if(ast_node* root,struct bintree_node* tab)
     }
     
     printf("LABEL $$IF_SKIP%llu\n",if_body_id);
+    printf("#============================================== IF END\n");
     if_body_id++;
 }
 
@@ -187,6 +208,7 @@ void gen_main(ast_node* root, struct bintree_node* tab)
 
         case(EXPR_FCALL):
         case(EXPR_PAR):
+        case(CONVERT_TYPE):
         case(EXPR):
             gen_expr(root,'F');
             break;
@@ -282,6 +304,14 @@ void gen_expr(ast_node* root, char side)
         return;
     }
    
+    if(root->type == CONVERT_TYPE)
+    {
+        gen_expr(root->children[0],side);
+        printf("PUSHS GF@_E%c\n",side);
+        gen_convert(root->sub_type);
+        printf("POPS GF@_E%c\n",side);
+        return;
+    }
     // skip EXPR_PAR
     if(root->type == EXPR_PAR)
     {
@@ -298,6 +328,7 @@ void gen_expr(ast_node* root, char side)
         gen_expr(root->children[0],'L');
         gen_expr(root->children[1],'R');
     }
+
 
     switch(root->sub_type)
     {
@@ -316,7 +347,14 @@ void gen_expr(ast_node* root, char side)
             return;
 
         case(FVAL):
-            printf("MOVE GF@_E%c float@%s\n",side,root->attrib);
+            errno = 0;
+            double val = strtod(root->attrib, NULL);
+            if(val == 0.0 && errno != 0)
+            {
+                //TODO handle error, shouldn not happen
+                val = 0.0;
+            }
+            printf("MOVE GF@_E%c float@%a\n",side,val);
             return;
         
         case(SVAL):
@@ -377,18 +415,9 @@ void gen_expr(ast_node* root, char side)
             printf("NOT GF@_E%c GF@_EBL\n",side);
             return;
         
+        
         default:
-            printf("# ========= ??? %s:%s ???\n",token_str(root->sub_type),root->attrib);
-            char side2;
-            if(side == 'L')
-            {
-                side2 = 'R';
-            }
-            else
-            {
-                side2 = 'L';
-            }
-            printf("MOVE GF@_E%c GF@_E%c\n",side,side2);
+            //TODO erro
             return;
     
     }
@@ -397,3 +426,120 @@ void gen_expr(ast_node* root, char side)
     putchar('\n');
 }
 
+void gen_convert(token_type oper)
+{
+    printf("#===================== convert : %s\n",token_str(oper));
+    static unsigned long long int B2I_id = 0;
+    static unsigned long long int B2F_id = 0;
+    static unsigned long long int B2S_id = 0;
+    static unsigned long long int S2B_id = 0;
+    switch(oper)
+    {
+        default:
+            break;
+
+        case(NULL_TO_INT):
+            printf("POPS GF@_STACK_DUMP\n");
+            printf("PUSHS int@0\n");
+            break;
+            
+        case(NULL_TO_FLOAT):
+            printf("POPS GF@_STACK_DUMP\n");
+            printf("PUSHS float@0x0p+0\n");
+            break;
+
+        case(NULL_TO_BOOL):
+            printf("POPS GF@_STACK_DUMP\n");
+            printf("PUSHS bool@false\n");
+            break;
+
+        case(NULL_TO_STR):
+            printf("POPS GF@_STACK_DUMP\n");
+            printf("PUSHS string@\n");
+            break;
+        
+        case(INT_TO_FLOAT):
+            printf("INT2FLOATS\n");
+            break;
+
+        case(INT_TO_BOOL):
+            printf("PUSHS int@0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            break;
+
+        case(FLOAT_TO_INT):
+            printf("FLOAT2INTS\n");
+            break;
+
+        case(FLOAT_TO_BOOL):
+            printf("PUSHS float@0x0p+0\n");
+            printf("EQS\n");
+            printf("NOTS\n");
+            break;
+
+        case(BOOL_TO_INT):
+            printf("PUSHS bool@true\n");
+            printf("JUMPIFNEQS $$$$B2I_ZERO%llu\n",B2I_id);
+            
+            printf("PUSHS int@1\n");
+
+            printf("JUMP $$$$B2I_SKIP%llu\n",B2I_id);
+            printf("LABEL $$$$B2I_ZERO%llu\n",B2I_id);
+
+            printf("PUSHS int@0\n");
+            
+            printf("LABEL $$$$B2I_SKIP%llu\n",B2I_id);
+            
+            B2I_id++;
+            break;
+
+
+        case(BOOL_TO_FLOAT):
+            printf("PUSHS bool@true\n");
+            printf("JUMPIFNEQS $$$$B2F_ZERO%llu\n",B2F_id);
+            
+            printf("PUSHS float@0x1p+0\n");
+
+            printf("JUMP $$$$B2F_SKIP%llu\n",B2F_id);
+            printf("LABEL $$$$B2F_ZERO%llu\n",B2F_id);
+
+            printf("PUSHS float@0x0p+0\n");
+
+            printf("LABEL $$$$B2F_SKIP%llu\n",B2F_id);
+            
+            B2F_id++;
+            break;
+        
+        case(BOOL_TO_STR):
+            printf("PUSHS bool@true\n");
+            printf("JUMPIFNEQS $$$$B2S_ZERO%llu\n",B2S_id);
+            
+            printf("PUSHS string@1\n");
+
+            printf("JUMP $$$$B2S_SKIP%llu\n",B2S_id);
+            printf("LABEL $$$$B2S_ZERO%llu\n",B2S_id);
+
+            printf("PUSHS string@\n");
+
+            printf("LABEL $$$$B2S_SKIP%llu\n",B2S_id);
+            B2S_id++;
+            break;
+
+        case(STR_TO_BOOL):
+            printf("PUSHS string@\n");
+            printf("JUMPIFNEQS $$$$S2B_ZERO%llu\n",S2B_id);
+            
+            printf("PUSHS bool@false\n");
+
+            printf("JUMP $$$$S2B_SKIP%llu\n",S2B_id);
+            printf("LABEL $$$$S2B_ZERO%llu\n",S2B_id);
+
+            printf("PUSHS bool@true\n");
+
+            printf("LABEL $$$$S2B_SKIP%llu\n",S2B_id);
+            S2B_id++;
+            break;
+    }
+    printf("#======================== convert : %s\n",token_str(oper));
+}
