@@ -23,6 +23,8 @@ bintree_node prev_scope_func;
 bintree_node curr_scope_func;
 bintree_node search;
 bintree_node search2;
+bintree_node search3;
+bintree_node search4;
 bintree_node var;
 
 
@@ -187,6 +189,241 @@ arg_type token_type_to_arg_type_forvals(token_type token){
     }
 }
 
+bool is_it_predef_func_call(ast_node* node){
+    if (((strcmp(node->attrib,"reads") == 0)) || ((strcmp(node->attrib,"readi") == 0))  || ((strcmp(node->attrib,"readf") == 0)) ||
+        ((strcmp(node->attrib,"write") == 0)) || ((strcmp(node->attrib,"strlen") == 0)) || ((strcmp(node->attrib,"substring") == 0)) ||
+        ((strcmp(node->attrib,"ord") == 0))   || ((strcmp(node->attrib,"chr") == 0))){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
+//reads() : ?string
+    global_symtab = bintree_insert(global_symtab, generate_id(), "reads", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "reads")) == NULL){
+        dbgprint("ERROR:  failed to find 'reads' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = nstring_t;
+    }
+
+//readi() : ?int
+    global_symtab = bintree_insert(global_symtab, generate_id(), "readi", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "readi")) == NULL){
+        dbgprint("ERROR:  failed to find 'readi' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = nint_t;
+    }
+
+//readf() : ?float
+    global_symtab = bintree_insert(global_symtab, generate_id(), "readf", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "readf")) == NULL){
+        dbgprint("ERROR:  failed to find 'readf' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+        
+        search->node_data->rtype = nfloat_t;
+    }
+
+//write (term1, term2, ..., term(n)) : void
+    global_symtab = bintree_insert(global_symtab, generate_id(), "write", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "write")) == NULL){
+        dbgprint("ERROR:  failed to find 'write' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = int_t;
+
+        search->node_data->variadic_func = true;
+    }
+
+
+//function strlen(string $s) : int
+    global_symtab = bintree_insert(global_symtab, generate_id(), "strlen", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "strlen")) == NULL){
+        dbgprint("ERROR:  failed to find 'strlen' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = int_t;
+
+        //insert 'string $s'
+        search->local_symtab = bintree_insert(search->local_symtab, 0, "s", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "s");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = string_t;
+        var->node_data->curr_type = string_t;
+        dll_insert_last(search->node_data->args_list, 0, "s", "string"); //insert arg name and type
+
+        search->node_data->vars_cnt = 1; //set var count
+        search->node_data->arg_cnt = 1; //set arg count
+    }
+
+//function substring(string $s, int $i, int $j) : ?string
+    global_symtab = bintree_insert(global_symtab, generate_id(), "substring", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "substring")) == NULL){
+        dbgprint("ERROR:  failed to find 'substring' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = nstring_t;
+
+        //insert 'string $s'
+        search->local_symtab = bintree_insert(search->local_symtab, 0, "s", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "s");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = string_t;
+        var->node_data->curr_type = string_t;
+        dll_insert_last(search->node_data->args_list, 0, "s", "string"); //insert arg name and type
+        //insert 'int $i'
+        search->local_symtab = bintree_insert(search->local_symtab, 1, "i", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "i");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = int_t;
+        var->node_data->curr_type = int_t;
+        dll_insert_last(search->node_data->args_list, 1, "i", "int"); //insert arg name and type
+        //insert 'int $j'
+        search->local_symtab = bintree_insert(search->local_symtab, 2, "j", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "j");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = int_t;
+        var->node_data->curr_type = int_t;
+        dll_insert_last(search->node_data->args_list, 2, "j", "int"); //insert arg name and type
+
+        search->node_data->vars_cnt = 3; //set var count
+        search->node_data->arg_cnt = 3; //set arg count
+    }
+
+//ord(string $c) : int
+    global_symtab = bintree_insert(global_symtab, generate_id(), "ord", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "ord")) == NULL){
+        dbgprint("ERROR:  failed to find 'ord' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = int_t;
+
+        //insert 'string $c'
+        search->local_symtab = bintree_insert(search->local_symtab, 0, "c", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "c");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = string_t;
+        var->node_data->curr_type = string_t;
+        dll_insert_last(search->node_data->args_list, 0, "c", "string"); //insert arg name and type
+
+        search->node_data->vars_cnt = 1; //set var count
+        search->node_data->arg_cnt = 1; //set arg count
+    }
+
+//chr(int $i) : string
+    global_symtab = bintree_insert(global_symtab, generate_id(), "chr", function); //main program body
+    //check if inserted and set curr scope to main body
+    if ((search = bintree_search_by_key(global_symtab, "chr")) == NULL){
+        dbgprint("ERROR:  failed to find 'chr' predefined function's node in global symtable");
+        if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+        return global_symtab;
+    } else {
+        dll list = dll_create();
+        if (list == NULL){
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
+            return global_symtab;
+        }
+        search->node_data->args_list = list;
+        bintree_node_nullifyinfo(search);
+        bintree_init(&search->local_symtab);
+
+        search->node_data->rtype = string_t;
+
+        //insert 'int $i'
+        search->local_symtab = bintree_insert(search->local_symtab, 0, "i", variable); //insert the variable into function's local symtab
+        var = bintree_search_by_key(search->local_symtab, "i");
+        var = bintree_node_nullifyinfo(var);
+        var->node_data->init_type = int_t;
+        var->node_data->curr_type = int_t;
+        dll_insert_last(search->node_data->args_list, 0, "i", "int"); //insert arg name and type
+
+        search->node_data->vars_cnt = 1; //set var count
+        search->node_data->arg_cnt = 1; //set arg count
+    }
+
+    return global_symtab;
+}
+
 
 
 /**===========================================================**\
@@ -287,7 +524,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     return type_l; //just return it
                 //int/float compatibility + division by zero
                 } else if (((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) || 
-                           ((type_l == float_t || type_l == nfloat_t) && (type_r == int_t || type_r == nint_t))){ //if one type is int and the other float
+                           ((type_l == float_t || type_l == nfloat_t) && (type_r == int_t || type_r == nint_t)) ||
+                           ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)) ||
+                           ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t))){ //if one type is int and the other float
                     if (node->sub_type == DIV){ //if dividing, check if right value isn't a zero
                         if ((type_r == int_t && atoll(node->children[1]->attrib) == 0) ||
                             (type_r == float_t && atof(node->children[1]->attrib) == 0.0)){
@@ -300,8 +539,8 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         handle_conversions_arithmetics_strings(node, type_l, type_r);
                     }
                     return float_t; //return float
+                //conversions (except strings)
                 } else if ((type_l == void_t || type_r == void_t) && ((type_l != string_t && type_l != nstring_t) && (type_r != string_t && type_r != nstring_t))){
-                    dbgprint("5");
                     if (type_l == void_t){
                         if (already_converted == false){
                             handle_conversions_arithmetics_strings(node, type_l, type_r);
@@ -312,6 +551,20 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                             handle_conversions_arithmetics_strings(node, type_l, type_r);
                         }
                         return type_l;
+                    }
+                //conditionals (need string conversions as well)
+                } else if (node->sub_type == LT || node->sub_type == GT || node->sub_type == LTE || node->sub_type == GTE || node->sub_type == EQ || node->sub_type == NEQ){
+                    if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
+                        if (type_l == void_t || type_r == void_t){
+                            if (already_converted == false){
+                                handle_conversions_arithmetics_strings(node, type_l, type_r);
+                            }
+                        }
+                        return string_t;
+                    } else {
+                        dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
+                        if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                        return ARG_TYPE_ERROR;
                     }
                 } else {
                     dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
@@ -325,12 +578,10 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
             return ARG_TYPE_ERROR;
         }
     } else if (node->type == EXPR_FCALL){
-        semantic_check_fcall(node, global_symtab);
-        if (sem_retcode != SEM_SUCCESS){return ARG_TYPE_ERROR;}
-        search = bintree_search_by_key(global_symtab, node->attrib);
-        return search->node_data->rtype;
+        search3 = bintree_search_by_key(global_symtab, node->attrib);
+        return search3->node_data->rtype;
     } else if (node->type == CONVERT_TYPE) {
-        
+        ;
     } else {
         dbgprint("ERROR[99]:  'semantic_get_expr_type' received a non-'EXPR' AST node of type: %s", node_type_tostr(node->type));
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
@@ -529,7 +780,6 @@ void handle_conversions_arithmetics_strings(ast_node* parent, arg_type type_l, a
                 }
             }
         } else if (type_l == int_t || type_l == nint_t){
-            dbgprint("2");
             ast_node* node_l;
             if (type_r == float_t || type_r == nfloat_t){
                 node_l = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
@@ -566,7 +816,6 @@ void handle_conversions_arithmetics_strings(ast_node* parent, arg_type type_l, a
                 }
             }
         } else if (type_r == int_t || type_r == nint_t){
-            dbgprint("3");
             ast_node* node_r;
             if (type_l == float_t || type_l == nfloat_t){
                 node_r = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
@@ -655,13 +904,13 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
         var->node_data->curr_type = type;
     } else {
         //CHECK CONVERSION COMPATIBILITY
-        //dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
-        //dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
+        dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
+        dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
         if (!(var->node_data->curr_type == type || //same types
            (var->node_data->curr_type == void_t) || //var is type void
-           ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == float_t || type == void_t)) ||          //?int = int/void
-           ((var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t) && (type == int_t || type == float_t || type == void_t)) ||    //?float = float/void
-           ((var->node_data->curr_type == string_t || var->node_data->curr_type == nstring_t) && (type == string_t || type == void_t)))){ //?string = string/void 
+           ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||          //?int = int/void
+           ((var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||    //?float = float/void
+           ((var->node_data->curr_type == string_t || var->node_data->curr_type == nstring_t) && (type == string_t || type == nstring_t || type == void_t)))){ //?string = string/void 
             dbgprint("ERROR[7]:  type incompatibility in assignment");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
             return;
@@ -717,6 +966,10 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
 
     //number of parameters
 
+    if (search->node_data->variadic_func == true){ //if function is variadic, no reason to check number/types of parameters
+        return;
+    }
+
     if (node->children_cnt == 0){ //if no parameters passed
         if (search->node_data->arg_cnt != 0){ //check if called function needs any params
             dbgprint("ERROR[4]:  wrong number of parameters passed in function call");
@@ -739,11 +992,6 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
-        if (node->children[0]->type == EXPR_FCALL){
-            semantic_check_fcall(node->children[0], global_symtab);
-            if (sem_retcode != SEM_SUCCESS){return;}
-        }
-        node = node->children[0];
     } else {//else AST is wrongly formatted
         dbgprint("ERROR[99]: wrong format of AST received: in function call, expected node with type 'EXPR_LIST' but %s received instead", node_type_tostr(node->children[0]->type));
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
@@ -751,9 +999,11 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
     }
 
     if ((node->children_cnt != search->node_data->arg_cnt) && (node->type == EXPR_LIST)){ //if number of parameters in EXPR_LIST doesn't correspond to the number of parameters required by given function
-        dbgprint("ERROR[4]:  wrong number of parameters passed in function call");
-        if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
-        return;
+        if (search->node_data->variadic_func == false){
+            dbgprint("ERROR[4]:  wrong number of parameters passed in function call");
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
+            return;
+        }
     }
 
     //types of parameters
@@ -762,8 +1012,62 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
     char tmp[32];
     arg_type type;
     ///NOTE: the following loop will only run for 'EXPR_LIST' nodes
-    if (node->type == EXPR_LIST){
+    if (node->type == EXPR_LIST || node->type == EXPR || node->type == EXPR_FCALL){
         for (size_t i = 0; i < search->node_data->arg_cnt; i++){ //repeat until you reach end of function's 'args_list' list
+            if (node->children[i]->type == EXPR_PAR){
+                ast_node* node2;
+                node2 = node->children[i];
+                while (node2->children[0]->type == EXPR_PAR){
+                    node2 = node2->children[0];
+                }
+
+                if (node2->children[0]->type == EXPR_FCALL){ //if passed parameter is a function call
+                    dbgprint("9.9");
+                    if ((search2 = bintree_search_by_key(global_symtab, node2->children[0]->attrib)) == NULL){ //check if called function exists
+                        dbgprint("ERROR[3]:  found an attempt at calling an undefined function");
+                        if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
+                        return;
+                    }
+                    arg_type type = semantic_get_expr_type(node2->children[0], global_symtab); //get its rettype (also has imbedded fcall checking)
+                    if (sem_retcode != SEM_SUCCESS){return;}
+                    //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                    //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                    if (strcmp(bintree_fnc_arg_type_tostr(type), ptr->linkData->type) != 0){ //should also handle nullables? (?int, ?string,...)
+                        dbgprint("ERROR[4]:  wrong types of parameters passed in function call");
+                        if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
+                        return;
+                    }
+                } else if (node2->children[0]->type == EXPR){
+                    type = semantic_get_expr_type(node2->children[0], global_symtab);
+                    strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
+                    if (sem_retcode != 0){return;}
+                    //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
+                    //dbgprint("?tmp:  %s", tmp);
+
+                    /**INFORUN(
+                        const char* type = node_type_tostr(node->children[i]->type);
+                        const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
+                        fprintf(stdout,"![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
+                    );**/
+                    //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                    //dbgprint("tmp:                               %s",tmp);
+                    //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                    if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
+                        if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
+                                                        strcmp(ptr->linkData->type, "?float") == 0 ||
+                                                        strcmp(ptr->linkData->type, "?string") == 0)) ||
+                            ((strcmp(tmp, "int") == 0) && (strcmp(ptr->linkData->type, "?int") == 0)) ||
+                            ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
+                            ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
+                            dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call");
+                            if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
+                            return;
+                        }
+                    }
+                    //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
+                    //dbgprint("?tmp:  %s", tmp);
+                }
+            }
             /**INFORUN(
                 fprintf(stderr,"-- node->children[i]->type:    %s\n", node_type_tostr(node->children[i]->type));
                 fprintf(stderr,"-- node->children[i]->attrib:  %s\n", node->children[i]->attrib);
@@ -788,9 +1092,7 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
             } else if (node->children[i]->type == EXPR){
                 type = semantic_get_expr_type(node->children[i], global_symtab);
                 strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
-                if (sem_retcode != 0){
-                    return;
-                }
+                if (sem_retcode != 0){return;}
                 //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
                 //dbgprint("?tmp:  %s", tmp);
 
@@ -810,7 +1112,7 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                          ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
                          ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
                         dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call");
-                        sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;
+                        if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                         return;
                     }
                 }
@@ -827,18 +1129,49 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
     }
 
     if (node->type == EXPR){ //
-        //dbgprint("! tmp: %s",tmp);
         type = semantic_get_expr_type(node, global_symtab);
+        strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
         if (sem_retcode != SEM_SUCCESS){return;}
-        //dbgprint("!! tmp: %s",tmp);
+        ptr = search->node_data->args_list->tail; //go to end of function's 'args_list' list
+        if (strcmp(tmp, ptr->linkData->type) != 0){
+            if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
+                                                  strcmp(ptr->linkData->type, "?float") == 0 ||
+                                                  strcmp(ptr->linkData->type, "?string") == 0)) ||
+                  (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
+                  (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
+                  (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
+                dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call");
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
+                return;
+            }
+        }
     } else if (node->type == EXPR_LIST){ //check the tail as well
-        //dbgprint("- tmp: %s",tmp);
         type = semantic_get_expr_type(node->children[node->children_cnt-1], global_symtab);
+        strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
         if (sem_retcode != SEM_SUCCESS){return;}
-        //dbgprint("-- type: %d",type);
-        //dbgprint("-- tmp:  %s",tmp);
+        ptr = search->node_data->args_list->tail; //go to end of function's 'args_list' list
+        /**dbgprint("node->children[node->children_cnt-1]-attrib: %s", node->children[node->children_cnt-1]->attrib);
+        dbgprint("node->children[node->children_cnt-1]->type:  %s", node_subtype_tostr(node->children[node->children_cnt-1]->sub_type));
+        dbgprint("tmp:                  %s", tmp);
+        dbgprint("ptr->linkData->type:  %s", ptr->linkData->type);
+        dbgprint("arg_list:             ");
+        dll_print_forwards(search->node_data->args_list);
+        fprintf(stdout,"\n");**/
+
+        if (strcmp(tmp, ptr->linkData->type) != 0){
+            if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
+                                                  strcmp(ptr->linkData->type, "?float") == 0 ||
+                                                  strcmp(ptr->linkData->type, "?string") == 0)) ||
+                  ((strcmp(tmp, "int") == 0) && (strcmp(ptr->linkData->type, "?int") == 0)) ||
+                  ((strcmp(tmp, "float") == 0) && (strcmp(ptr->linkData->type, "?float") == 0)) ||
+                  ((strcmp(tmp, "string") == 0) && (strcmp(ptr->linkData->type, "?string") == 0)))){
+                dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call %s",search->node_data->key);
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
+                return;
+            }
+        }
     } else if (node->type == EXPR_FCALL) {
-        if ((search = bintree_search_by_key(global_symtab, node->attrib)) == NULL){ //check if called function exists
+        if ((search2 = bintree_search_by_key(global_symtab, node->attrib)) == NULL){ //check if called function exists
             dbgprint("ERROR[3]:  found an attempt at calling an undefined function");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
             return;
@@ -846,11 +1179,13 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
         //arg_type = semantic_get_expr_type();
         arg_type type = semantic_get_expr_type(node, global_symtab);
         if (sem_retcode != SEM_SUCCESS){return;}
-        if (search->node_data->rtype != type){ //should also handle nullables? (?int, ?string,...)
+        dbgprint("!!!!!!!!!!!!!!!!!!!!!!!!")
+        if (search2->node_data->rtype != type){ //should also handle nullables? (?int, ?string,...)
             dbgprint("ERROR[4]:  wrong types of parameters passed in function call");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
+        return;
     }
 
 }
@@ -954,9 +1289,15 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
         type_r = semantic_get_expr_type(node->children[1], global_symtab);
         if (sem_retcode != SEM_SUCCESS){return;}
 
+        dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+        dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
+
         if (!((type_l == type_r) || //same
-              ((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) ||    //int and float
-              ((type_l == float_t || type_l == nfloat_t) && (type_r == int_t || type_r == nint_t)) ||    //float and int
+              ((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) ||     //int and float
+              ((type_l == float_t || type_l == nfloat_t) && (type_r == int_t || type_r == nint_t)) ||     //float and int
+              ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)) ||         //int/?int and int/?int
+              ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t)) || //float/?float and float/?float
+              ((type_l == string_t || type_l == nstring_t) && (type_r == string_t || type_r == nstring_t)) || //string/?string and string/?string
               (type_l == void_t || type_r == void_t))){ //void
             dbgprint("ERROR[7]:  found type incompatibility in a(n) %s conditional", node_type_tostr(node->type));
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
@@ -1084,6 +1425,8 @@ int semantic(context* cont){
     //bintree_init(&cont->global_symtab);
 //create main body symtable node
     cont->global_symtab = bintree_insert(cont->global_symtab, generate_id(), ":b", function); //main program body
+//create predefined funcs
+    create_predef_funcs(cont->global_symtab);
 //check if inserted and set curr scope to main body
     if ((curr_scope_func = bintree_search_by_key(cont->global_symtab, ":b")) == NULL){
         dbgprint("ERROR:  failed to find ':b' (aka main) node in global symtable");

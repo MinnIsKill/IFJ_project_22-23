@@ -43,6 +43,8 @@ const char* node_subtype_tostr(token_type type);
 arg_type token_type_to_arg_type(token_type token);
 arg_type token_type_to_arg_type_forvals(token_type token);
 
+bool is_it_predef_func_call(ast_node* node);
+
 arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symtab);
 
 struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_node* global_symtab);
