@@ -143,7 +143,7 @@ bool node_remove_child(ast_node* parent, ast_node* child)
         return(false);
     }
     // parent has no child
-    if(parent->children == NULL || parent->children_cnt)
+    if(parent->children == NULL || parent->children_cnt == 0)
     {
         infoprint("parent has no children.");
         return(false);

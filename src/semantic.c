@@ -501,7 +501,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
                         if (type_l == void_t || type_r == void_t){
                             if (already_converted == false){
-                                handle_conversions_arithmetics_strings(node, type_l, type_r);
+                                handle_conversions(node, type_l, type_r);
                             }
                         }
                         return string_t;
@@ -1407,9 +1407,15 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                     node_print(stderr, AST);
                     fprintf(stderr, "  after RETURN_N received\n");
                 );
-
-                //then return;
-                return;
+                for (size_t j = i+1; j < AST->children_cnt;){
+                    if (AST->children[j]->type != FDEF){
+                        //dbgprint("AST->children[j]->type:  %s", node_type_tostr(AST->children[j]->type));
+                        node_remove_child(AST, AST->children[j]);
+                    } else {
+                        ++j;
+                    }
+                }
+                
             }
         }
     }
