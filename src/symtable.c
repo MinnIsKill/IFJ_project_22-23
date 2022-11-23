@@ -68,6 +68,7 @@ struct bintree_node* bintree_node_nullifyinfo(struct bintree_node *root){
     root->node_data->string[0] = '\0';
     root->node_data->value = 0;
     root->node_data->codegen_was_def = false;
+    root->node_data->variadic_func = false;
 
     return root;
 }
