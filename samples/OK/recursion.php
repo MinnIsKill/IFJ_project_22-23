@@ -1,13 +1,24 @@
 <?php
 declare(strict_types=1);
-
-function goo( float $a, int $b ) : int
+function spool(int $a) : int
 {
-    if($b === 1 )
+    write($a);
+    if($a > 0)
     {
-        return $b;
+        $b = spool($a - 1);
+        if($b === 4 / 2)
+        {
+            write("ClOsE");
+        }
     }
-    $a = 1;
-    goo(10.1,2);
+    else
+    {
+        write("MIDPOINT");
+    }
+    write($a);
+    return($a);
 }
 
+write("spool","START");
+spool(5);
+write("spool","END");

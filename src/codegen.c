@@ -387,8 +387,11 @@ void gen_expr(ast_node* root, char side)
             break;
             
         case(DIV):
-            // TODO IDIV
             printf("DIV");
+            break;
+        
+        case(IDIV):
+            printf("IDIV");
             break;
 
         case(STRCAT):

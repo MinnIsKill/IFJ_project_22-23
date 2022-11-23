@@ -86,6 +86,8 @@ typedef enum{
     BOOL_TO_FLOAT, // TRUE -> 1.0 , FALSE -> 0.0
     BOOL_TO_STR,   // TRUE -> "1", FALSE -> ""
     STR_TO_BOOL,   // "" -> FALSE else return true
+    
+    IDIV,    // semantic converts DIV to IDIV when both operands are INT
 
 }token_type;
 

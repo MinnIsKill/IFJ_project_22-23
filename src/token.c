@@ -84,6 +84,7 @@ const char* token_str(token_type t)
         "BOOL -> FLOAT", // TRUE -> 1.0 , FALSE -> 0.0
         "BOOL -> STR",   // TRUE -> "1", FALSE -> ""
         "STR -> BOOL",   // "" -> FALSE else return true
+        "IDIV",   
         };
         return(s[t]);
 }
