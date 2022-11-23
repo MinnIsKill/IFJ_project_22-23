@@ -14,6 +14,7 @@ foo() + 123;
 
 $a = foo();
 
+//ERROR[7]
 $a = foo() + "yo mama";
 
 function foo() : int

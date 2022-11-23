@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
-pp();
+pp(7);
 $TRUE = 1;
 if(1 + 2)
 {
     while($TRUE)
     {
-        foo(1,2,3);
+        foo(1,2.6,3);
     }
     return(1);
 }

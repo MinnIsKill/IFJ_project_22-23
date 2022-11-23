@@ -536,19 +536,19 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         }
                     } //it's not DIV or division by zero, but still, both operands must be of type float
                     if (already_converted == false){
-                        handle_conversions_arithmetics_strings(node, type_l, type_r);
+                        handle_conversions(node, type_l, type_r);
                     }
                     return float_t; //return float
                 //conversions (except strings)
                 } else if ((type_l == void_t || type_r == void_t) && ((type_l != string_t && type_l != nstring_t) && (type_r != string_t && type_r != nstring_t))){
                     if (type_l == void_t){
                         if (already_converted == false){
-                            handle_conversions_arithmetics_strings(node, type_l, type_r);
+                            handle_conversions(node, type_l, type_r);
                         }
                         return type_r;
                     } else {
                         if (already_converted == false){
-                            handle_conversions_arithmetics_strings(node, type_l, type_r);
+                            handle_conversions(node, type_l, type_r);
                         }
                         return type_l;
                     }
@@ -557,7 +557,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
                         if (type_l == void_t || type_r == void_t){
                             if (already_converted == false){
-                                handle_conversions_arithmetics_strings(node, type_l, type_r);
+                                handle_conversions(node, type_l, type_r);
                             }
                         }
                         return string_t;
@@ -705,7 +705,7 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
 /**
  * AST CONVERSION NODE INSERTION FOR ARITHMETICS AND STRINGS
 */
-void handle_conversions_arithmetics_strings(ast_node* parent, arg_type type_l, arg_type type_r){
+void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
     //if division, both operands have to be converted to float
     if (parent->sub_type == DIV){
         dbgprint("DIV");
@@ -757,7 +757,7 @@ void handle_conversions_arithmetics_strings(ast_node* parent, arg_type type_l, a
             }
         }
     //if other arithmetic operation, both types have to be of the same type (higher type has priority, float > int > void)
-    } else if (parent->sub_type == ADD || parent->sub_type == SUB || parent->sub_type == MUL){
+    } else {
         dbgprint("ARITHMETIC");
         if (type_l == void_t){
             ast_node* node_l;
@@ -1280,13 +1280,11 @@ void semantic_check_return(ast_node* node, struct bintree_node* global_symtab){
 */
 void semantic_check_conditionals(ast_node* node, struct bintree_node* global_symtab){
     ast_node* parent = node;
-    node = node->children[0]; //go inside relational statement
+    node = node->children[0]; //dive into relational statement
     while (node->type == EXPR_PAR){ //get rid of EXPR_PAR nodes
         node = node->children[0];
     }
-    dbgprint("node->children_cnt:  %ld",node->children_cnt);
     if (node->children_cnt == 0){
-        dbgprint("1");
         semantic_get_expr_type(node, global_symtab); //this is here basically just because it already has fun and var def checks
         if (sem_retcode != SEM_SUCCESS){return;}
         handle_conversions_conditionals(parent, node, global_symtab);
@@ -1312,7 +1310,11 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
             return;
         } else {
-            handle_conversions_conditionals(parent, node, global_symtab);
+            if (node->sub_type == ADD || node->sub_type == SUB || node->sub_type == MUL || node->sub_type == DIV || node->sub_type == STRCAT){
+                handle_conversions_conditionals(parent, node, global_symtab);
+            } else {
+                handle_conversions(node, type_l, type_r);
+            }
         }
     }
     return;
@@ -1405,12 +1407,7 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                     node_print(stderr, AST);
                     fprintf(stderr, "  after RETURN_N received\n");
                 );
-                for (size_t j = i+1; j < AST->children_cnt; j++){
-                    if (AST->children[j]->type != FDEF){
-                        node_remove_child(AST, AST->children[j]);
-                        j--;
-                    }
-                }
+
                 //then return;
                 return;
             }

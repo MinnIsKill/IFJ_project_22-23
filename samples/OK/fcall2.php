@@ -1,4 +1,3 @@
 <?php
 declare(strict_types=1);
-//ERROR[5]
-$a = $b;
+foo(1,"hello",$a,boo());

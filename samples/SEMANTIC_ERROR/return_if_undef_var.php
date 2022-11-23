@@ -5,6 +5,7 @@ function foo() : void
 }
 if(foo())
 {
+    //ERROR[5]
     return($a);
 }
 ?>

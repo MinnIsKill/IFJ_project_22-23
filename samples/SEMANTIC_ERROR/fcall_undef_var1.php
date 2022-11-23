@@ -4,4 +4,5 @@ function foo(int $r) : int
 {
     return 1;
 }
+//ERROR[5]
 foo($a);
