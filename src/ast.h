@@ -90,10 +90,22 @@ bool node_add(ast_node* dst,ast_node* src);
  * @param[in] parent after this node new node will be inserted
  * @param[in] node this node will be inserted
  * @param[in] child this node will be child of inserted node
- * @return true if insertion succeded else false
+ * @return true if insertion succeded
+ *         false when insertion fails of input child
+ *         is not child of input parent
  *
  */
 bool node_insert_betwene(ast_node* parent, ast_node* node, ast_node* child);
+
+
+/*
+ * @brief Remove one child from one of parents children.
+ * @param[in] parent remove child from this node
+ * @param[in] child remove this node from parent
+ *
+ * @return true if deletion was succesfull else false
+ */
+bool node_remove_child(ast_node* parent, ast_node* child);
 
 //========== DEBUG AND PRINT FUNCTIONS ==========
 /**

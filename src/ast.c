@@ -105,7 +105,7 @@ bool node_insert_betwene(ast_node* parent, ast_node* node, ast_node* child)
         return(false);
     }
     // parent has no child
-    if(parent->children == NULL)
+    if(parent->children == NULL || parent->children == 0)
     {
         infoprint("parent has no children.");
         return(false);
@@ -132,6 +132,58 @@ bool node_insert_betwene(ast_node* parent, ast_node* node, ast_node* child)
     
     dbgprint("Input child is not child of input parent.");
     return(false);
+}
+
+bool node_remove_child(ast_node* parent, ast_node* child)
+{
+    // can not operate on NULL
+    if(parent == NULL || child == NULL)
+    {
+        infoprint("parent || child is NULL");
+        return(false);
+    }
+    // parent has no child
+    if(parent->children == NULL || parent->children_cnt)
+    {
+        infoprint("parent has no children.");
+        return(false);
+    }
+
+    // find correct node
+    size_t i = 0;
+    bool found = false;
+    for(; i < parent->children_cnt ; ++i )
+    {
+        if(parent->children[i] == child)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    // if node was not found return
+    if(!found)
+    {
+        return false;
+    }
+
+    // if node was found delete it and decremente children cnt
+    node_delete(&parent->children[i]);
+    parent->children_cnt--;
+
+    // now just move the whole array by one left
+    // sice i decremented children count i sould never read past
+    // children array
+    for(; i < parent->children_cnt; ++i)
+    {
+        parent->children[i] = parent->children[i+1];
+    }
+
+    // just in case set last spot to NULL
+    // because the array is not shrinked
+    // and the slot may be avalible
+    parent->children[parent->children_cnt+1] = NULL;
+    return(true);
 }
 
 //========== DEBUG AND PRINT FUNCTIONS ==========
