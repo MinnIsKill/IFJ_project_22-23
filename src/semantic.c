@@ -1356,9 +1356,9 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
             return;
         } else {
             if (node->sub_type == ADD || node->sub_type == SUB || node->sub_type == MUL || node->sub_type == DIV || node->sub_type == IDIV || node->sub_type == STRCAT){
-                handle_conversions(node, type_l, type_r);
-            } else {
                 handle_conversions_conditionals(parent, node, global_symtab);
+            } else {
+                handle_conversions(node, type_l, type_r);
             }
         }
     }
@@ -1519,6 +1519,12 @@ int semantic(context* cont){
 //main AST traversal
     AST_DF_traversal(cont->root, cont->global_symtab);
     if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured
+
+    INFORUN(
+        fprintf(stdout,"--------------------------------------------------\n");
+        bintree_inorder_currvarsonly(curr_scope_func->local_symtab);
+        fprintf(stdout,"--------------------------------------------------\n");
+    );
 
     return sem_retcode;
 }
