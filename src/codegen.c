@@ -58,7 +58,6 @@ void gen_init_locals(struct bintree_node* tab)
 {
     if(tab == NULL)
     {
-        printf("BREAK\n");
         return;
     }
     
@@ -325,10 +324,38 @@ void codegen_print_escape(char* str)
     }
 }
 
+void gen_cmp()
+{
+    static unsigned long long int CMP_ID=0;
+
+    unsigned long long int CMP_ID_SAMPLE=CMP_ID++;
+    printf("POPS GF@_R2\n");
+    printf("POPS GF@_R1\n");
+    
+    printf("PUSHS GF@_R1\n");
+    printf("PUSHS GF@_R2\n");
+   
+    printf("TYPE GF@_R1 GF@_R1\n");
+    printf("TYPE GF@_R2 GF@_R2\n");
+   
+    printf("JUMPIFEQ $$$_COMPARE%llu GF@_R1 GF@_R2\n",CMP_ID_SAMPLE);
+    
+    printf("POPS GF@_STACK_DUMP\n");
+    printf("POPS GF@_STACK_DUMP\n");
+
+    printf("PUSHS bool@false\n");
+
+    printf("JUMP $$$_COMPARE_SKIP%llu\n",CMP_ID_SAMPLE);
+    printf("LABEL $$$_COMPARE%llu\n",CMP_ID_SAMPLE);
+    
+    printf("EQS\n");
+    
+    printf("LABEL $$$_COMPARE_SKIP%llu\n",CMP_ID_SAMPLE);
+}
+
 void gen_expr(ast_node* root)
 {
     // TODO check if side in {L,F,R}
-
     if(root == NULL)
     {
         return;
@@ -422,7 +449,8 @@ void gen_expr(ast_node* root)
             break;
         
         case(EQ):
-            printf("EQS");
+            //printf("EQS");
+            gen_cmp();
             break;
 
         case(LT):
@@ -464,7 +492,8 @@ void gen_expr(ast_node* root)
             break;
         
         case(NEQ):
-            printf("EQS\n");
+            //printf("EQS\n");
+            gen_cmp();
             printf("NOTS\n");
             break;
         
