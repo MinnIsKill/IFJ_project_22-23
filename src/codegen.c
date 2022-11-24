@@ -13,6 +13,12 @@
 #include"built_in_functions.c"
 
 static struct bintree_node* GLOBAL;
+static unsigned long long int if_body_id = 0;
+static unsigned long long int while_id = 0;
+static unsigned long long int B2I_id = 0;
+static unsigned long long int B2F_id = 0;
+static unsigned long long int B2S_id = 0;
+static unsigned long long int S2B_id = 0;
 
 //forward declarations
 void gen_expr(ast_node* root);
@@ -48,6 +54,28 @@ void gen_epilog()
     
 }
 
+void gen_init_locals(struct bintree_node* tab)
+{
+    if(tab == NULL)
+    {
+        printf("BREAK\n");
+        return;
+    }
+    
+    for(size_t n = 0; n < tab->node_data->vars_cnt; ++n)
+    {
+        struct bintree_node* var = bintree_search_by_id(tab->local_symtab,n);
+        char* ID = var->node_data->key;
+        if(!var->node_data->codegen_was_def)
+        {
+            printf("DEFVAR LF@%s\n",ID);
+            printf("MOVE LF@%s nil@nil\n",ID);
+            var->node_data->codegen_was_def = true;
+        }
+    }
+
+}
+
 
 void gen_fdef(ast_node* root, struct bintree_node* tab)
 {
@@ -69,10 +97,15 @@ void gen_fdef(ast_node* root, struct bintree_node* tab)
         ast_node* pars = root->children[0];
         for(size_t n = 0; n < pars->children_cnt; ++n)
         {
-            printf("DEFVAR LF@%s\n",pars->children[n]->attrib);
+            char* ID = pars->children[n]->attrib;
+            struct bintree_node* var = bintree_search_by_key(table->local_symtab, ID);
+            var->node_data->codegen_was_def = true; 
+            printf("DEFVAR LF@%s\n",ID);
             printf("POPS LF@%s\n",pars->children[n]->attrib);
         }
     }
+    
+    gen_init_locals(table);    
 
     putchar('\n');
 
@@ -109,7 +142,8 @@ void codegen(context* cont)
     gen_prolog();
     putchar('\n');
 
-
+    gen_init_locals(GLOBAL);
+    
     // skip root
     root = root->children[0];
     for(size_t n = 0; n < root->children_cnt; ++n)
@@ -132,12 +166,12 @@ void gen_return(ast_node* root)
         
 void gen_if(ast_node* root,struct bintree_node* tab)
 {
+    unsigned long long int if_body_id_sample = if_body_id++;
     printf("#============================================== IF START\n");
-    static unsigned long long int if_body_id = 0;
     gen_expr(root->children[0]);
     
     printf("PUSHS bool@false\n");
-    printf("JUMPIFEQS $$IF_ELSE%llu\n",if_body_id);
+    printf("JUMPIFEQS $$IF_ELSE%llu\n",if_body_id_sample);
    
     ast_node* true_body = root->children[1];
     for(size_t n = 0; n < true_body->children_cnt; ++n)
@@ -147,8 +181,8 @@ void gen_if(ast_node* root,struct bintree_node* tab)
     }
    
     
-    printf("JUMP $$IF_SKIP%llu\n",if_body_id);
-    printf("LABEL $$IF_ELSE%llu\n",if_body_id);
+    printf("JUMP $$IF_SKIP%llu\n",if_body_id_sample);
+    printf("LABEL $$IF_ELSE%llu\n",if_body_id_sample);
     printf("#============================================== IF ELSE\n");
    
     putchar('\n');
@@ -162,21 +196,20 @@ void gen_if(ast_node* root,struct bintree_node* tab)
         }
     }
     
-    printf("LABEL $$IF_SKIP%llu\n",if_body_id);
+    printf("LABEL $$IF_SKIP%llu\n",if_body_id_sample);
     printf("#============================================== IF END\n");
-    if_body_id++;
 }
 
 void gen_while(ast_node* root,struct bintree_node* tab)
 {
-    static unsigned long long int while_id = 0;
-    printf("LABEL $$WHILE_START%llu\n",while_id);
+    unsigned long long int while_id_sample = while_id++;
+    printf("LABEL $$WHILE_START%llu\n",while_id_sample);
     
     gen_expr(root->children[0]);
     
     // todo convert
-    printf("PUSHS bool@float\n");
-    printf("JUMPIFEQS $$WHILE_EXIT%llu\n",while_id);
+    printf("PUSHS bool@false\n");
+    printf("JUMPIFEQS $$WHILE_EXIT%llu\n",while_id_sample);
    
     ast_node* body = root->children[1];
     for(size_t n = 0; n < body->children_cnt; ++n)
@@ -185,9 +218,8 @@ void gen_while(ast_node* root,struct bintree_node* tab)
         putchar('\n');
     }
    
-    printf("JUMP $$WHILE_START%llu\n",while_id);
-    printf("LABEL $$WHILE_EXIT%llu\n",while_id);
-    while_id++;
+    printf("JUMP $$WHILE_START%llu\n",while_id_sample);
+    printf("LABEL $$WHILE_EXIT%llu\n",while_id_sample);
 }
 
 // basicly router to the correct generator gunction
@@ -358,7 +390,7 @@ void gen_expr(ast_node* root)
             break;
         
         case(VVAL):
-            printf("PUSH nil@nil\n");
+            printf("PUSHS nil@nil\n");
             break;
 
         case(ADD):
@@ -370,7 +402,7 @@ void gen_expr(ast_node* root)
             break;
 
         case(MUL):
-            printf("MULLS\n");
+            printf("MULS\n");
             break;
             
         case(DIV):
@@ -447,10 +479,6 @@ void gen_expr(ast_node* root)
 void gen_convert(token_type oper)
 {
     printf("#===================== convert : %s\n",token_str(oper));
-    static unsigned long long int B2I_id = 0;
-    static unsigned long long int B2F_id = 0;
-    static unsigned long long int B2S_id = 0;
-    static unsigned long long int S2B_id = 0;
     switch(oper)
     {
         default:
