@@ -7,7 +7,6 @@
 #include"error.h"
 #include"parser.h"
 #include"context.h"
-#include"fake_lex.h"
 #include"semantic.h"
 #include"symtable.h"
 #include"lex.h"
