@@ -6,7 +6,7 @@ function spool(int $a) : int
     if($a > 0)
     {
         $b = spool($a - 1);
-        if($b > 0)
+        if($b > 4 / 2 )
         {
             write("ClOsE");
         }
