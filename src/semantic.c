@@ -498,9 +498,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
 
                 ///TODO: AST CONVERT_TYPE nodes insertion
 
-                //dbgprint("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
-                //dbgprint("type_r: %s", bintree_fnc_arg_type_tostr(type_r));
-                //dbgprint("node->sub_type: %s", node_subtype_tostr(node->sub_type));
+                dbgprint("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
+                dbgprint("type_r: %s", bintree_fnc_arg_type_tostr(type_r));
+                dbgprint("node->sub_type: %s", node_subtype_tostr(node->sub_type));
                 //string concatenation
                 if (node->sub_type == STRCAT){ //first check if STRCAT
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
@@ -566,7 +566,11 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     if (already_converted == false){
                         handle_conversions(node, type_l, type_r);
                     }
-                    return float_t; //return float
+                    if ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)){
+                        return int_t; //return int
+                    } else {
+                        return float_t; //return float
+                    }
                 //conversions (except strings)
                 } else if ((type_l == void_t || type_r == void_t) && ((type_l != string_t && type_l != nstring_t) && (type_r != string_t && type_r != nstring_t))){
                     if (type_l == void_t){
@@ -744,6 +748,8 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             return; //already was converted
         }
     }
+    dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+    dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
     //if division, both operands have to be converted to float (unless they're both int)
     if (parent->sub_type == DIV || parent->sub_type == IDIV){
         //dbgprint("DIV");
@@ -1375,9 +1381,9 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
             return;
         } else {
             if (node->sub_type == ADD || node->sub_type == SUB || node->sub_type == MUL || node->sub_type == DIV || node->sub_type == IDIV || node->sub_type == STRCAT){
-                handle_conversions_conditionals(parent, node, global_symtab);
-            } else {
                 handle_conversions(node, type_l, type_r);
+            } else {
+                handle_conversions_conditionals(parent, node, global_symtab);
             }
         }
     }
