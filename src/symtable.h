@@ -51,6 +51,7 @@ struct bintree_data{
 
     bool codegen_was_def; //for codegen, if var had been processed
     bool variadic_func;   //if function variadic
+    bool is_zero;
 
     struct dll *args_list; //names of arguments for functions (in order)
     arg_type rtype; //return type for functions
