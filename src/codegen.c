@@ -15,7 +15,7 @@
 static struct bintree_node* GLOBAL;
 
 //forward declarations
-void gen_expr(ast_node* root, char side);
+void gen_expr(ast_node* root);
 void gen_expr_assign(ast_node* root,struct bintree_node* tab);
 void gen_fcall(ast_node* root); 
 void gen_main(ast_node* root, struct bintree_node* tab);
@@ -26,21 +26,13 @@ void gen_prolog()
     printf(".IFJcode22\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
-    printf("DEFVAR GF@_EF\n");
-    printf("DEFVAR GF@_EL\n");
-    printf("DEFVAR GF@_ER\n");
-    printf("DEFVAR GF@_EBL\n");
-    printf("DEFVAR GF@_EBR\n");
-    printf("DEFVAR GF@_FF\n");
     printf("DEFVAR GF@_STACK_DUMP\n");
+    printf("DEFVAR GF@_R1\n");
+    printf("DEFVAR GF@_R2\n");
 
-    printf("MOVE GF@_EF  nil@nil\n");
-    printf("MOVE GF@_EL  nil@nil\n");
-    printf("MOVE GF@_ER  nil@nil\n");
-    printf("MOVE GF@_EBL nil@nil\n");
-    printf("MOVE GF@_EBR nil@nil\n");
-    printf("MOVE GF@_FF  nil@nil\n");
     printf("MOVE GF@_STACK_DUMP  nil@nil\n");
+    printf("MOVE GF@_R1  nil@nil\n");
+    printf("MOVE GF@_R2  nil@nil\n");
     printf("#===================== END OF PROLOG -> START OF MAIN\n\n"); 
 
 }
@@ -69,7 +61,6 @@ void gen_fdef(ast_node* root, struct bintree_node* tab)
 
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
-    printf("MOVE GF@_FF nil@nil\n");
     
     //for each var in par_list def var + pop value in it
 
@@ -100,7 +91,6 @@ void gen_fdef(ast_node* root, struct bintree_node* tab)
     }
 
     
-    printf("PUSHS GF@_FF\n");
     printf("POPFRAME\n");
     printf("RETURN\n");
 
@@ -125,6 +115,7 @@ void codegen(context* cont)
     for(size_t n = 0; n < root->children_cnt; ++n)
     {
         gen_main(root->children[n], tab);
+        printf("CLEARS\n");
         putchar('\n');
     }
 
@@ -133,10 +124,9 @@ void codegen(context* cont)
             
 void gen_return(ast_node* root)
 {
-    if(root->children_cnt > 1)
+    if(root->children_cnt > 0)
     {
-        gen_expr(root->children[0],'F');    
-        printf("MOVE GF@_FF GF@_EF\n");
+        gen_expr(root->children[0]);    
     }
 }
         
@@ -144,10 +134,10 @@ void gen_if(ast_node* root,struct bintree_node* tab)
 {
     printf("#============================================== IF START\n");
     static unsigned long long int if_body_id = 0;
-    gen_expr(root->children[0],'F');
+    gen_expr(root->children[0]);
     
-    // todo convert
-    printf("JUMPIFEQ $$IF_ELSE%llu GF@_EF bool@false\n",if_body_id);
+    printf("PUSHS bool@false\n");
+    printf("JUMPIFEQS $$IF_ELSE%llu\n",if_body_id);
    
     ast_node* true_body = root->children[1];
     for(size_t n = 0; n < true_body->children_cnt; ++n)
@@ -182,10 +172,11 @@ void gen_while(ast_node* root,struct bintree_node* tab)
     static unsigned long long int while_id = 0;
     printf("LABEL $$WHILE_START%llu\n",while_id);
     
-    gen_expr(root->children[0],'F');
+    gen_expr(root->children[0]);
     
     // todo convert
-    printf("JUMPIFEQ $$WHILE_EXIT%llu GF@_EF bool@false\n",while_id);
+    printf("PUSHS bool@float\n");
+    printf("JUMPIFEQS $$WHILE_EXIT%llu\n",while_id);
    
     ast_node* body = root->children[1];
     for(size_t n = 0; n < body->children_cnt; ++n)
@@ -212,7 +203,7 @@ void gen_main(ast_node* root, struct bintree_node* tab)
         case(EXPR_PAR):
         case(CONVERT_TYPE):
         case(EXPR):
-            gen_expr(root,'F');
+            gen_expr(root);
             break;
 
         case(FDEF):
@@ -248,9 +239,8 @@ void gen_expr_assign(ast_node* root,struct bintree_node* tab)
     else
     {
     }
-    gen_expr(root->children[1],'F');
-    printf("MOVE LF@%s GF@_EF\n",ID);
-
+    gen_expr(root->children[1]);
+    printf("POPS LF@%s\n",ID);
 }
 
 void gen_fcall(ast_node* root)
@@ -258,11 +248,6 @@ void gen_fcall(ast_node* root)
     char* fid = root->attrib;
     printf("# function call : %s\n",fid);
     printf("# function call prolog\n");
-    printf("PUSHS GF@_EF\n");
-    printf("PUSHS GF@_EL\n");
-    printf("PUSHS GF@_ER\n");
-    printf("PUSHS GF@_EBL\n");
-    printf("PUSHS GF@_EBR\n");
 
     if(root->children_cnt > 0 )
     {
@@ -276,10 +261,8 @@ void gen_fcall(ast_node* root)
     for(size_t n = root->children_cnt; n > 0; --n)
     {
         printf("# generating resault of expr for arg[%lu]\n",n);
-        gen_expr(root->children[n-1],'F');
+        gen_expr(root->children[n-1]);
         putchar('\n');
-        printf("# pushing arg[%lu]\n",n);
-        printf("PUSHS GF@_EF\n"); 
     }
 
     //TODO if variadic function push children count
@@ -292,19 +275,25 @@ void gen_fcall(ast_node* root)
     putchar('\n');
     printf("# calling %s\n",fid);
     printf("CALL $$%s\n", fid);
-    printf("# extracting resault into GF@_FF\n");
-    printf("POPS GF@_FF\n");
     putchar('\n');
-    
-    printf("# function call epilog\n");
-    printf("POPS GF@_EBR\n");
-    printf("POPS GF@_EBL\n");
-    printf("POPS GF@_ER\n");
-    printf("POPS GF@_EL\n");
-    printf("POPS GF@_EF\n");
 }
 
-void gen_expr(ast_node* root, char side)
+void codegen_print_escape(char* str)
+{
+    for(;*str != '\0';++str)
+    {
+        if((*str >= 0 && *str <= 32) || *str == 35 || *str == 92)
+        {
+            printf("\\%03u",(unsigned char)*str);
+        }
+        else
+        {
+            putchar(*str);
+        }
+    }
+}
+
+void gen_expr(ast_node* root)
 {
     // TODO check if side in {L,F,R}
 
@@ -315,10 +304,8 @@ void gen_expr(ast_node* root, char side)
    
     if(root->type == CONVERT_TYPE)
     {
-        gen_expr(root->children[0],side);
-        printf("PUSHS GF@_E%c\n",side);
+        gen_expr(root->children[0]);
         gen_convert(root->sub_type);
-        printf("POPS GF@_E%c\n",side);
         return;
     }
     // skip EXPR_PAR
@@ -334,8 +321,8 @@ void gen_expr(ast_node* root, char side)
 
     if(root->children_cnt > 0 && root->type != EXPR_FCALL)
     {
-        gen_expr(root->children[0],'L');
-        gen_expr(root->children[1],'R');
+        gen_expr(root->children[0]);
+        gen_expr(root->children[1]);
     }
 
 
@@ -343,17 +330,15 @@ void gen_expr(ast_node* root, char side)
     {
         case(FID):
             gen_fcall(root); 
-            printf("# move resault of function call in correct register\n");
-            printf("MOVE GF@_E%c GF@_FF\n",side);
             return;
 
         case(ID):
-            printf("MOVE GF@_E%c LF@%s\n",side,root->attrib);
-            return;
+            printf("PUSHS LF@%s\n",root->attrib);
+            break;
 
         case(IVAL):
-            printf("MOVE GF@_E%c int@%s\n",side,root->attrib);
-            return;
+            printf("PUSHS int@%s\n",root->attrib);
+            break;
 
         case(FVAL):
             errno = 0;
@@ -363,78 +348,99 @@ void gen_expr(ast_node* root, char side)
                 //TODO handle error, shouldn not happen
                 val = 0.0;
             }
-            printf("MOVE GF@_E%c float@%a\n",side,val);
-            return;
+            printf("PUSHS float@%a\n",val);
+            break;
         
         case(SVAL):
-            printf("MOVE GF@_E%c string@%s\n",side,root->attrib);
-            return;
+            printf("PUSHS string@");
+            codegen_print_escape(root->attrib);
+            putchar('\n');
+            break;
         
         case(VVAL):
-            printf("MOVE GF@_E%c nil@nil\n",side);
-            return;
+            printf("PUSH nil@nil\n");
+            break;
 
         case(ADD):
-            printf("ADD");
+            printf("ADDS\n");
             break;
         
         case(SUB):
-            printf("SUB");
+            printf("SUBS\n");
             break;
 
         case(MUL):
-            printf("MULL");
+            printf("MULLS\n");
             break;
             
         case(DIV):
-            printf("DIV");
+            printf("DIVS\n");
             break;
         
         case(IDIV):
-            printf("IDIV");
+            printf("IDIVS\n");
             break;
 
         case(STRCAT):
-            printf("CONCAT");
+            
+            printf("POPS GF@_R2\n");
+            printf("POPS GF@_R1\n");
+            printf("CONCAT GF@_R1 GF@_R1 GF@_R2\n");
+            printf("PUSHS GF@_R1\n");
             break;
         
         case(EQ):
-            printf("EQ");
+            printf("EQS");
             break;
 
         case(LT):
-            printf("LT");
+            printf("LTS");
             break;
         
         case(GT):
-            printf("GT");
+            printf("GTS");
             break;
         
         case(LTE):
-            printf("LT GF@_EBL GF@_EL GF@_ER\n");
-            printf("EQ GF@_EBR GF@_EL GF@_ER\n");
-            printf("OR GF@_E%c GF@_EBL GF@_EBR\n",side);
-            return;
+            printf("POPS GF@_R2\n");
+            printf("POPS GF@_R1\n");
+            
+            printf("PUSHS GF@_R1\n");
+            printf("PUSHS GF@_R2\n");
+            printf("LTS\n");
+            
+            printf("PUSHS GF@_R1\n");
+            printf("PUSHS GF@_R2\n");
+            printf("EQS\n");
+            
+            printf("ORS\n");
+            break;
         
         case(GTE):
-            printf("GT GF@_EBL GF@_EL GF@_ER\n");
-            printf("EQ GF@_EBR GF@_EL GF@_ER\n");
-            printf("OR GF@_E%c GF@_EBL GF@_EBR\n",side);
-            return;
+            printf("POPS GF@_R2\n");
+            printf("POPS GF@_R1\n");
+            
+            printf("PUSHS GF@_R1\n");
+            printf("PUSHS GF@_R2\n");
+            printf("GTS\n");
+            
+            printf("PUSHS GF@_R1\n");
+            printf("PUSHS GF@_R2\n");
+            printf("EQS\n");
+            
+            printf("ORS\n");
+            break;
         
         case(NEQ):
-            printf("EQ GF@_EBL GF@_EL GF@_ER\n");
-            printf("NOT GF@_E%c GF@_EBL\n",side);
-            return;
-        
+            printf("EQS\n");
+            printf("NOTS\n");
+            break;
         
         default:
             //TODO erro
             return;
-    
     }
     
-    printf(" GF@_E%c GF@_EL GF@_ER\n",side);
     putchar('\n');
 }
 
