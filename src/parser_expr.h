@@ -31,6 +31,7 @@ typedef enum
     EP_STACK_ERROR,     // error while manipulating with stack
     EP_AST_ERROR,       // error while manipulating with ast
     EP_UNKNOWN_ERROR,   // other kind of errors
+    EP_LEX_ERROR,       // lex failed
 }ep_codes;
 
 /** 

@@ -29,7 +29,8 @@ typedef enum
     P_AST_ERROR,    // error while manipulating with stack
     P_STACK_ERROR,  // error while manipulating with ast
     P_PARAM_ERROR,  // wrong parameters
-    P_LEX_ERROR,
+    P_LEX_ERROR,    // lexer failed ---> LEX_ERROR
+    P_ERROR,        // other error ---> INTERNAL_ERROR
 }p_codes;
 
 /*
