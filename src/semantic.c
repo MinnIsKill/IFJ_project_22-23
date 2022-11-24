@@ -569,9 +569,11 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         }
                         return string_t;
                     } else {
-                        dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
-                        if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
-                        return ARG_TYPE_ERROR;
+                        if (node->sub_type != EQ && node->sub_type != NEQ){
+                            dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
+                            if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                            return ARG_TYPE_ERROR;
+                        }
                     }
                 } else {
                     dbgprint("ERROR[7]:  found a type incompatibility error in an expression");
@@ -714,6 +716,9 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
  * AST CONVERSION NODE INSERTION FOR ARITHMETICS AND STRINGS
 */
 void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
+    if (parent->sub_type == EQ || parent->sub_type == NEQ){ //=== and !== don't have converts
+        return;
+    }
     if (parent->children_cnt == 1){
         if (parent->children[0]->type == CONVERT_TYPE){
             return; //already was converted
@@ -723,8 +728,8 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             return; //already was converted
         }
     }
-    dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
-    dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
+    //dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+    //dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
     //if division, both operands have to be converted to float (unless they're both int)
     if (parent->sub_type == DIV || parent->sub_type == IDIV){
         //dbgprint("DIV");
@@ -1351,9 +1356,11 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
               ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t)) || //float/?float and float/?float
               ((type_l == string_t || type_l == nstring_t) && (type_r == string_t || type_r == nstring_t)) || //string/?string and string/?string
               (type_l == void_t || type_r == void_t))){ //void
-            dbgprint("ERROR[7]:  found type incompatibility in a(n) %s conditional", node_type_tostr(node->type));
-            if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
-            return;
+            if (node->sub_type != EQ && node->sub_type != NEQ){
+                dbgprint("ERROR[7]:  found type incompatibility in a(n) %s conditional", node_type_tostr(node->type));
+                if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                return;
+            }
         } else {
             if (node->sub_type == ADD || node->sub_type == SUB || node->sub_type == MUL || node->sub_type == DIV || node->sub_type == IDIV || node->sub_type == STRCAT){
                 handle_conversions_conditionals(parent, node, global_symtab);
