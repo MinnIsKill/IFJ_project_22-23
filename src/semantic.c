@@ -515,31 +515,6 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
                         return ARG_TYPE_ERROR;
                     }
-                }
-                //division by zero
-                if ((type_l == type_r) && (type_l != string_t && type_r != string_t) && (type_l != void_t && type_r != void_t)){ //if types are equal and aren't strings
-                    if (node->sub_type == DIV || node->sub_type == IDIV){ //if dividing, check if right value isn't a zero
-                        if (((type_r == int_t || type_r == nint_t) && (atoll(node->children[1]->attrib) == 0)) ||
-                            ((type_r == float_t || type_r == nfloat_t) && (atof(node->children[1]->attrib) == 0.0))){
-                            if (node->children[1]->sub_type != ID){
-                                dbgprint("ERROR[8]:  found an attempt at division by zero");
-                                if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
-                                return ARG_TYPE_ERROR;
-                            } else { //var
-                                if ((var = bintree_search_by_key(curr_scope_func->local_symtab, node->children[1]->attrib)) != NULL){ //already checked elsewhere anyway
-                                    if (var->node_data->is_zero == true){
-                                        dbgprint("ERROR[8]:  found an attempt at division by zero");
-                                        if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
-                                        return ARG_TYPE_ERROR;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (already_converted == false){
-                        handle_conversions(node, type_l, type_r);
-                    }
-                    return type_l; //just return it
                 //int/float compatibility + division by zero
                 } else if (((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) || 
                            ((type_l == float_t || type_l == nfloat_t) && (type_r == int_t || type_r == nint_t)) ||
@@ -975,7 +950,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
         //CHECK CONVERSION COMPATIBILITY
         //dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
         //dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
-        if (!(var->node_data->curr_type == type || //same types
+        /**if (!(var->node_data->curr_type == type || //same types
            (var->node_data->curr_type == void_t) || //var is type void
            ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||          //?int = int/void
            ((var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||    //?float = float/void
@@ -983,7 +958,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
             dbgprint("ERROR[7]:  type incompatibility in assignment");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
             return;
-        } else {
+        } else {**/
             if (type != void_t){
                 var->node_data->curr_type = type;
                 //dbgprint("node->children[1]->attrib:  %s", node->children[1]->attrib);
@@ -1011,7 +986,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
                     return; 
                 }**/
             }
-        }
+        //}
     }
 }
 
