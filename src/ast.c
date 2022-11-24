@@ -156,6 +156,7 @@ bool node_remove_child(ast_node* parent, ast_node* child)
     {
         if(parent->children[i] == child)
         {
+            infoprint("child was found");
             found = true;
             break;
         }
@@ -164,11 +165,12 @@ bool node_remove_child(ast_node* parent, ast_node* child)
     // if node was not found return
     if(!found)
     {
+        infoprint("child was NOT found");
         return false;
     }
 
     // if node was found delete it and decremente children cnt
-    node_delete(&parent->children[i]);
+    node_delete(&(parent->children[i]));
     parent->children_cnt--;
 
     // now just move the whole array by one left
@@ -182,7 +184,7 @@ bool node_remove_child(ast_node* parent, ast_node* child)
     // just in case set last spot to NULL
     // because the array is not shrinked
     // and the slot may be avalible
-    parent->children[parent->children_cnt+1] = NULL;
+    parent->children[parent->children_cnt] = NULL;
     return(true);
 }
 
