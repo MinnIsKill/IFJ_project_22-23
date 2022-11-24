@@ -26,11 +26,17 @@ int main()
     INFORUN(parser_print_header(p_rc););
     switch(p_rc)
     { 
-
-        //TODO other error types
         default:
             context_delete(&con); 
-            return(SYNTAX_ERROR); 
+            return(INTERNAL_ERROR);
+
+        case(P_SYNTAX_ERROR):
+            context_delete(&con); 
+            return(SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            context_delete(&con); 
+            return(LEX_ERROR);
         
         case(P_SUCCESS):
             break; // continue
