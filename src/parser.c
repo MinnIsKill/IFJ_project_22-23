@@ -28,36 +28,46 @@ p_codes type_n(ast_node* root,context* con);
 
 // test if current token is of type t
 // and if is then consume it(load next token)
-bool consume(token_type t, context* con)
+// P_PARAM_ERROR ---> P_ERROR
+// P_CAN_SKIP    ---> P_SYNTAX_ERROR / continue
+// P_LEX_ERROR   ---> P_LEX_ERROR
+// P_SUCCESS     ---> P_SUCCESS
+p_codes consume(token_type t, context* con)
 {
     if(con == NULL)
     {
-        return(false);
+        return(P_PARAM_ERROR);
     }
     if(con->token != t)
     {
         infoprint("%s was not consumed",token_str(t));
-        return(false);
+        return(P_CAN_SKIP);
     }
     infoprint("[%s|%s] was consumed",token_str(t),con->attrib.buffer);
-    lex_next(con,stdin);
-    return(true);
+    if(!lex_next(con,stdin))
+    {
+        return(P_LEX_ERROR);
+    }
+    return(P_SUCCESS);
 }
 
 // test if current token is of type t
-bool peek(token_type t, context* con)
+// P_PARAM_ERROR ---> P_ERROR
+// P_CAN_SKIP    ---> P_SYNTAX_ERROR / continue
+// P_SUCCESS     ---> P_SUCCESS
+p_codes peek(token_type t, context* con)
 {
     if(con == NULL)
     {
-        return(false);
+        return(P_PARAM_ERROR);
     }
     if(con->token != t)
     {
         infoprint("%s was not found",token_str(t));
-        return(false);
+        return(P_CAN_SKIP);
     }
     infoprint("[%s|%s] was found",token_str(t),con->attrib.buffer);
-    return(true);
+    return(P_SUCCESS);
 }
 /**
  *  this function implements prog rule from grammar
@@ -72,14 +82,34 @@ p_codes parse(context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(PS_MARK,con))
+    switch(consume(PS_MARK,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
-    if(!consume(PC_MARK,con))
+    switch(consume(PC_MARK,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     p_codes p = prog_body(con->root,con);
@@ -179,22 +209,50 @@ p_codes prog_end(ast_node* root,context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(consume(EOS,con))
+    switch(consume(EOS,con))
     {
-        return(P_SUCCESS);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            break;
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
     }
     
-    if(!consume(PE_MARK,con))
+    switch(consume(PE_MARK,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
-    if(!consume(EOS,con))
+    switch(consume(EOS,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
     }
-    
-    return(P_SUCCESS);
 }
 
 /**
@@ -361,17 +419,29 @@ p_codes extended_expr(ast_node* root, context* con)
         case(EP_STACK_ERROR):
             return(P_STACK_ERROR);
             break;
+        
+        case(EP_LEX_ERROR):
+            return(P_LEX_ERROR);    
 
         default:
             return(P_SYNTAX_ERROR);
             break;
     }    
-    if(!consume(SEMIC,con))
-    {
-        return(P_SYNTAX_ERROR);
-    }
 
-    return(P_SUCCESS);
+    switch(consume(SEMIC,con))
+    {
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
+    }
 }
 
 
@@ -393,9 +463,19 @@ p_codes ret(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(RETURN,con))
+    switch(consume(RETURN,con))
     {
-        return(P_CAN_SKIP);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_CAN_SKIP);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     ast_node* node = node_new(RETURN_N,RETURN,"");
@@ -439,9 +519,19 @@ p_codes ret_cont(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(consume(SEMIC,con))
+    switch(consume(SEMIC,con))
     {
-        return(P_SUCCESS);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            break;
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
     }
 
     switch(parse_expr(root,con))
@@ -464,12 +554,20 @@ p_codes ret_cont(ast_node* root, context* con)
             break;
     }
     
-    if(!consume(SEMIC,con))
+    switch(consume(SEMIC,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
     }
-    
-    return(P_SUCCESS);
 }
 
 /**
@@ -489,9 +587,19 @@ p_codes while_n(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(WHILE,con))
+    switch(consume(WHILE,con))
     {
-        return(P_CAN_SKIP);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_CAN_SKIP);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     ast_node* node = node_new(WHILE_N,WHILE,"");
@@ -521,10 +629,22 @@ p_codes while_n(ast_node* root, context* con)
             break;
     }
     
-    if(!consume(LBRC,con))
+    switch(consume(LBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
 
@@ -535,10 +655,20 @@ p_codes while_n(ast_node* root, context* con)
         return(p);
     }
     
-    if(!consume(RBRC,con))
+    switch(consume(RBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
    
     if(!node_add(root,node))
@@ -565,9 +695,19 @@ p_codes if_n(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(IF,con))
+    switch(consume(IF,con))
     {
-        return(P_CAN_SKIP);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_CAN_SKIP);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     ast_node* node = node_new(IF_N,IF,"");
@@ -586,6 +726,11 @@ p_codes if_n(ast_node* root, context* con)
             return(P_AST_ERROR);
             break;
         
+        case(EP_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+            break;
+        
         case(EP_STACK_ERROR):
             node_delete(&node);
             return(P_STACK_ERROR);
@@ -596,10 +741,22 @@ p_codes if_n(ast_node* root, context* con)
             return(P_SYNTAX_ERROR);
     }
     
-    if(!consume(LBRC,con))
+    switch(consume(LBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
     p_codes p = body(node,con);
@@ -609,10 +766,22 @@ p_codes if_n(ast_node* root, context* con)
         return(p);
     }
     
-    if(!consume(RBRC,con))
+    switch(consume(RBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     p = else_n(node,con);
@@ -630,6 +799,7 @@ p_codes if_n(ast_node* root, context* con)
 
     if(!node_add(root,node))
     {
+        node_delete(&node);
         return(P_AST_ERROR);
     }
 
@@ -654,14 +824,34 @@ p_codes else_n(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(ELSE,con))
+    switch(consume(ELSE,con))
     {
-        return(P_CAN_SKIP);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_CAN_SKIP);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
-    if(!consume(LBRC,con))
+    switch(consume(LBRC,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
     p_codes p = body(root,con);
@@ -670,12 +860,20 @@ p_codes else_n(ast_node* root, context* con)
         return(p);
     }
     
-    if(!consume(RBRC,con))
+    switch(consume(RBRC,con))
     {
-        return(P_SYNTAX_ERROR);
-    }
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
 
-    return(P_SUCCESS);
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            return(P_SUCCESS);
+    }
 }
 
 /**
@@ -695,14 +893,31 @@ p_codes fun_def(ast_node* root, context* con)
         return(P_PARAM_ERROR);
     }
 
-    if(!consume(FUNC,con))
+    switch(consume(FUNC,con))
     {
-        return(P_CAN_SKIP);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_CAN_SKIP);
+
+        case(P_LEX_ERROR):
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
-    if(!peek(FID,con))
+    switch(peek(FID,con))
     {
-        return(P_SYNTAX_ERROR);
+        default:
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            return(P_SYNTAX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
     
     ast_node* node = node_new(FDEF,FID,con->attrib.buffer);
@@ -710,12 +925,29 @@ p_codes fun_def(ast_node* root, context* con)
     {
         return(P_AST_ERROR);
     }
-    lex_next(con,stdin);
-    
-    if(!consume(LPAR,con))
+
+    if(!lex_next(con,stdin))
     {
         node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        return(P_LEX_ERROR);
+    }
+    
+    switch(consume(LPAR,con))
+    {
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     p_codes p = par_list(node,con);
@@ -731,16 +963,40 @@ p_codes fun_def(ast_node* root, context* con)
             break;
     }
 
-    if(!consume(RPAR,con))
+    switch(consume(RPAR,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
-    if(!consume(TYPE,con))
+    switch(consume(TYPE,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     p = ret_type(node,con);
@@ -751,10 +1007,22 @@ p_codes fun_def(ast_node* root, context* con)
     }
 
 
-    if(!consume(LBRC,con))
+    switch(consume(LBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     p = body(node,con);
@@ -764,14 +1032,27 @@ p_codes fun_def(ast_node* root, context* con)
         return(p);
     }
 
-    if(!consume(RBRC,con))
+    switch(consume(RBRC,con))
     {
-        node_delete(&node);
-        return(P_SYNTAX_ERROR);
+        default:
+            node_delete(&node);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            break;
     }
 
     if(!node_add(root,node))
     {
+        node_delete(&node);
         return(P_AST_ERROR);
     }
     return(P_SUCCESS);
@@ -852,11 +1133,25 @@ p_codes par_list(ast_node* root, context* con)
             return(p);
         }
 
-        if(!peek(ID,con))
+        switch(peek(ID,con))
         {
-            node_delete(&par);
-            node_delete(&node);
-            return(P_SYNTAX_ERROR);
+            default:
+                node_delete(&par);
+                node_delete(&node);
+                return(P_ERROR);
+
+            case(P_CAN_SKIP):
+                node_delete(&par);
+                node_delete(&node);
+                return(P_SYNTAX_ERROR);
+
+            case(P_LEX_ERROR):
+                node_delete(&par);
+                node_delete(&node);
+                return(P_LEX_ERROR);
+
+            case(P_SUCCESS):
+                break;
         }
         
         free(par->attrib);
@@ -871,7 +1166,12 @@ p_codes par_list(ast_node* root, context* con)
 
         //TODO CHECK
 
-        lex_next(con,stdin);
+        if(!lex_next(con,stdin))
+        {
+            node_delete(&par);
+            node_delete(&node);
+            return(P_LEX_ERROR);
+        }
     
         if(!node_add(node,par))
         {
@@ -880,9 +1180,17 @@ p_codes par_list(ast_node* root, context* con)
             return(P_AST_ERROR);
         }
         
-        if(!consume(COMMA,con))
+        switch(consume(COMMA,con))
         {
-            should_loop = false;
+            default:
+                return(P_ERROR);
+
+            case(P_CAN_SKIP):
+                should_loop = false;
+                break;
+
+            case(P_SUCCESS):
+                break;
         }
     }
 
@@ -945,18 +1253,29 @@ p_codes ret_type(ast_node* root, context* con)
     }
 
 
-    if(consume(VTYPE,con))
+    switch(consume(VTYPE,con))
     {
-        node->sub_type = VTYPE;
-        if(!node_add(root,node))
-        {
+        default:
             node_delete(&node);
-            return(P_AST_ERROR);
-        }
-        return(P_SUCCESS);
+            return(P_ERROR);
+        
+        case(P_CAN_SKIP):
+            node_delete(&node);
+            return(P_SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
+
+        case(P_SUCCESS):
+            node->sub_type = VTYPE;
+            if(!node_add(root,node))
+            {
+                node_delete(&node);
+                return(P_AST_ERROR);
+            }
+            return(P_SUCCESS);
     }
-    
-    return(P_SYNTAX_ERROR);
 }
 
 /**
@@ -991,7 +1310,10 @@ p_codes type_n(ast_node* root, context* con)
         case(NITYPE):
         case(NFTYPE):
             root->sub_type = con->token;
-            lex_next(con,stdin);
+            if(!lex_next(con,stdin))
+            {
+                return(P_LEX_ERROR);
+            }
             return(P_SUCCESS);
             break;
         default:
@@ -1010,6 +1332,8 @@ const char* p_codes_str(const p_codes p)
         case(P_AST_ERROR)    : return("ast error"); 
         case(P_STACK_ERROR)  : return("stack error"); 
         case(P_PARAM_ERROR)  : return("invalid parameter"); 
+        case(P_LEX_ERROR)    : return("lex error"); 
+        case(P_ERROR)        : return("generic error"); 
         default              : return("~NOT MATCHED~");
     }
 }
