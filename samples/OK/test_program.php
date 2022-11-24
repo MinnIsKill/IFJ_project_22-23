@@ -33,4 +33,3 @@ function bb() : string
 return(42);
 
 ?>
-

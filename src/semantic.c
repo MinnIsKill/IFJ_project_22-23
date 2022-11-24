@@ -18,6 +18,7 @@
 #include "semantic.h"
 
 int sem_retcode = SEM_SUCCESS;
+bool return_encountered = false;
 symtable_stack symstack;
 bintree_node prev_scope_func;
 bintree_node curr_scope_func;
@@ -514,13 +515,18 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                 //division by zero
                 if ((type_l == type_r) && (type_l != string_t && type_r != string_t) && (type_l != void_t && type_r != void_t)){ //if types are equal and aren't strings
                     if (node->sub_type == DIV){ //if dividing, check if right value isn't a zero
-                        if ((type_r == int_t && atoll(node->children[1]->attrib) == 0) ||
-                            (type_r == float_t && atof(node->children[1]->attrib) == 0.0)){
+                        if (((type_r == int_t || type_r == nint_t) && (atoll(node->children[1]->attrib) == 0)) ||
+                            ((type_r == float_t || type_r == nfloat_t) && (atof(node->children[1]->attrib) == 0.0))){
+                            if (node->children[1]->sub_type != ID){
                                 dbgprint("ERROR[8]:  found an attempt at division by zero");
                                 if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
                                 return ARG_TYPE_ERROR;
+                            } else {
+                                ;//var = 
+                            }
                         }
                     }
+                    handle_conversions(node, type_l, type_r);
                     return type_l; //just return it
                 //int/float compatibility + division by zero
                 } else if (((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) || 
@@ -530,9 +536,13 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                     if (node->sub_type == DIV){ //if dividing, check if right value isn't a zero
                         if ((type_r == int_t && atoll(node->children[1]->attrib) == 0) ||
                             (type_r == float_t && atof(node->children[1]->attrib) == 0.0)){
-                            dbgprint("ERROR[8]:  found an attempt at division by zero");
-                            if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
-                            return ARG_TYPE_ERROR;
+                            if (node->children[1]->sub_type != ID){
+                                dbgprint("ERROR[8]:  found an attempt at division by zero");
+                                if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
+                                return ARG_TYPE_ERROR;
+                            } else {
+                                ;//var = 
+                            }
                         }
                     } //it's not DIV or division by zero, but still, both operands must be of type float
                     if (already_converted == false){
@@ -679,6 +689,7 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
             if ((search = bintree_search_by_key(global_symtab, AST->attrib)) != NULL){ //check if function was already defined
                 dbgprint("ERROR[3]: attempt at function redefinition encountered"); //!!!
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
+                return global_symtab;
             } else { //if it doesn't exist yet, create new node in symtable
                 global_symtab = global_symtab_funcinsert(AST, global_symtab);
             }
@@ -706,9 +717,14 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
  * AST CONVERSION NODE INSERTION FOR ARITHMETICS AND STRINGS
 */
 void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
-    //if division, both operands have to be converted to float
+    //if division, both operands have to be converted to float (unless they're both int)
     if (parent->sub_type == DIV){
-        dbgprint("DIV");
+        //dbgprint("DIV");
+        if ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)){
+            dbgprint("IDIV found");
+            parent->sub_type = IDIV;
+            return;
+        }
         if ((type_l != float_t) && (type_l != nfloat_t)){
             ast_node* node_l;
             if (type_l == int_t || type_l == nint_t){
@@ -738,7 +754,7 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
         }
     //if string concatenation, both operands have to be converted to string
     } else if (parent->sub_type == STRCAT){ //anything other than void is STRNUM extension
-        dbgprint("STRCAT");
+        //dbgprint("STRCAT");
         if (type_l == void_t){
             ast_node* node_l = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
             if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
@@ -758,7 +774,7 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
         }
     //if other arithmetic operation, both types have to be of the same type (higher type has priority, float > int > void)
     } else {
-        dbgprint("ARITHMETIC");
+        //dbgprint("ARITHMETIC / RELATIONAL");
         if (type_l == void_t){
             ast_node* node_l;
             if (type_r == int_t || type_r == nint_t){
@@ -894,6 +910,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
     arg_type type;
     ///NOTE: 'semantic_get_expr_type' already checks for compatibility
     type = semantic_get_expr_type(node->children[1], global_symtab);
+    //val = semantic_get_expr_val(node->children[1], global_symtab);
     /**if (type == void_t){ //NULL assignment
         dbgprint("ERROR[7]:  found NULL assignment");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
@@ -1107,9 +1124,9 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                     const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
                     fprintf(stdout,"![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
                 );**/
-                dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                dbgprint("tmp:                               %s",tmp);
-                dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                //dbgprint("tmp:                               %s",tmp);
+                //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
                 if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
                     if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
                                                         strcmp(ptr->linkData->type, "?float") == 0 ||
@@ -1398,9 +1415,12 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
     }
 
     for(size_t i = 0; i < AST->children_cnt; i++){
-        if(AST->children[i] != NULL && sem_retcode == 0){
+        if(AST->children[i] != NULL && sem_retcode == SEM_SUCCESS){
             AST_DF_traversal(AST->children[i], global_symtab);
             if (AST->children[i]->type == RETURN_N){
+                if (return_encountered == false){
+                    return_encountered = true;
+                }
                 //destroy everything after RETURN_N
                 INFORUN(
                     fprintf(stderr, "trimming: ");
@@ -1408,18 +1428,24 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                     fprintf(stderr, "  after RETURN_N received\n");
                 );
                 for (size_t j = i+1; j < AST->children_cnt;){
-                    if (AST->children[j]->type != FDEF){
-                        //dbgprint("AST->children[j]->type:  %s", node_type_tostr(AST->children[j]->type));
+                    if (AST->children[j] != NULL && AST->children[j]->type != FDEF){
                         node_remove_child(AST, AST->children[j]);
                     } else {
                         ++j;
                     }
                 }
-                
             }
         }
     }
     if (AST->type == FDEF){ //move current scope back to main
+        search4 = bintree_search_by_key(global_symtab, AST->attrib); //at this point, this has been checked enough times
+        if (search4->node_data->rtype != void_t && return_encountered == false){
+            dbgprint("ERROR[6]:  missing return in a function returning non-void");
+            if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_RET_EXPR_ERR;}
+            return;
+        }
+        return_encountered = false;
+
         curr_scope_func = bintree_search_by_key(global_symtab, ":b");
     }
 }
@@ -1455,13 +1481,13 @@ int semantic(context* cont){
 
 //load forward function declarations into global symtable
     cont->global_symtab = AST_DF_firsttraversal(cont->root, cont->global_symtab);
+    if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured during first traversal (afaik, only error #3 can occur here)
 //DEBUG: print out main body symtable and global symtable
     INFORUN(
         fprintf(stdout,"--------------------------------------------------\n");
         bintree_inorder_fullprint(cont->global_symtab, false);
         fprintf(stdout,"--------------------------------------------------\n");
     );
-    if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured during first traversal (afaik, only error #3 can occur here)
 //main AST traversal
     AST_DF_traversal(cont->root, cont->global_symtab);
     if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured
