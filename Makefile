@@ -16,10 +16,13 @@ $(BIN)_dbg: ./src/codegen.c ./src/token.c ./src/g_stack.c ./src/ast_stack.c ./sr
 	$(CC) $(CFLAGS) $(DBGFLAGS) $(ERFLAGS)  $^ -o $@
 
 
-.PHONY: ./obj/fake_lex.o lex
+.PHONY: ./obj/fake_lex.o lex finalize
 
 ./obj/fake_lex.o: ./src/fake_lex.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 lex: 
 	cd ./src/flex;flex lexer.l
+
+finalize:
+	zip -j ./final/xkalis03.zip ./src/* ./final/Makefile ./final/rozdeleni
