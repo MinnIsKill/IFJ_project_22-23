@@ -5,7 +5,7 @@
  *        receives an AST passed by parser as input, walks through it to evaluate semantic
  *        correctness, and if successful, passes the AST to code generator
  *
- * @date of last update:   18th November 2022
+ * @date of last update:   22nd November 2022
  */
 
 #ifndef SEMANTIC_H
