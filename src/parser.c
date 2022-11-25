@@ -117,6 +117,12 @@ p_codes parse(context* con)
     {
         return(p);
     }
+    
+    p = prog_end(con->root,con);
+    if( p != P_SUCCESS)
+    {
+        return(p);
+    }
 
     return(P_SUCCESS);
 }

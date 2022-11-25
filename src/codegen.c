@@ -26,6 +26,62 @@ void gen_fcall(ast_node* root);
 void gen_main(ast_node* root, struct bintree_node* tab);
 void gen_convert(token_type oper);
 
+
+// one parameter that will be converted
+void gen_CONVERT_X_TO_BOOL()
+{
+    printf
+    (
+        "LABEL $$$_CONVERT_X_TO_BOOL\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_VAL\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_VAL\n"
+        "TYPE LF@_TYPE LF@_VAL\n"
+        "\n"
+        "JUMPIFEQ $$$_INT_TO_BOOL LF@_TYPE string@int\n"
+        "JUMPIFEQ $$$_FLOAT_TO_BOOL LF@_TYPE string@float\n"
+        "JUMPIFEQ $$$_LOCAL_NIL_TO_BOOL LF@_TYPE string@nil\n"
+        "JUMPIFEQ $$$_STRING_TO_BOOL LF@_TYPE string@string\n"
+            "PUSHS LF@_VAL\n"
+            "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "\n"
+        "LABEL $$$_INT_TO_BOOL\n"
+            "JUMPIFEQ $$$_INT_TO_BOOL_FALSE LF@_VAL int@0\n"
+                "PUSHS bool@true\n"
+                "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+            "LABEL $$$_INT_TO_BOOL_FALSE\n"
+                "PUSHS bool@false\n"
+            "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "\n"
+        "LABEL $$$_FLOAT_TO_BOOL\n"
+            "JUMPIFEQ $$$_FLOAT_TO_BOOL_FALSE LF@_VAL float@0x0p+0\n"
+                "PUSHS bool@true\n"
+                "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+            "LABEL $$$_FLOAT_TO_BOOL_FALSE\n"
+                "PUSHS bool@false\n"
+            "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "\n"
+        "LABEL $$$_LOCAL_NIL_TO_BOOL\n"
+            "PUSHS bool@false\n"
+            "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "\n"
+        "LABEL $$$_STRING_TO_BOOL\n"
+            "JUMPIFEQ $$$_STRING_TO_BOOL_FALSE LF@_VAL string@\n"
+                "PUSHS bool@true\n"
+                "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+            "LABEL $$$_STRING_TO_BOOL_FALSE\n"
+                "PUSHS bool@false\n"
+            "JUMP $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_BOOL_SKIP\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
 void gen_CONVERT_NIL_TO_X()
 {
     printf
@@ -205,6 +261,7 @@ void gen_epilog()
     gen_EQEQ();
     gen_REL_GT();
     gen_REL_LT();
+    gen_CONVERT_X_TO_BOOL();
     gen_built_ins();
     printf("LABEL $$$PROGRAM_END\n");
     printf("POPFRAME\n");
@@ -326,6 +383,7 @@ void gen_if(ast_node* root,struct bintree_node* tab)
     unsigned long long int if_body_id_sample = if_body_id++;
     printf("#============================================== IF START\n");
     gen_expr(root->children[0]);
+    printf("CALL $$$_CONVERT_X_TO_BOOL\n");
     
     printf("PUSHS bool@false\n");
     printf("JUMPIFEQS $$IF_ELSE%llu\n",if_body_id_sample);
@@ -363,6 +421,7 @@ void gen_while(ast_node* root,struct bintree_node* tab)
     printf("LABEL $$WHILE_START%llu\n",while_id_sample);
     
     gen_expr(root->children[0]);
+    printf("CALL $$$_CONVERT_X_TO_BOOL\n");
     
     // todo convert
     printf("PUSHS bool@false\n");
