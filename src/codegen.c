@@ -9,7 +9,6 @@
 #include"codegen.h"
 #include"ast.h"
 #include"token.h"
-
 #include"built_in_functions.c"
 
 static struct bintree_node* GLOBAL;
@@ -26,6 +25,161 @@ void gen_expr_assign(ast_node* root,struct bintree_node* tab);
 void gen_fcall(ast_node* root); 
 void gen_main(ast_node* root, struct bintree_node* tab);
 void gen_convert(token_type oper);
+
+void gen_CONVERT_NIL_TO_X()
+{
+    printf
+    (
+        "LABEL $$$_CONVERT_NIL\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_TYPE\n"
+        "\n"
+        "JUMPIFEQ $$$_NIL_TO_INT LF@_TYPE string@int\n"
+        "JUMPIFEQ $$$_NIL_TO_FLOAT LF@_TYPE string@float\n"
+        "JUMPIFEQ $$$_NIL_TO_BOOL LF@_TYPE string@bool\n"
+        "JUMPIFEQ $$$_NIL_TO_STRING LF@_TYPE string@string\n"
+        "PUSHS nil@nil\n"
+        "JUMP $$$_NIL_TO_SKIP\n"
+        "\n"
+        "LABEL $$$_NIL_TO_INT\n"
+        "PUSHS int@0\n"
+        "JUMP $$$_NIL_TO_SKIP\n"
+        "\n"
+        "LABEL $$$_NIL_TO_FLOAT\n"
+        "PUSHS float@0x0p+0\n"
+        "JUMP $$$_NIL_TO_SKIP\n"
+        "\n"
+        "LABEL $$$_NIL_TO_BOOL\n"
+        "PUSHS bool@false\n"
+        "JUMP $$$_NIL_TO_SKIP\n"
+        "\n"
+        "LABEL $$$_NIL_TO_STRING\n"
+        "PUSHS string@\n"
+        "JUMP $$$_NIL_TO_SKIP\n"
+        "\n"
+        "LABEL $$$_NIL_TO_SKIP\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
+void gen_EQEQ()
+{
+    printf
+    (
+        "LABEL $$$_EQEQ\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_LEFT\n"
+        "DEFVAR LF@_RIGHT\n"
+        "DEFVAR LF@_LEFT_TYPE\n"
+        "DEFVAR LF@_RIGHT_TYPE\n"
+        "POPS LF@_LEFT\n"
+        "POPS LF@_RIGHT\n"
+        "TYPE LF@_LEFT_TYPE LF@_LEFT\n"
+        "TYPE LF@_RIGHT_TYPE LF@_RIGHT\n"
+        "\n"
+        "JUMPIFEQ $$$_EQEQ_LEFT_NIL LF@_LEFT_TYPE string@nil\n"
+        "JUMPIFEQ $$$_EQEQ_RIGHT_NIL LF@_RIGHT_TYPE string@nil\n"
+        "PUSHS LF@_LEFT\n"
+        "PUSHS LF@_RIGHT\n"
+        "EQS\n"
+        "JUMP $$$_EQEQ_SKIP\n"
+        "\n"
+        "LABEL $$$_EQEQ_LEFT_NIL\n"
+        "JUMPIFEQ $$$_EQEQ_BOTH_NIL LF@_RIGHT_TYPE string@nil\n"
+        "PUSHS LF@_RIGHT_TYPE\n"
+        "CALL $$$_CONVERT_NIL\n"
+        "PUSHS LF@_RIGHT\n"
+        "EQS\n"
+        "JUMP $$$_EQEQ_SKIP\n"
+        "\n"
+        "LABEL $$$_EQEQ_RIGHT_NIL\n"
+        "JUMPIFEQ $$$_EQEQ_BOTH_NIL LF@_LEFT_TYPE string@nil\n"
+        "PUSHS LF@_LEFT_TYPE\n"
+        "CALL $$$_CONVERT_NIL\n"
+        "PUSHS LF@_LEFT\n"
+        "EQS\n"
+        "JUMP $$$_EQEQ_SKIP\n"
+        "\n"
+        "LABEL $$$_EQEQ_BOTH_NIL\n"
+        "PUSHS bool@true\n"
+        "\n"
+        "LABEL $$$_EQEQ_SKIP\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
+void gen_REL_LT()
+{
+    printf
+    (
+        "LABEL $$$_REL_LT\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "DEFVAR LF@_LEFT\n"
+        "DEFVAR LF@_RIGHT\n"
+        "DEFVAR LF@_RESAULT\n"
+        "DEFVAR LF@_LEFT_TYPE\n"
+        "DEFVAR LF@_RIGHT_TYPE\n"
+        "POPS LF@_RIGHT\n"
+        "POPS LF@_LEFT\n"
+        "TYPE LF@_LEFT_TYPE LF@_LEFT\n"
+        "TYPE LF@_RIGHT_TYPE LF@_RIGHT\n"
+        "\n"
+        "JUMPIFEQ $$$_REL_LT_FALSE LF@_LEFT_TYPE string@nil\n"
+        "JUMPIFEQ $$$_REL_LT_FALSE LF@_RIGHT_TYPE string@nil\n"
+        //TODO dyna check
+        "LT LF@_RESAULT LF@_LEFT LF@_RIGHT\n"
+        "JUMP $$$_REL_LT_SKIP\n"
+        "\n"
+        "LABEL $$$_REL_LT_FALSE\n"
+        "MOVE LF@_RESAULT bool@false\n"
+        "LABEL $$$_REL_LT_SKIP\n"
+        "PUSHS LF@_RESAULT\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
+void gen_REL_GT()
+{
+    printf
+    (
+        "LABEL $$$_REL_GT\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "DEFVAR LF@_LEFT\n"
+        "DEFVAR LF@_RIGHT\n"
+        "DEFVAR LF@_RESAULT\n"
+        "DEFVAR LF@_LEFT_TYPE\n"
+        "DEFVAR LF@_RIGHT_TYPE\n"
+        "POPS LF@_RIGHT\n"
+        "POPS LF@_LEFT\n"
+        "TYPE LF@_LEFT_TYPE LF@_LEFT\n"
+        "TYPE LF@_RIGHT_TYPE LF@_RIGHT\n"
+        "\n"
+        "JUMPIFEQ $$$_REL_GT_FALSE LF@_LEFT_TYPE string@nil\n"
+        "JUMPIFEQ $$$_REL_GT_FALSE LF@_RIGHT_TYPE string@nil\n"
+        //TODO dyna check
+        "GT LF@_RESAULT LF@_LEFT LF@_RIGHT\n"
+        "JUMP $$$_REL_GT_SKIP\n"
+        "\n"
+        "LABEL $$$_REL_GT_FALSE\n"
+        "MOVE LF@_RESAULT bool@false\n"
+        "LABEL $$$_REL_GT_SKIP\n"
+        "PUSHS LF@_RESAULT\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
 
 void gen_prolog()
 {
@@ -47,6 +201,10 @@ void gen_epilog()
 {
     printf("\n\n#===================== EPILOG\n"); 
     printf("JUMP $$$PROGRAM_END\n");
+    gen_CONVERT_NIL_TO_X();
+    gen_EQEQ();
+    gen_REL_GT();
+    gen_REL_LT();
     gen_built_ins();
     printf("LABEL $$$PROGRAM_END\n");
     printf("POPFRAME\n");
@@ -353,6 +511,7 @@ void gen_cmp()
     printf("LABEL $$$_COMPARE_SKIP%llu\n",CMP_ID_SAMPLE);
 }
 
+
 void gen_expr(ast_node* root)
 {
     // TODO check if side in {L,F,R}
@@ -454,11 +613,11 @@ void gen_expr(ast_node* root)
             break;
 
         case(LT):
-            printf("LTS");
+            printf("CALL $$$_REL_LT\n");
             break;
         
         case(GT):
-            printf("GTS");
+            printf("CALL $$$_REL_GT\n");
             break;
         
         case(LTE):
@@ -467,11 +626,13 @@ void gen_expr(ast_node* root)
             
             printf("PUSHS GF@_R1\n");
             printf("PUSHS GF@_R2\n");
-            printf("LTS\n");
+            
+            printf("CALL $$$_REL_LT\n");
             
             printf("PUSHS GF@_R1\n");
             printf("PUSHS GF@_R2\n");
-            printf("EQS\n");
+            
+            printf("CALL $$$_EQEQ\n");
             
             printf("ORS\n");
             break;
@@ -482,11 +643,13 @@ void gen_expr(ast_node* root)
             
             printf("PUSHS GF@_R1\n");
             printf("PUSHS GF@_R2\n");
-            printf("GTS\n");
+            
+            printf("CALL $$$_REL_GT\n");
             
             printf("PUSHS GF@_R1\n");
             printf("PUSHS GF@_R2\n");
-            printf("EQS\n");
+            
+            printf("CALL $$$_EQEQ\n");
             
             printf("ORS\n");
             break;
