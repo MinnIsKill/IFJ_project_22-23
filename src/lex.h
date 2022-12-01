@@ -2,6 +2,7 @@
 #define LEX_H_INCLUDED
 
 #include <errno.h>
+#include <float.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -27,6 +28,8 @@ typedef enum lex_state
     LEX_STATE_FVAL_0,
     LEX_STATE_FVAL_1,
     LEX_STATE_FVAL_2,
+    LEX_STATE_FVAL_3,
+    LEX_STATE_FVAL_4,
     LEX_STATE_SVAL_0,
     LEX_STATE_SVAL_1,
     LEX_STATE_SVAL_X,
@@ -43,6 +46,8 @@ typedef enum lex_state
     LEX_STATE_PS_MARK_1,
     LEX_STATE_PC_MARK_0,
     LEX_STATE_PE_MARK_0,
+    LEX_STATE_PE_MARK_1,
+    LEX_STATE_PE_MARK_2,
 
     LEX_STATE_ERROR,
     LEX_STATE_END,
@@ -90,7 +95,7 @@ typedef enum lex_state
 
     LEX_STATE_COMMA,
     LEX_STATE_TYPE,
-    LEX_STATE_SEM,
+    LEX_STATE_SEMIC,
     LEX_STATE_STRCAT,
     
     LEX_STATE_PS_MARK,
