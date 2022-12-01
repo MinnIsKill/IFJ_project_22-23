@@ -260,7 +260,7 @@ lex_state lex_state_start(context* context, FILE* input)
             return LEX_STATE_SVAL_0;
     }
 
-    char_buffer_add(&context->attrib, current);
+    CHAR_BUFFER_ADD(context, current);
 
     if (lex_is_first_identifier(current))
         return LEX_STATE_FID_0;
@@ -412,7 +412,7 @@ lex_state lex_state_id_0(context* context, FILE* input)
 
     if (lex_is_first_identifier(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_ID_1;
     }
     
@@ -426,7 +426,7 @@ lex_state lex_state_id_1(context* context, FILE* input)
 
     if (lex_is_identifier(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_ID_1;
     }
 
@@ -442,13 +442,13 @@ lex_state lex_state_fid_0(context* context, FILE* input)
 
     if (lex_is_identifier(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FID_0;
     }
 
     if (char_buffer_equals(&context->attrib, LEX_PHP_PC_MARK_START))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_PC_MARK_0;
     }
 
@@ -476,7 +476,7 @@ lex_state lex_state_nid_0(context* context, FILE* input)
 
     if (lex_is_identifier(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_NID_0;
     }
 
@@ -497,19 +497,19 @@ lex_state lex_state_ival_0(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_IVAL_0;
     }
 
     if (current == '.')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_0;
     }
 
     if (current == 'e' || current == 'E')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_2;
     }
 
@@ -525,7 +525,7 @@ lex_state lex_state_fval_0(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_1;
     }
     
@@ -539,13 +539,13 @@ lex_state lex_state_fval_1(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_1;
     }
 
     if (current == 'e' || current == 'E')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_2;
     }
 
@@ -561,13 +561,13 @@ lex_state lex_state_fval_2(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_4;
     }
 
     if (current == '+' || current == '-')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_3;
     }
 
@@ -581,7 +581,7 @@ lex_state lex_state_fval_3(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_4;
     }
 
@@ -595,7 +595,7 @@ lex_state lex_state_fval_4(context* context, FILE* input)
 
     if (lex_is_digit(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FVAL_4;
     }
 
@@ -630,7 +630,7 @@ lex_state lex_state_sval_0(context* context, FILE* input)
         return LEX_STATE_ERROR;
     }
 
-    char_buffer_add(&context->attrib, current);
+    CHAR_BUFFER_ADD(context, current);
     return LEX_STATE_SVAL_0;
 }
 
@@ -640,19 +640,19 @@ lex_state lex_state_sval_1(context* context, FILE* input)
 
     if (current == '"' || current == '$' || current == '\\')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_SVAL_0;
     }
 
     if (current == 'n')
     {
-        char_buffer_add(&context->attrib, '\n');
+        CHAR_BUFFER_ADD(context, '\n');
         return LEX_STATE_SVAL_0;
     }
 
     if (current == 't')
     {
-        char_buffer_add(&context->attrib, '\t');
+        CHAR_BUFFER_ADD(context, '\t');
         return LEX_STATE_SVAL_0;
     }
 
@@ -674,7 +674,7 @@ lex_state lex_state_sval_1(context* context, FILE* input)
     }
 
     ungetc(current, input);
-    char_buffer_add(&context->attrib, '\\');
+    CHAR_BUFFER_ADD(context, '\\');
 
     return LEX_STATE_SVAL_0;
 }
@@ -694,7 +694,7 @@ lex_state lex_state_sval_x(context* context, FILE* input)
 
             if (errno == 0 && symbol >= 0x01 && symbol <= 0xFF)
             {
-                char_buffer_add(&context->attrib, symbol);
+                CHAR_BUFFER_ADD(context, symbol);
                 return LEX_STATE_SVAL_0;
             }
         }
@@ -713,7 +713,7 @@ lex_state lex_state_sval_x(context* context, FILE* input)
 
     ungetc('x', input);
 
-    char_buffer_add(&context->attrib, '\\');
+    CHAR_BUFFER_ADD(context, '\\');
     return LEX_STATE_SVAL_0;
 }
 
@@ -732,7 +732,7 @@ lex_state lex_state_sval_o(context* context, FILE* input)
 
             if (errno == 0 && symbol >= 0001 && symbol <= 0377)
             {
-                char_buffer_add(&context->attrib, symbol);
+                CHAR_BUFFER_ADD(context, symbol);
                 return LEX_STATE_SVAL_0;
             }
         }
@@ -749,7 +749,7 @@ lex_state lex_state_sval_o(context* context, FILE* input)
     for (int i = lex_esc_len - 1; i >= 0; i--)
         ungetc(lex_esc[i], input);
 
-    char_buffer_add(&context->attrib, '\\');
+    CHAR_BUFFER_ADD(context, '\\');
     return LEX_STATE_SVAL_0;
 }
 
@@ -759,7 +759,7 @@ lex_state lex_state_assig_0(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_EQ_0;
     }
 
@@ -775,7 +775,7 @@ lex_state lex_state_lt_0(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
 
         context->token = LTE;
         return LEX_STATE_LTE;
@@ -783,7 +783,7 @@ lex_state lex_state_lt_0(context* context, FILE* input)
 
     if (current == '?')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_PS_MARK_0;
     }
 
@@ -799,7 +799,7 @@ lex_state lex_state_gt_0(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
 
         context->token = GTE;
         return LEX_STATE_GTE;
@@ -817,8 +817,8 @@ lex_state lex_state_eq_0(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
-
+        CHAR_BUFFER_ADD(context, current);
+        
         context->token = EQ;
         return LEX_STATE_EQ;
     }
@@ -833,7 +833,7 @@ lex_state lex_state_neq_0(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_NEQ_1;
     }
 
@@ -847,7 +847,7 @@ lex_state lex_state_neq_1(context* context, FILE* input)
 
     if (current == '=')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
 
         context->token = NEQ;
         return LEX_STATE_NEQ;
@@ -864,7 +864,7 @@ lex_state lex_state_ps_mark_0(context* context, FILE* input)
 
     if (current == LEX_PHP_PS_MARK[len])
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
 
         if (char_buffer_equals(&context->attrib, LEX_PHP_PS_MARK))
             return LEX_STATE_PS_MARK_1;
@@ -897,7 +897,7 @@ lex_state lex_state_pc_mark_0(context* context, FILE* input)
 
     if (current == LEX_PHP_PC_MARK[len])
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
 
         if (char_buffer_equals(&context->attrib, LEX_PHP_PC_MARK))
         {
@@ -918,13 +918,13 @@ lex_state lex_state_pe_mark_0(context* context, FILE* input)
 
     if (current == '>')
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_PE_MARK_1;
     }
 
     if (lex_is_first_identifier(current))
     {
-        char_buffer_add(&context->attrib, current);
+        CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_NID_0;
     }
 
