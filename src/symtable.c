@@ -30,7 +30,7 @@ void bintree_init(bintree_node *root){
 //bintree DISPOSE FUNCTION
 //recursive
 void bintree_dispose(struct bintree_node *root){
-    //printf("DISPOSE: root pointing at [%d] %s\n", root->node_data->id, root->node_data->key);
+    //fprintf(stderr,"DISPOSE: root pointing at [%d] %s\n", root->node_data->id, root->node_data->key);
     bintree_dispose_internal(root);
     bintree_init(&root);
 }
@@ -44,7 +44,7 @@ void bintree_dispose_internal(struct bintree_node *root){
     bintree_dispose_internal(root->r);
     
     //then delete the node
-    //printf("DELETING: [%d] %s\n", root->node_data->id, root->node_data->key);
+    //fprintf(stderr,"DELETING: [%d] %s\n", root->node_data->id, root->node_data->key);
     if (root->node_type == function){
         bintree_dispose(root->local_symtab);
         dll_destroy(root->node_data->args_list);
@@ -117,14 +117,14 @@ struct bintree_node* bintree_insert(struct bintree_node *root, size_t id, char k
     tmp->node_data = data;
     tmp->node_data->id = id;
     tmp->node_type = type_of_node;
-    //printf("tmp->node_data->id = %d\n", tmp->node_data->id);
+    //fprintf(stderr,"tmp->node_data->id = %d\n", tmp->node_data->id);
     if ((tmp->node_data->key = strdup(key)) == NULL){
         dbgprint("ERROR:  in bintree_insert:  malloc failed");
         free(tmp);
         free(data);
         return NULL;
     }
-    //printf("tmp->node_data->key = %s\n", tmp->node_data->key);
+    //fprintf(stderr,"tmp->node_data->key = %s\n", tmp->node_data->key);
     tmp->l = NULL;
     tmp->r = NULL;
 
@@ -149,7 +149,7 @@ struct bintree_node* bintree_delete_by_id(struct bintree_node *root, size_t id){
     par = NULL;
 
     while (ptr != NULL){
-        //printf("\n? scanning: [%d]\n\n",ptr->node_data->id);
+        //fprintf(stderr,"\n? scanning: [%d]\n\n",ptr->node_data->id);
         if (id == ptr->node_data->id){
             if (ptr->l == NULL && ptr->r == NULL){ //leaf
                 if (ptr != root){
@@ -231,9 +231,9 @@ struct bintree_node* bintree_delete_by_key(struct bintree_node *root, char key[]
         }
     }
 
-    //printf(" ptr pointing at [%d] %s\n", ptr->node_data->id, ptr->node_data->key);
-    //if (par != NULL) {printf(" par pointing at [%d] %s\n", par->node_data->id, par->node_data->key);}
-    //printf(" root pointing at [%d] %s\n", root->node_data->id, root->node_data->key);
+    //fprintf(stderr," ptr pointing at [%d] %s\n", ptr->node_data->id, ptr->node_data->key);
+    //if (par != NULL) {fprintf(stderr," par pointing at [%d] %s\n", par->node_data->id, par->node_data->key);}
+    //fprintf(stderr," root pointing at [%d] %s\n", root->node_data->id, root->node_data->key);
 
     if (ptr == NULL){
         dbgprint("WARNING:  in bintree_delete_by_key:  no node with KEY \"%s\" found", key);
@@ -251,8 +251,8 @@ struct bintree_node* bintree_delete_by_key(struct bintree_node *root, char key[]
 //FOR THE PURPOSES OF THIS PROJECT, IT'S BETTER NOT TO USE THIS (not optimized for the purposes of this project)
 struct bintree_node* bintree_search_by_id (struct bintree_node *root, size_t id){
     while (root != NULL){
-        //printf("id is %d\n", id);
-        //printf("root->node_data->id is %d\n", root->node_data->id);
+        //fprintf(stderr,"id is %d\n", id);
+        //fprintf(stderr,"root->node_data->id is %d\n", root->node_data->id);
         if (id < root->node_data->id){
             root = root->l; /*Move to left child*/
         } else if (id > root->node_data->id){
@@ -334,7 +334,7 @@ const char* bintree_fnc_args_list_tostr(arg_type* args_list, size_t arg_cnt, cha
 //non-recursive
 void bintree_inorder(struct bintree_node *root){
     struct bintree_node *tmp; //forward checker
-    //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
+    //if (root != NULL) {fprintf(stderr,"INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
  
     while (root != NULL){
         if (root->l != NULL){
@@ -345,14 +345,14 @@ void bintree_inorder(struct bintree_node *root){
  
             if (tmp->r == root){
                 tmp->r = NULL;
-                fprintf(stdout,"    [%ld] %s\n", root->node_data->id, root->node_data->key);
+                fprintf(stderr,"    [%ld] %s\n", root->node_data->id, root->node_data->key);
                 root = root->r;
             } else {
                 tmp->r = root;
                 root = root->l;
             }
         } else {
-            fprintf(stdout,"    [%ld] %s\n", root->node_data->id, root->node_data->key);
+            fprintf(stderr,"    [%ld] %s\n", root->node_data->id, root->node_data->key);
             root = root->r;
         }
     }
@@ -363,7 +363,7 @@ void bintree_inorder(struct bintree_node *root){
 void bintree_inorder_saveoutput(struct bintree_node *root, char output[]){
     struct bintree_node *tmp; //forward checker
     bool firstflag = false;
-    //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
+    //if (root != NULL) {fprintf(stderr,"INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
  
     while (root != NULL){
         if (firstflag == false){
@@ -400,7 +400,7 @@ void bintree_inorder_saveoutput(struct bintree_node *root, char output[]){
 //non-recursive
 void bintree_inorder_fullprint(struct bintree_node *root, bool called_from_inside){
     struct bintree_node *tmp; //forward checker
-    //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
+    //if (root != NULL) {fprintf(stderr,"INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
  
     while (root != NULL){
         if (root->l != NULL){
@@ -411,22 +411,18 @@ void bintree_inorder_fullprint(struct bintree_node *root, bool called_from_insid
  
             if (tmp->r == root){
                 tmp->r = NULL;
-                if (strcmp(root->node_data->key, ":b") == 0) { //if it's prog_body func
-                    fprintf(stdout,"  [prog_body]\n");
-                    fprintf(stdout,"      └─> contains variables: \n");
-                    bintree_inorder_currvarsonly(root);
-                } else if (root->node_type == function){
-                    fprintf(stdout,"    [fnc]%s   args_cnt: %ld   rtype: %s   arguments:",root->node_data->key, root->node_data->arg_cnt, bintree_fnc_arg_type_tostr(root->node_data->rtype));
+                if (root->node_type == function){
+                    fprintf(stderr,"    [fnc]%s   args_cnt: %ld   rtype: %s   arguments:",root->node_data->key, root->node_data->arg_cnt, bintree_fnc_arg_type_tostr(root->node_data->rtype));
                     dll_print_forwards(root->node_data->args_list);
-                    fprintf(stdout,"\n      └─> its local symtable contains: \n");
+                    fprintf(stderr,"\n      └─> its local symtable contains: \n");
                     if (root->local_symtab == NULL){
-                        fprintf(stdout,"\n");
+                        fprintf(stderr,"\n");
                     } else {
                         bintree_inorder_fullprint(root->local_symtab, true);
                     }
                 } else {
-                    if (called_from_inside == true){ fprintf(stdout,"                                       ");}
-                    fprintf(stdout,"[var]%s   type: %s\n",root->node_data->key, bintree_fnc_arg_type_tostr(root->node_data->curr_type));
+                    if (called_from_inside == true){ fprintf(stderr,"                                       ");}
+                    fprintf(stderr,"[var]%s   type: %s\n",root->node_data->key, bintree_fnc_arg_type_tostr(root->node_data->curr_type));
                 }
                 root = root->r;
             } else {
@@ -434,22 +430,18 @@ void bintree_inorder_fullprint(struct bintree_node *root, bool called_from_insid
                 root = root->l;
             }
         } else {
-            if (strcmp(root->node_data->key, ":b") == 0) { //if it's prog_body func
-                fprintf(stdout,"  [prog_body]\n");
-                fprintf(stdout,"      └─> contains variables: \n");
-                bintree_inorder_currvarsonly(root);
-            } else if (root->node_type == function){
-                fprintf(stdout,"    [fnc]%s   args_cnt: %ld   rtype: %s   arguments:",root->node_data->key, root->node_data->arg_cnt, bintree_fnc_arg_type_tostr(root->node_data->rtype));
+            if (root->node_type == function){
+                fprintf(stderr,"    [fnc]%s   args_cnt: %ld   rtype: %s   arguments:",root->node_data->key, root->node_data->arg_cnt, bintree_fnc_arg_type_tostr(root->node_data->rtype));
                 dll_print_forwards(root->node_data->args_list);
-                fprintf(stdout,"\n      └─> its local symtable contains: \n");
+                fprintf(stderr,"\n      └─> its local symtable contains: \n");
                 if (root->local_symtab == NULL){
-                    fprintf(stdout,"\n");
+                    fprintf(stderr,"\n");
                 } else {
                     bintree_inorder_fullprint(root->local_symtab, true);
                 }
             } else {
-                if (called_from_inside == true){ fprintf(stdout,"                                       ");}
-                fprintf(stdout,"[var]%s   type: %s\n",root->node_data->key, bintree_fnc_arg_type_tostr(root->node_data->curr_type));
+                if (called_from_inside == true){ fprintf(stderr,"                                       ");}
+                fprintf(stderr,"[var]%s   type: %s\n",root->node_data->key, bintree_fnc_arg_type_tostr(root->node_data->curr_type));
             }
             root = root->r;
         }
@@ -460,7 +452,7 @@ void bintree_inorder_fullprint(struct bintree_node *root, bool called_from_insid
 //non-recursive
 void bintree_inorder_currvarsonly(struct bintree_node *root){
     struct bintree_node *tmp; //forward checker
-    //if (root != NULL) {printf("INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
+    //if (root != NULL) {fprintf(stderr,"INORDER: root is [%d] %s\n", root->node_data->id, root->node_data->key);}
  
     while (root != NULL){
         if (root->l != NULL){
@@ -472,14 +464,7 @@ void bintree_inorder_currvarsonly(struct bintree_node *root){
             if (tmp->r == root){
                 tmp->r = NULL;
                 if (root->node_type == variable){
-                    fprintf(stdout,"                             [%s]%s : ",bintree_fnc_arg_type_tostr(root->node_data->curr_type), root->node_data->key);
-                    if (root->node_data->curr_type == int_t || root->node_data->curr_type == nint_t || root->node_data->curr_type == float_t || root->node_data->curr_type == nfloat_t){
-                        fprintf(stdout,"%.2f\n",root->node_data->value);
-                    } else if (root->node_data->curr_type == string_t || root->node_data->curr_type == nstring_t) {
-                        fprintf(stdout,"%s\n",root->node_data->string);
-                    } else {
-                        fprintf(stdout,"NULL\n");
-                    }
+                    fprintf(stderr,"    [%s]%s\n",bintree_fnc_arg_type_tostr(root->node_data->curr_type), root->node_data->key);
                 }
                 root = root->r;
             } else {
@@ -488,14 +473,7 @@ void bintree_inorder_currvarsonly(struct bintree_node *root){
             }
         } else {
             if (root->node_type == variable){
-                fprintf(stdout,"                             [%s]%s : ",bintree_fnc_arg_type_tostr(root->node_data->curr_type), root->node_data->key);
-                if (root->node_data->curr_type == int_t || root->node_data->curr_type == nint_t || root->node_data->curr_type == float_t || root->node_data->curr_type == nfloat_t){
-                    fprintf(stdout,"%.2f\n",root->node_data->value);
-                } else if (root->node_data->curr_type == string_t || root->node_data->curr_type == nstring_t) {
-                    fprintf(stdout,"%s\n",root->node_data->string);
-                } else {
-                    fprintf(stdout,"NULL\n");
-                }
+                fprintf(stderr,"    [%s]%s\n",bintree_fnc_arg_type_tostr(root->node_data->curr_type), root->node_data->key);
             }
             root = root->r;
         }

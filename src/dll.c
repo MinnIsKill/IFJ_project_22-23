@@ -59,10 +59,10 @@ int dll_insert_first(struct dll *list, size_t id, char key[], char type[]){
     }
     new->linkData = data;
     new->linkData->id = id;
-    //printf("new->linkData->id = %ld\n", new->linkData->id);
+    //fprintf(stderr,"new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
     strcpy(new->linkData->type, type);
-    //printf("new->linkData->key = %s\n", new->linkData->key);
+    //fprintf(stderr,"new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
 	
@@ -96,10 +96,10 @@ int dll_insert_last(struct dll *list, size_t id, char key[], char type[]){
     }
     new->linkData = data;
     new->linkData->id = id;
-    //printf("new->linkData->id = %ld\n", new->linkData->id);
+    //fprintf(stderr,"new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
     strcpy(new->linkData->type, type);
-    //printf("new->linkData->key = %s\n", new->linkData->key);
+    //fprintf(stderr,"new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
 	
@@ -133,10 +133,10 @@ int dll_insert_after(struct dll *list, size_t id_searchedlink, size_t id_newlink
     }
     new->linkData = data;
     new->linkData->id = id_newlink;
-    //printf("new->linkData->id = %ld\n", new->linkData->id);
+    //fprintf(stderr,"new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
     strcpy(new->linkData->type, type);
-    //printf("new->linkData->key = %s\n", new->linkData->key);
+    //fprintf(stderr,"new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
 
@@ -190,10 +190,10 @@ int dll_insert_before(struct dll *list, size_t id_searchedlink, size_t id_newlin
     }
     new->linkData = data;
     new->linkData->id = id_newlink;
-    //printf("new->linkData->id = %ld\n", new->linkData->id);
+    //fprintf(stderr,"new->linkData->id = %ld\n", new->linkData->id);
     strcpy(new->linkData->key, key);
     strcpy(new->linkData->type, type);
-    //printf("new->linkData->key = %s\n", new->linkData->key);
+    //fprintf(stderr,"new->linkData->key = %s\n", new->linkData->key);
     new->prev = NULL;
     new->next = NULL;
 
@@ -378,12 +378,12 @@ void dll_print_forwards(struct dll *list){
         struct dll_link *ptr = list->head;
 
         while (ptr != list->tail){
-            fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
+            fprintf(stderr,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
             ptr = ptr->next;
         }
 
         //print the tail as well
-        fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
+        fprintf(stderr,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
     }
 }
 
@@ -393,11 +393,11 @@ void dll_print_backwards(struct dll *list){
         struct dll_link *ptr = list->tail;
 
         while (ptr != list->head){
-            fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
+            fprintf(stderr,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
             ptr = ptr->prev;
         }
 
         //print the head as well
-        fprintf(stdout,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
+        fprintf(stderr,"  [%s]%s", ptr->linkData->type, ptr->linkData->key);
     }
 }

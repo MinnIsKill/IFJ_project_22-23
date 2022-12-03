@@ -47,7 +47,7 @@ int main()
 #endif
     
     semantic_retcodes s_rc = semantic(&con);
-    infoprintt("!!!!!!!!!!\n    semantics ended with code:  [%d]\n!!!!!!!!!!\n", s_rc);
+    infoprintt("\n    semantics ended with code:  [%d]\n\n", s_rc);
     if(s_rc != SEM_SUCCESS)
     {
         context_delete(&con);

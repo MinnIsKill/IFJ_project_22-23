@@ -16,7 +16,7 @@ int main(void)
     vector_append(&vect, "Girl");
 
     vector_print(&vect);
-    printf("\n");
+    fprintf(stderr,"\n");
 
     vector_delete(&vect, 3);
     vector_delete(&vect, 2);

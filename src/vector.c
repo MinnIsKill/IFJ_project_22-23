@@ -84,6 +84,6 @@ void vector_free(struct _vector *vect){
 //prints vector contents item by item
 void vector_print(struct _vector *vect){
     for (size_t i = 0; i < vect->children_cnt; i++){
-        printf("item #%ld:  [%s]\n", i, (char*) vector_get(vect, i));
+        fprintf(stderr,"item #%ld:  [%s]\n", i, (char*) vector_get(vect, i));
     }   
 }
