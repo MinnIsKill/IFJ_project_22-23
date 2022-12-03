@@ -2,12 +2,20 @@
 #define LEX_H_INCLUDED
 
 #include <errno.h>
+#include <float.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "context.h"
+
+typedef enum lex_mode
+{
+    LEX_MODE_START,
+    LEX_MODE_CONTINUE,
+    LEX_MODE_NORMAL
+} lex_mode;
 
 typedef enum lex_state
 {
@@ -27,10 +35,14 @@ typedef enum lex_state
     LEX_STATE_FVAL_0,
     LEX_STATE_FVAL_1,
     LEX_STATE_FVAL_2,
+    LEX_STATE_FVAL_3,
+    LEX_STATE_FVAL_4,
     LEX_STATE_SVAL_0,
     LEX_STATE_SVAL_1,
-    LEX_STATE_SVAL_X,
-    LEX_STATE_SVAL_O,
+    LEX_STATE_SVAL_X0,
+    LEX_STATE_SVAL_X1,
+    LEX_STATE_SVAL_O0,
+    LEX_STATE_SVAL_O1,
 
     LEX_STATE_ASSIG_0,
     LEX_STATE_LT_0,
@@ -40,9 +52,11 @@ typedef enum lex_state
     LEX_STATE_NEQ_1,
 
     LEX_STATE_PS_MARK_0,
-    LEX_STATE_PS_MARK_1,
     LEX_STATE_PC_MARK_0,
+    LEX_STATE_PC_MARK_1,
     LEX_STATE_PE_MARK_0,
+    LEX_STATE_PE_MARK_1,
+    LEX_STATE_PE_MARK_2,
 
     LEX_STATE_ERROR,
     LEX_STATE_END,
@@ -90,7 +104,7 @@ typedef enum lex_state
 
     LEX_STATE_COMMA,
     LEX_STATE_TYPE,
-    LEX_STATE_SEM,
+    LEX_STATE_SEMIC,
     LEX_STATE_STRCAT,
     
     LEX_STATE_PS_MARK,

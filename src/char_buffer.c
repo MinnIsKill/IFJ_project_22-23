@@ -16,10 +16,6 @@ bool char_buffer_add(char_buffer* buf, int c)
     {
         if (!char_buffer_resize(buf, buf->size * 2))
             return false;
-        
-        // TODO check, possible bug, 2x more memory that
-        // is actualy allocated
-        //buf->size *= 2;
     }
 
     buf->buffer[buf->len++] = c;
@@ -27,12 +23,20 @@ bool char_buffer_add(char_buffer* buf, int c)
     return true;
 }
 
+void char_buffer_remove(char_buffer* buf, size_t n)
+{
+    if (buf->len < n)
+        return;
+
+    buf->len -= n;
+}
+
 size_t char_buffer_len(char_buffer* buf)
 {
     return buf->len;
 }
 
-char* char_buffer_cstr(char_buffer* buf)
+const char* char_buffer_cstr(char_buffer* buf)
 {
     return buf->buffer;
 }
@@ -40,6 +44,14 @@ char* char_buffer_cstr(char_buffer* buf)
 int char_buffer_get(char_buffer* buf, size_t index)
 {
     return buf->buffer[index];
+}
+
+const char* char_buffer_end(char_buffer* buf, size_t n)
+{
+    if (buf->len < n)
+        return NULL;
+
+    return buf->buffer + buf->len - n;
 }
 
 bool char_buffer_equals(char_buffer* buf, const char* other)

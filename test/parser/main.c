@@ -7,7 +7,6 @@
 #include"./../../src/error.h"
 #include"./../../src/parser.h"
 #include"./../../src/context.h"
-#include"./../../src/fake_lex.h"
 #include"./../../src/semantic.h"
 #include"./../../src/symtable.h"
 #include"./../../src/lex.h"
