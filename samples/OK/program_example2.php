@@ -17,8 +17,8 @@ if ($a < 0) {
         $vysl = $vysl * $a;
         $a = $a - 1;
     }
-    if ($a > 0){
-        
+    if ($a + 0){
+
     }
     write("Vysledek je: ", $vysl, "\n");
 }
