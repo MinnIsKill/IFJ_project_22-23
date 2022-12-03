@@ -1,3 +1,5 @@
+<?php
+declare(strict_types=1);
 function
 if
 else
@@ -40,6 +42,4 @@ func
 :
 ;
 .
-<?php
-declare(strict_types=1);
 ?>

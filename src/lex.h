@@ -10,6 +10,13 @@
 
 #include "context.h"
 
+typedef enum lex_mode
+{
+    LEX_MODE_START,
+    LEX_MODE_CONTINUE,
+    LEX_MODE_NORMAL
+} lex_mode;
+
 typedef enum lex_state
 {
     LEX_STATE_START,
@@ -45,8 +52,8 @@ typedef enum lex_state
     LEX_STATE_NEQ_1,
 
     LEX_STATE_PS_MARK_0,
-    LEX_STATE_PS_MARK_1,
     LEX_STATE_PC_MARK_0,
+    LEX_STATE_PC_MARK_1,
     LEX_STATE_PE_MARK_0,
     LEX_STATE_PE_MARK_1,
     LEX_STATE_PE_MARK_2,

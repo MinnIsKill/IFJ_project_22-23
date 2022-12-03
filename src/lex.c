@@ -18,13 +18,12 @@
 
 #define LEX_PHP_PS_MARK             "<?php"
 #define LEX_PHP_PC_MARK             "declare(strict_types=1);"
-#define LEX_PHP_PC_MARK_START       "declare"
 #define LEX_PHP_PE_MARK             "?>"
 
 #define LEX_ESC_HEX_LEN             2
 #define LEX_ESC_HEX_PREFIX          2
-#define LEX_ESC_OCTAL_LEN             3
-#define LEX_ESC_OCTAL_PREFIX          1
+#define LEX_ESC_OCTAL_LEN           3
+#define LEX_ESC_OCTAL_PREFIX        1
 
 #define LEX_KEYWORD_CHECK(ctx, value, result, state)        \
         if (char_buffer_equals(&ctx->attrib, value))        \
@@ -39,6 +38,8 @@
             dbgprint("Out of memory!")                      \
             return LEX_STATE_ERROR;                         \
         }
+
+static lex_mode lex_current_mode;
 
 lex_state lex_state_start(context* context, FILE* input);
 
@@ -73,8 +74,8 @@ lex_state lex_state_neq_0(context* context, FILE* input);
 lex_state lex_state_neq_1(context* context, FILE* input);
 
 lex_state lex_state_ps_mark_0(context* context, FILE* input);
-lex_state lex_state_ps_mark_1(context* context, FILE* input);
 lex_state lex_state_pc_mark_0(context* context, FILE* input);
+lex_state lex_state_pc_mark_1(context* context, FILE* input);
 lex_state lex_state_pe_mark_0(context* context, FILE* input);
 lex_state lex_state_pe_mark_1(context* context, FILE* input);
 lex_state lex_state_pe_mark_2(context* context, FILE* input);
@@ -114,8 +115,8 @@ const lex_state_function LEX_TABLE[] =
     /* LEX_STATE_NEQ_1 */ lex_state_neq_1,
 
     /* LEX_STATE_PS_MARK_0 */ lex_state_ps_mark_0,
-    /* LEX_STATE_PS_MARK_1 */ lex_state_ps_mark_1,
     /* LEX_STATE_PC_MARK_0 */ lex_state_pc_mark_0,
+    /* LEX_STATE_PC_MARK_1 */ lex_state_pc_mark_1,
     /* LEX_STATE_PE_MARK_0 */ lex_state_pe_mark_0,
     /* LEX_STATE_PE_MARK_1 */ lex_state_pe_mark_1,
     /* LEX_STATE_PE_MARK_2 */ lex_state_pe_mark_2
@@ -205,6 +206,7 @@ bool lex_init(context* context, FILE* input)
     if (!char_buffer_init(&context->attrib))
         return false;
 
+    lex_current_mode = LEX_MODE_START;
     return lex_next(context, input);
 }
 
@@ -249,6 +251,12 @@ void lex_destroy(context* context)
 
 lex_state lex_state_start(context* context, FILE* input)
 {
+    if (lex_current_mode == LEX_MODE_START)
+        return LEX_STATE_PS_MARK_0;
+
+    if (lex_current_mode == LEX_MODE_CONTINUE)
+        return LEX_STATE_PC_MARK_0;
+
     int current = fgetc(input);
 
     if (lex_is_whitespace(current))
@@ -357,6 +365,12 @@ lex_state lex_state_com_0(context* context, FILE* input)
 
     ungetc(current, input);
 
+    if (lex_current_mode == LEX_MODE_CONTINUE)
+    {
+        dbgprint("Unexpected symbol '%c'!", current);
+        return LEX_STATE_ERROR;
+    }
+
     context->token = DIV;
     return LEX_STATE_DIV;
 }
@@ -368,8 +382,11 @@ lex_state lex_state_lcom_0(context* context, FILE* input)
     if (current == '\n' || current == EOF)
     {
         ungetc(current, input);
-
         char_buffer_clear(&context->attrib);
+
+        if (lex_current_mode == LEX_MODE_CONTINUE)
+            return LEX_STATE_PC_MARK_1;
+
         return LEX_STATE_START;
     }
 
@@ -403,6 +420,10 @@ lex_state lex_state_bcom_1(context* context, FILE* input)
     if (current == '/')
     {
         char_buffer_clear(&context->attrib);
+
+        if (lex_current_mode == LEX_MODE_CONTINUE)
+            return LEX_STATE_PC_MARK_1;
+
         return LEX_STATE_START;
     }
 
@@ -447,12 +468,6 @@ lex_state lex_state_fid_0(context* context, FILE* input)
     {
         CHAR_BUFFER_ADD(context, current);
         return LEX_STATE_FID_0;
-    }
-
-    if (char_buffer_equals(&context->attrib, LEX_PHP_PC_MARK_START))
-    {
-        CHAR_BUFFER_ADD(context, current);
-        return LEX_STATE_PC_MARK_0;
     }
 
     ungetc(current, input);
@@ -801,12 +816,6 @@ lex_state lex_state_lt_0(context* context, FILE* input)
         return LEX_STATE_LTE;
     }
 
-    if (current == '?')
-    {
-        CHAR_BUFFER_ADD(context, current);
-        return LEX_STATE_PS_MARK_0;
-    }
-
     ungetc(current, input);
 
     context->token = LT;
@@ -887,7 +896,12 @@ lex_state lex_state_ps_mark_0(context* context, FILE* input)
         CHAR_BUFFER_ADD(context, current);
 
         if (char_buffer_equals(&context->attrib, LEX_PHP_PS_MARK))
-            return LEX_STATE_PS_MARK_1;
+        {
+            lex_current_mode = LEX_MODE_CONTINUE;
+
+            context->token = PS_MARK;
+            return LEX_STATE_PS_MARK;
+        }
 
         return LEX_STATE_PS_MARK_0;
     }
@@ -896,24 +910,31 @@ lex_state lex_state_ps_mark_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_ps_mark_1(context* context, FILE* input)
+lex_state lex_state_pc_mark_0(context* context, FILE* input)
 {
+    (void) context;
     int current = fgetc(input);
-
+    
     if (lex_is_whitespace(current))
-    {
-        context->token = PS_MARK;
-        return LEX_STATE_PS_MARK;
-    }
+        return LEX_STATE_PC_MARK_1;
+
+    if (current == '/')
+        return LEX_STATE_COM_0;
 
     dbgprint("Unexpected symbol '%c'!", current);
     return LEX_STATE_ERROR;
 }
 
-lex_state lex_state_pc_mark_0(context* context, FILE* input)
+lex_state lex_state_pc_mark_1(context* context, FILE* input)
 {
     int current = fgetc(input);
     size_t len = char_buffer_len(&context->attrib);
+
+    if (lex_is_whitespace(current))
+        return LEX_STATE_PC_MARK_1;
+
+    if (current == '/')
+        return LEX_STATE_COM_0;
 
     if (current == LEX_PHP_PC_MARK[len])
     {
@@ -921,11 +942,13 @@ lex_state lex_state_pc_mark_0(context* context, FILE* input)
 
         if (char_buffer_equals(&context->attrib, LEX_PHP_PC_MARK))
         {
+            lex_current_mode = LEX_MODE_NORMAL;
+
             context->token = PC_MARK;
             return LEX_STATE_PC_MARK;
         }
 
-        return LEX_STATE_PC_MARK_0;
+        return LEX_STATE_PC_MARK_1;
     }
 
     dbgprint("Unexpected symbol '%c'!", current);
