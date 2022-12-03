@@ -22,7 +22,9 @@
 #define LEX_PHP_PE_MARK             "?>"
 
 #define LEX_ESC_HEX_LEN             2
-#define LEX_ESC_OCT_LEN             3
+#define LEX_ESC_HEX_PREFIX          2
+#define LEX_ESC_OCTAL_LEN             3
+#define LEX_ESC_OCTAL_PREFIX          1
 
 #define LEX_KEYWORD_CHECK(ctx, value, result, state)        \
         if (char_buffer_equals(&ctx->attrib, value))        \
@@ -37,9 +39,6 @@
             dbgprint("Out of memory!")                      \
             return LEX_STATE_ERROR;                         \
         }
-
-static char lex_esc[LEX_ESC_OCT_LEN + 1]; // Make sure HEX and OCT fit here!
-static int lex_esc_len;
 
 lex_state lex_state_start(context* context, FILE* input);
 
@@ -61,8 +60,10 @@ lex_state lex_state_fval_3(context* context, FILE* input);
 lex_state lex_state_fval_4(context* context, FILE* input);
 lex_state lex_state_sval_0(context* context, FILE* input);
 lex_state lex_state_sval_1(context* context, FILE* input);
-lex_state lex_state_sval_x(context* context, FILE* input);
-lex_state lex_state_sval_o(context* context, FILE* input);
+lex_state lex_state_sval_x0(context* context, FILE* input);
+lex_state lex_state_sval_x1(context* context, FILE* input);
+lex_state lex_state_sval_o0(context* context, FILE* input);
+lex_state lex_state_sval_o1(context* context, FILE* input);
 
 lex_state lex_state_assig_0(context* context, FILE* input);
 lex_state lex_state_lt_0(context* context, FILE* input);
@@ -100,8 +101,10 @@ const lex_state_function LEX_TABLE[] =
     /* LEX_STATE_FVAL_4 */ lex_state_fval_4,
     /* LEX_STATE_SVAL_0 */ lex_state_sval_0,
     /* LEX_STATE_SVAL_1 */ lex_state_sval_1,
-    /* LEX_STATE_SVAL_X */ lex_state_sval_x,
-    /* LEX_STATE_SVAL_O */ lex_state_sval_o,
+    /* LEX_STATE_SVAL_X0 */ lex_state_sval_x0,
+    /* LEX_STATE_SVAL_X1 */ lex_state_sval_x1,
+    /* LEX_STATE_SVAL_O0 */ lex_state_sval_o0,
+    /* LEX_STATE_SVAL_O1 */ lex_state_sval_o1,
 
     /* LEX_STATE_ASSIG_0 */ lex_state_assig_0,
     /* LEX_STATE_LT_0 */ lex_state_lt_0,
@@ -658,19 +661,16 @@ lex_state lex_state_sval_1(context* context, FILE* input)
 
     if (current == 'x')
     {
-        memset(lex_esc, 0, sizeof(lex_esc));
-        lex_esc_len = 0;
-
-        return LEX_STATE_SVAL_X;
+        CHAR_BUFFER_ADD(context, '\\');
+        CHAR_BUFFER_ADD(context, current);
+        return LEX_STATE_SVAL_X0;
     }
 
-    if (lex_is_digit(current))
+    if (lex_is_octal(current))
     {
-        memset(lex_esc, 0, sizeof(lex_esc));
-        lex_esc_len = 0;
-
-        ungetc(current, input);
-        return LEX_STATE_SVAL_O;
+        CHAR_BUFFER_ADD(context, '\\');
+        CHAR_BUFFER_ADD(context, current);
+        return LEX_STATE_SVAL_O0;
     }
 
     ungetc(current, input);
@@ -679,77 +679,97 @@ lex_state lex_state_sval_1(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_sval_x(context* context, FILE* input)
+lex_state lex_state_sval_x0(context* context, FILE* input)
 {
     int current = fgetc(input);
 
-    if (current != EOF && lex_is_hex(current))
-    {
-        lex_esc[lex_esc_len] = current;
-        lex_esc_len++;
-
-        if (lex_esc_len == LEX_ESC_HEX_LEN)
-        {
-            long symbol = strtol(lex_esc, NULL, 16);
-
-            if (errno == 0 && symbol >= 0x01 && symbol <= 0xFF)
-            {
-                CHAR_BUFFER_ADD(context, symbol);
-                return LEX_STATE_SVAL_0;
-            }
-        }
-        else
-        {
-            return LEX_STATE_SVAL_X;
-        }
-    }
-    else
+    if (current == '"')
     {
         ungetc(current, input);
+        return LEX_STATE_SVAL_0;
     }
 
-    for (int i = lex_esc_len - 1; i >= 0; i--)
-        ungetc(lex_esc[i], input);
+    CHAR_BUFFER_ADD(context, current);
 
-    ungetc('x', input);
+    if (lex_is_hex(current))
+        return LEX_STATE_SVAL_X1;
 
-    CHAR_BUFFER_ADD(context, '\\');
     return LEX_STATE_SVAL_0;
 }
 
-lex_state lex_state_sval_o(context* context, FILE* input)
+lex_state lex_state_sval_x1(context* context, FILE* input)
 {
     int current = fgetc(input);
 
-    if (current != EOF && lex_is_octal(current))
-    {
-        lex_esc[lex_esc_len] = current;
-        lex_esc_len++;
-
-        if (lex_esc_len == LEX_ESC_OCT_LEN)
-        {
-            long symbol = strtol(lex_esc, NULL, 8);
-
-            if (errno == 0 && symbol >= 0001 && symbol <= 0377)
-            {
-                CHAR_BUFFER_ADD(context, symbol);
-                return LEX_STATE_SVAL_0;
-            }
-        }
-        else
-        {
-            return LEX_STATE_SVAL_O;
-        }
-    }
-    else
+    if (current == '"')
     {
         ungetc(current, input);
+        return LEX_STATE_SVAL_0;
     }
 
-    for (int i = lex_esc_len - 1; i >= 0; i--)
-        ungetc(lex_esc[i], input);
+    CHAR_BUFFER_ADD(context, current);
 
-    CHAR_BUFFER_ADD(context, '\\');
+    if (lex_is_hex(current))
+    {
+        const char* digits = char_buffer_end(&context->attrib, LEX_ESC_HEX_LEN);
+        long symbol = strtol(digits, NULL, 16);
+
+        if (errno == 0 && symbol >= 0x01 && symbol <= 0xFF)
+        {
+            char_buffer_remove(&context->attrib, LEX_ESC_HEX_PREFIX + LEX_ESC_HEX_LEN);
+            char_buffer_add(&context->attrib, symbol);
+            
+            return LEX_STATE_SVAL_0;
+        }
+    }
+
+    return LEX_STATE_SVAL_0;
+}
+
+lex_state lex_state_sval_o0(context* context, FILE* input)
+{
+    int current = fgetc(input);
+
+    if (current == '"')
+    {
+        ungetc(current, input);
+        return LEX_STATE_SVAL_0;
+    }
+
+    CHAR_BUFFER_ADD(context, current);
+
+    if (lex_is_octal(current))
+        return LEX_STATE_SVAL_O1;
+
+    return LEX_STATE_SVAL_0;
+}
+
+lex_state lex_state_sval_o1(context* context, FILE* input)
+{
+    int current = fgetc(input);
+
+    if (current == '"')
+    {
+        ungetc(current, input);
+        return LEX_STATE_SVAL_0;
+    }
+
+    CHAR_BUFFER_ADD(context, current);
+
+    if (lex_is_octal(current))
+    {
+        const char* digits = char_buffer_end(&context->attrib, LEX_ESC_OCTAL_LEN);
+        long symbol = strtol(digits, NULL, 8);
+
+        if (errno == 0 && symbol >= 0001 && symbol <= 0377)
+        {
+            char_buffer_remove(&context->attrib, LEX_ESC_OCTAL_PREFIX + LEX_ESC_OCTAL_LEN);
+            char_buffer_add(&context->attrib, symbol);
+
+            return LEX_STATE_SVAL_0;
+        }
+    }
+
     return LEX_STATE_SVAL_0;
 }
 
