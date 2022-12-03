@@ -30,7 +30,7 @@ typedef struct
  * @return true if context was initialized correctly
  *              else return false
  */
-bool context_new(context* c);
+int context_new(context* c);
 
 /*
  * @brief Free data alocated for compiler context

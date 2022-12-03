@@ -16,9 +16,10 @@
 int main()
 {
     context con;
-    if(!context_new(&con))
+    int con_rc = SUCCESS;
+    if((con_rc = context_new(&con)) != SUCCESS)
     {
-        return(INTERNAL_ERROR);
+        return(con_rc);
     }
 
     p_codes p_rc = parse(&con);
