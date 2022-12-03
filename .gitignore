@@ -13,3 +13,5 @@ samples/**/*.png
 IFJ22code_interpret
 final/tests
 final/*.zip
+tmp.ifjcode
+tmp.php

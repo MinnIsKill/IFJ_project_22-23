@@ -554,6 +554,10 @@ p_codes ret_cont(ast_node* root, context* con)
         case(EP_STACK_ERROR):
             return(P_STACK_ERROR);
             break;
+        
+        case(EP_LEX_ERROR):
+            return(P_LEX_ERROR);
+            break;
 
         default:
             return(P_SYNTAX_ERROR);
@@ -627,6 +631,11 @@ p_codes while_n(ast_node* root, context* con)
         case(EP_STACK_ERROR):
             node_delete(&node);
             return(P_STACK_ERROR);
+            break;
+        
+        case(EP_LEX_ERROR):
+            node_delete(&node);
+            return(P_LEX_ERROR);
             break;
 
         default:
