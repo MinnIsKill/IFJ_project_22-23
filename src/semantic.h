@@ -44,6 +44,8 @@ arg_type token_type_to_arg_type(token_type token);
 arg_type token_type_to_arg_type_forvals(token_type token);
 
 bool is_it_predef_func_call(ast_node* node);
+struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab);
+float string_to_float(const char* string);
 
 arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symtab);
 

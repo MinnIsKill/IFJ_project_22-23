@@ -10,10 +10,6 @@
  *               14-10-2022:  - minor updates, testing (deletes are still not completely functional but won't probably even be used anyway)
  */
 
-/**
- * TODO: - strdup var and func names ('key' and 'string')
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -70,7 +66,7 @@ struct bintree_node* bintree_node_nullifyinfo(struct bintree_node *root){
     root->node_data->value = 0;
     root->node_data->codegen_was_def = false;
     root->node_data->variadic_func = false;
-    root->node_data->is_zero = false;
+    //root->node_data->is_zero = false;
 
     return root;
 }

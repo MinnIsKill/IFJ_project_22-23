@@ -5,28 +5,26 @@
  *        receives an AST passed by parser as input, walks through it to evaluate semantic
  *        correctness, and if successful, passes the AST to code generator
  *
- * @date of last update:   24th November 2022
+ * @date of last update:   5th December 2022
 **/
 
-// ./compiler <./ast_examples/[test_name].php
-
-///TODO: NULLABLES
-//           - v rettype
-//           - v fundef
-//           - v funcall
+// ./compiler_dbg <./samples/[test_folder]/[test_name].php
+// ./compiler_dbg <./samples/OK/after_return.php
+// ./compiler_dbg <./samples/SEMANTIC_ERROR/division_by_zero_int.php
 
 #include "semantic.h"
 
-int sem_retcode = SEM_SUCCESS;
-bool return_encountered = false;
-symtable_stack symstack;
-bintree_node prev_scope_func;
-bintree_node curr_scope_func;
-bintree_node search;
+int sem_retcode = SEM_SUCCESS; //resulting code of semantic analysis
+bool return_encountered = false; //used to determine whether return was found in function body or not
+//symtable_stack symstack;       //unused
+//bintree_node prev_scope_func;  //unused
+bintree_node curr_scope_func; //current scope function (in which scope we currently are)
+bintree_node search;  //these are used to search for function, multiple because sometimes it's necessary to keep a 
+                      //pointer to find function; not overwrite the result of search
 bintree_node search2;
 bintree_node search3;
 bintree_node search4;
-bintree_node var;
+bintree_node var;     //used to search for a variable inside given function's local symtable
 
 
 /**===========================================================**\
@@ -38,21 +36,31 @@ bintree_node var;
  * many results/structures for the sake of debugging           *
 \**===========================================================**/
 
-//ID gen
+/**
+ * @function: generate_id
+ * @brief:  function generates ID for functions
+ * 
+ * @return: generated ID
+*/
 static size_t id = 0;
 size_t generate_id(){
     return (id++);
 }
 
-//(almost)breadth-first print of AST
+/**
+ * @function: AST_dotprint
+ * @brief:  (almost)breadth-first print of AST
+ * 
+ * @param[in] node: AST node serving as root node for this function's purpose
+*/
 void AST_dotprint(ast_node* root){
     if (root == NULL){
         return;
     }
 
-    dbgprint("--------------------START OF AST PRINT--------------------\n");
+    dbgprint_nonl("--------------------START OF AST PRINT--------------------\n");
     AST_dotprint_internal(root);
-    dbgprint("---------------------END OF AST PRINT---------------------\n");
+    dbgprint_nonl("---------------------END OF AST PRINT---------------------\n");
 }
 void AST_dotprint_internal(ast_node* root){
     ast_node *tmp;
@@ -61,7 +69,7 @@ void AST_dotprint_internal(ast_node* root){
         for (size_t i = 0; i < root->children_cnt; i++){
             tmp = root->children[i];
             if (i != root->children_cnt){
-                dbgprint("%lld -> %lld\n",root->id,tmp->id);
+                dbgprint_nonl("%lld -> %lld\n",root->id,tmp->id);
             }
         }
         for (size_t k = 0; k < root->children_cnt; k++){
@@ -69,10 +77,17 @@ void AST_dotprint_internal(ast_node* root){
             AST_dotprint_internal(tmp);
         }
     } else {
-        dbgprint("node has no children\n");
+        dbgprint_nonl("node has no children\n");
     }
 }
 
+/**
+ * @function: node_type_tostr
+ * @brief:  function converts node_type type (used as node type) into string
+ * 
+ *  @param[in] type: type of token to convert
+ *  @return: string equivalent of received node_type if matched, "ERROR" if not
+*/
 const char* node_type_tostr(node_type type){
     switch(type){
         case TERM:        return "TERM";        // terminal/leaf node
@@ -100,6 +115,13 @@ const char* node_type_tostr(node_type type){
     }
 }
 
+/**
+ * @function: node_subtype_tostr
+ * @brief:  function converts token_type type (used as node subtype) into string
+ * 
+ *  @param[in] token: type of token to convert
+ *  @return: string equivalent of received token_type if matched, "ERROR" if not
+*/
 const char* node_subtype_tostr(token_type type){
     //PERSONAL NOTE: I WON'T BE NEEDING MOST OF THESE - WILL CULL ONCE SEMANTIC'S DONE
     switch (type){
@@ -167,6 +189,20 @@ const char* node_subtype_tostr(token_type type){
     }
 }
 
+bool is_conditional(token_type type){
+    if (type == LT || type == GT || type == LTE || type == GTE || type == EQ || type == NEQ){
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @function: token_type_to_arg_type
+ * @brief:  function converts token_type type into arg_type type
+ * 
+ *  @param[in] token: type of token to convert
+ *  @return: arg_type equivalent of received token_type if matched, ARG_TYPE_ERROR type if not
+*/
 arg_type token_type_to_arg_type(token_type token){
     switch (token){
         case ITYPE: return int_t;    //int
@@ -182,6 +218,13 @@ arg_type token_type_to_arg_type(token_type token){
     }
 }
 
+/**
+ * @function: token_type_to_arg_type_forvals
+ * @brief:  function converts token_type type into arg_type type
+ * 
+ *  @param[in] token: type of token to convert
+ *  @return: arg_type equivalent of received token_type if matched, ARG_TYPE_ERROR type if not
+*/
 arg_type token_type_to_arg_type_forvals(token_type token){
     switch (token){
         case IVAL: return int_t;    //int value (e.g. '1')
@@ -193,6 +236,13 @@ arg_type token_type_to_arg_type_forvals(token_type token){
     }
 }
 
+/**
+ * @function: is_it_predef_func_call
+ * @brief:  function receives a 'FCALL' AST node and determines whether called function is a predefined function
+ * 
+ *  @param[in] node: AST node serving as root node for this function's purpose
+ *  @return: true if call of a predefined function, false if not
+*/
 bool is_it_predef_func_call(ast_node* node){
     if (((strcmp(node->attrib,"reads") == 0)) || ((strcmp(node->attrib,"readi") == 0))  || ((strcmp(node->attrib,"readf") == 0)) ||
         ((strcmp(node->attrib,"write") == 0)) || ((strcmp(node->attrib,"strlen") == 0)) || ((strcmp(node->attrib,"substring") == 0)) ||
@@ -203,12 +253,20 @@ bool is_it_predef_func_call(ast_node* node){
     }
 }
 
+/**
+ * @function: create_predef_funcs
+ * @brief:  function receives a binary tree root and inserts IFJ22 predefined functions
+ * 
+ *  @param[in] global_symtab: binary tree structure holding function declarations
+ *  @return: same root node which was received
+ *  @errcodes: 99 - internal, failure to insert function into global symtable
+*/
 struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
 //reads() : ?string
     global_symtab = bintree_insert(global_symtab, generate_id(), "reads", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "reads")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'reads' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'reads' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -228,7 +286,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "readi", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "readi")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'readi' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'readi' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -248,7 +306,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "readf", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "readf")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'readf' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'readf' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -268,7 +326,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "write", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "write")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'write' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'write' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -291,7 +349,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "strlen", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "strlen")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'strlen' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'strlen' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -322,7 +380,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "substring", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "substring")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'substring' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'substring' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -367,7 +425,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "ord", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "ord")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'ord' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'ord' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -398,7 +456,7 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), "chr", function); //main program body
     //check if inserted and set curr scope to main body
     if ((search = bintree_search_by_key(global_symtab, "chr")) == NULL){
-        dbgprint("ERROR[99]:  failed to find 'chr' predefined function's node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find 'chr' predefined function's node in global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     } else {
@@ -426,6 +484,46 @@ struct bintree_node* create_predef_funcs(struct bintree_node* global_symtab){
     }
 
     return global_symtab;
+}
+
+/**
+ * @function: string_to_float
+ * @brief:  function converts received string into float, if possible
+ * 
+ *  @param[in] string: string containing number
+ *  @return: number stored in string, as float
+*/
+float string_to_float(const char* string){
+    float res = 0;
+    bool is_negative = false;
+    bool decimal_point_found = false;
+
+    if (*string == '-'){ //first check if number is negative
+        string++;
+        is_negative = true;
+    }
+    while (*string){ //while there's what to read
+        if (*string == '.'){ //if float point found
+            decimal_point_found = true;
+        } else if ((*string - '0') >= 0 && (*string - '0') <= 9){ //if char is a number
+            res = (res * 10.0f) + (float)(*string - '0');
+        }
+        string++; //move to next char
+    }
+
+    if (decimal_point_found == true){ //if it's float
+        if (is_negative == true){ //if it's a negative number
+            return res * (-1 / 10.0f);
+        } else {
+            return res * (1 / 10.0f);
+        }
+    } else {
+        if (is_negative == true){
+            return res * -1;
+        } else {
+            return res * 1;
+        } 
+    }
 }
 
 
@@ -461,7 +559,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
     if (node->type == CONVERT_TYPE){
         node = node->children[0];
     }
-    //dbgprint("node->type:  %s", node_type_tostr(node->type));
+    //dbgprint_nonl("node->type:  %s", node_type_tostr(node->type));
     if (node->type == EXPR || node->type == EXPR_PAR){ //check if function truly received an 'EXPR' node
         arg_type type_l, type_r;
         if (node->type == EXPR_PAR){ //if node is 'EXPR_PAR', AST makes sure to insert the node with the actual value as its child, so just move into it
@@ -474,15 +572,15 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                 return token_type_to_arg_type_forvals(node->sub_type);
             } else if (node->sub_type == ID){ //EXPR is a variable
                 if ((var = bintree_search_by_key(curr_scope_func->local_symtab, node->attrib)) != NULL){ //is value defined in current scope?
-                    //dbgprint("var->node_data->curr_type:  %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
+                    //dbgprint_nonl("var->node_data->curr_type:  %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
                     return var->node_data->curr_type;
                 } else {
-                    dbgprint("ERROR[5]:  attempt at using an undefined variable detected\n");
+                    dbgprint_nonl("ERROR[5]:  attempt at using an undefined variable detected\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = UNDEF_VAR_ERR;}
                     return ARG_TYPE_ERROR;
                 }
             } else {
-                dbgprint("ERROR[99]:  unexpected format of 'EXPR' node: unsupported subtype\n");
+                dbgprint_nonl("ERROR[99]:  unexpected format of 'EXPR' node: unsupported subtype\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 return ARG_TYPE_ERROR;
             }
@@ -498,9 +596,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
 
                 ///TODO: AST CONVERT_TYPE nodes insertion
 
-                //dbgprint("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
-                //dbgprint("type_r: %s", bintree_fnc_arg_type_tostr(type_r));
-                //dbgprint("node->sub_type: %s", node_subtype_tostr(node->sub_type));
+                //dbgprint_nonl("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
+                //dbgprint_nonl("type_r: %s", bintree_fnc_arg_type_tostr(type_r));
+                //dbgprint_nonl("node->sub_type: %s", node_subtype_tostr(node->sub_type));
                 //string concatenation
                 if (node->sub_type == STRCAT){ //first check if STRCAT
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
@@ -510,10 +608,22 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                             }
                         }
                         return string_t;
-                    } else {
-                        dbgprint("ERROR[7]:  found a type incompatibility error in an expression\n");
-                        if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
-                        return ARG_TYPE_ERROR;
+                    } else { //check if we're not dealing with conditionals (those are convertable, except for with int/float)
+                        ast_node* tmp_l = node->children[0];
+                        ast_node* tmp_r = node->children[1];
+                        while (tmp_l->type == EXPR_PAR){
+                            tmp_l = tmp_l->children[0];
+                        }
+                        while (tmp_r->type == EXPR_PAR){
+                            tmp_r = tmp_r->children[0];
+                        }
+                        if (!((is_conditional(tmp_l->sub_type) || type_l == string_t || type_l == nstring_t || type_l == void_t) && 
+                            (is_conditional(tmp_r->sub_type) || type_r == string_t || type_r == nstring_t || type_r == void_t))){ //string/condit/void + string/condit/void
+                            dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
+                            if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                            return ARG_TYPE_ERROR;
+                        }
+                        return string_t;
                     }
                 //int/float compatibility + division by zero
                 } else if (((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) || 
@@ -521,20 +631,23 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                            ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)) ||
                            ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t))){ //if one type is int and the other float
                     if (node->sub_type == DIV || node->sub_type == IDIV){ //if dividing, check if right value isn't a zero
-                        if (((type_r == int_t || type_r == nint_t) && (atoll(node->children[1]->attrib) == 0)) ||
-                            ((type_r == float_t || type_r == nfloat_t) && (atof(node->children[1]->attrib) == 0.0))){
+                        if (((type_r == int_t || type_r == nint_t) && (string_to_float(node->children[1]->attrib) == 0)) ||
+                            ((type_r == float_t || type_r == nfloat_t) && (string_to_float(node->children[1]->attrib) == 0))){
                             if (node->children[1]->sub_type != ID){
-                                dbgprint("ERROR[8]:  found an attempt at division by zero\n");
+                                dbgprint_nonl("ERROR[8]:  found an attempt at division by zero\n");
                                 if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
                                 return ARG_TYPE_ERROR;
                             } else {
+                                //NOTE: these checks only ever
+                                /**
                                 if ((var = bintree_search_by_key(curr_scope_func->local_symtab, node->children[1]->attrib)) != NULL){ //already checked elsewhere anyway
                                     if (var->node_data->is_zero == true){
-                                        dbgprint("ERROR[8]:  found an attempt at division by zero\n");
+                                        dbgprint_nonl("ERROR[8]:  found an attempt at division by zero\n");
                                         if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
                                         return ARG_TYPE_ERROR;
                                     }
                                 }
+                                **/
                             }
                         }
                     } //it's not DIV or division by zero, but still, both operands must be of type float
@@ -570,25 +683,25 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         return string_t;
                     } else {
                         if (node->sub_type != EQ && node->sub_type != NEQ){
-                            dbgprint("ERROR[7]:  found a type incompatibility error in an expression\n");
+                            dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
                             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
                             return ARG_TYPE_ERROR;
                         }
                     }
                 } else {
-                    dbgprint("ERROR[7]:  found a type incompatibility error in an expression\n");
+                    dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
                     return ARG_TYPE_ERROR;
                 }
             }
         } else {
-            dbgprint("ERROR[99]:  unexpected format of 'EXPR' node: children_cnt not 0 or 2\n");
+            dbgprint_nonl("ERROR[99]:  unexpected format of 'EXPR' node: children_cnt not 0 or 2\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
             return ARG_TYPE_ERROR;
         }
     } else if (node->type == EXPR_FCALL){
         if ((search3 = bintree_search_by_key(global_symtab, node->attrib)) == NULL){
-            dbgprint("ERROR[3]:  found an attempt at calling an undefined function\n");
+            dbgprint_nonl("ERROR[3]:  found an attempt at calling an undefined function\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
             return ARG_TYPE_ERROR;
         }
@@ -596,7 +709,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
     } else if (node->type == CONVERT_TYPE) {
         ;
     } else {
-        dbgprint("ERROR[99]:  'semantic_get_expr_type' received a non-'EXPR' AST node of type: %s\n", node_type_tostr(node->type));
+        dbgprint_nonl("ERROR[99]:  'semantic_get_expr_type' received a non-'EXPR' AST node of type: %s\n", node_type_tostr(node->type));
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return ARG_TYPE_ERROR;
     }
@@ -619,7 +732,7 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
 struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_node* global_symtab){
     global_symtab = bintree_insert(global_symtab, generate_id(), node->attrib, function);
     if ((search = bintree_search_by_key(global_symtab, node->attrib)) == NULL){
-        dbgprint("ERROR[99]:  in 'global_symtab_insert': function 'bintree_insert' failed inserting function into global symtable\n");
+        dbgprint_nonl("ERROR[99]:  in 'global_symtab_insert': function 'bintree_insert' failed inserting function into global symtable\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return global_symtab;
     }
@@ -637,12 +750,12 @@ struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_nod
         node = node->children[0]; //go to parameter list
         //fill out "search->node_data->arg_names_list" && "search->node_data->arg_type_list"
         for (size_t i = 0; i < node->children_cnt; i++){
-            //dbgprint("node->children[i]->type: %s",node_type_tostr(node->children[i]->type));
+            //dbgprint_nonl("node->children[i]->type: %s",node_type_tostr(node->children[i]->type));
             if (node->children[i]->type == PARAM){
                 arg_type type = token_type_to_arg_type(node->children[i]->sub_type);
                 char tmp[32];
                 strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
-                //dbgprint("node->children[i]->attrib: %s",node->children[i]->attrib);
+                //dbgprint_nonl("node->children[i]->attrib: %s",node->children[i]->attrib);
                 search->local_symtab = bintree_insert(search->local_symtab, search->node_data->arg_cnt, node->children[i]->attrib, variable); //insert the variable into function's local symtab
                 var = bintree_search_by_key(search->local_symtab, node->children[i]->attrib);
                 var = bintree_node_nullifyinfo(var);
@@ -653,7 +766,7 @@ struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_nod
                 search->node_data->vars_cnt++; //increment var count
                 search->node_data->arg_cnt++; //increment arg count
             } else {
-                dbgprint("ERROR[99]:  in 'global_symtab_insert': found non-param node inserted in parameter list in AST\n       Function was not inserted into global tree => wrong behaviour may follow\n");
+                dbgprint_nonl("ERROR[99]:  in 'global_symtab_insert': found non-param node inserted in parameter list in AST\n       Function was not inserted into global tree => wrong behaviour may follow\n");
             }
         }
     } else if (node->children[0]->type == RET_TYPE){ //function with no parameters
@@ -661,7 +774,7 @@ struct bintree_node* global_symtab_funcinsert(ast_node* node, struct bintree_nod
         search->node_data->arg_cnt = 0;
         search->node_data->rtype = token_type_to_arg_type(node->children[0]->sub_type);
     } else {
-        dbgprint("ERROR[99]:  in 'global_symtab_insert': function declaration empty or missing sub-nodes\n       Function was not inserted into global tree => wrong behaviour may follow\n"); //!!!todo: error code (but this should be syntax error)
+        dbgprint_nonl("ERROR[99]:  in 'global_symtab_insert': function declaration empty or missing sub-nodes\n       Function was not inserted into global tree => wrong behaviour may follow\n"); //!!!todo: error code (but this should be syntax error)
     }
 
     return global_symtab;
@@ -686,7 +799,7 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
     //function definition encountered
         case FDEF:
             if ((search = bintree_search_by_key(global_symtab, AST->attrib)) != NULL){ //check if function was already defined
-                dbgprint("ERROR[3]: attempt at function redefinition encountered\n"); //!!!
+                dbgprint_nonl("ERROR[3]: attempt at function redefinition encountered\n"); //!!!
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
                 return global_symtab;
             } else { //if it doesn't exist yet, create new node in symtable
@@ -700,7 +813,7 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
     INFORUN(
         const char* type = node_type_tostr(AST->type);
         const char* sub_type = node_subtype_tostr(AST->sub_type);
-        dbgprint("[attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", AST->attrib, type, sub_type);
+        dbgprint_nonl("[attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", AST->attrib, type, sub_type);
     );
 
     for(size_t i = 0; i < AST->children_cnt; i++){
@@ -713,7 +826,13 @@ struct bintree_node* AST_DF_firsttraversal(ast_node* AST, struct bintree_node* g
 }
 
 /**
- * AST CONVERSION NODE INSERTION FOR ARITHMETICS AND STRINGS
+ * @function: handle_conversions
+ * @brief AST conversion node insertion
+ * 
+ * @param[in] parent: parent AST node of checked conditional
+ * @param[in] type_l: type of left operand
+ * @param[in] type_r: type of right operand
+ * @errcodes: 99 - node insertion failure
 */
 void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
     if (parent->sub_type == EQ || parent->sub_type == NEQ){ //=== and !== don't have converts
@@ -728,13 +847,13 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             return; //already was converted
         }
     }
-    //dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
-    //dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
+    //dbgprint_nonl("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+    //dbgprint_nonl("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
     //if division, both operands have to be converted to float (unless they're both int)
     if (parent->sub_type == DIV || parent->sub_type == IDIV){
-        //dbgprint("DIV");
+        //dbgprint_nonl("DIV");
         if ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)){
-            //dbgprint("IDIV found");
+            //dbgprint_nonl("IDIV found");
             parent->sub_type = IDIV;
             return;
         }
@@ -746,7 +865,7 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
                 node_l = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
             }
             if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 return; 
             }
@@ -760,18 +879,18 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
                 node_r = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
             }
             if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 return; 
             }
         }
     //if string concatenation, both operands have to be converted to string
     } else if (parent->sub_type == STRCAT){ //anything other than void is STRNUM extension
-        //dbgprint("STRCAT");
+        //dbgprint_nonl("STRCAT");
         if (type_l == void_t){
             ast_node* node_l = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
             if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 return; 
             }
@@ -780,14 +899,14 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
         if (type_r == void_t){
             ast_node* node_r = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
             if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 return; 
             }
         }
     //if other arithmetic operation, both types have to be of the same type (higher type has priority, float > int > void)
     } else {
-        //dbgprint("ARITHMETIC / RELATIONAL");
+        //dbgprint_nonl("ARITHMETIC / RELATIONAL");
         if (type_l == void_t){
             if (parent->sub_type == GT || parent->sub_type == LT){ //don't put NULL conversions into '<' or '>'
                 return;
@@ -796,21 +915,21 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             if (type_r == int_t || type_r == nint_t){
                 node_l = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
                 if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
             } else if (type_r == float_t || type_r == nfloat_t){
                 node_l = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
                 if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
             } else if (type_r == string_t){
                 node_l = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
                 if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
@@ -820,7 +939,7 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             if (type_r == float_t || type_r == nfloat_t){
                 node_l = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
                 if (node_insert_betwene(parent, node_l, parent->children[0]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
@@ -835,21 +954,21 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             if (type_l == int_t || type_l == nint_t){
                 node_r = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
                 if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
             } else if (type_l == float_t || type_l == nfloat_t){
                 node_r = node_new(CONVERT_TYPE, NULL_TO_FLOAT, NULL);
                 if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
             } else if (type_l == string_t){
                 node_r = node_new(CONVERT_TYPE, NULL_TO_STR, NULL);
                 if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
@@ -859,7 +978,7 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
             if (type_l == float_t || type_l == nfloat_t){
                 node_r = node_new(CONVERT_TYPE, INT_TO_FLOAT, NULL);
                 if (node_insert_betwene(parent, node_r, parent->children[1]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }
@@ -869,13 +988,19 @@ void handle_conversions(ast_node* parent, arg_type type_l, arg_type type_r){
 }
 
 /**
- * AST CONVERSION NODE INSERTION FOR CONDITIONALS
+ * @function: handle_conversions_conditionals
+ * @brief AST conversion node insertion for conditionals
+ * 
+ * @param[in] parent: parent AST node of checked conditional
+ * @param[in] child:  child AST node of checked conditional
+ * @param[in] global_symtab: binary tree structure holding function declarations
+ * @errcodes: 99 - node insertion failure
 */
 void handle_conversions_conditionals(ast_node* parent, ast_node* child, struct bintree_node* global_symtab){
     arg_type type = semantic_get_expr_type(child, global_symtab);
     if (sem_retcode != SEM_SUCCESS){return;}
 
-    dbgprint("type: %s", bintree_fnc_arg_type_tostr(type));
+    //dbgprint_nonl("type: %s", bintree_fnc_arg_type_tostr(type));
 
     ast_node* node;
     if (type == int_t || type == nint_t){
@@ -887,11 +1012,12 @@ void handle_conversions_conditionals(ast_node* parent, ast_node* child, struct b
     } else if (type == void_t){
         node = node_new(CONVERT_TYPE, NULL_TO_BOOL, NULL);
     } else {
-        dbgprint("reeeeeeeeee");
+        //dbgprint_nonl("reeeeeeeeee");
+        ;
     }
 
     if (node_insert_betwene(parent, node, parent->children[0]) == false){
-        dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
+        dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return; 
     }
@@ -919,10 +1045,10 @@ void handle_conversions_conditionals(ast_node* parent, ast_node* child, struct b
 */
 void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
     if (node->children_cnt < 2){
-        dbgprint("ERROR:  found assignment with no left or right parameters (e.g. '= expr' or '$var ='\n"); //!!! should be handled by parser
+        dbgprint_nonl("ERROR:  found assignment with no left or right parameters (e.g. '= expr' or '$var ='\n"); //!!! should be handled by parser
     }
     if (node->children[0]->sub_type != ID){
-        dbgprint("ERROR:  found assignment with its left parameter not being a variable\n"); //!!! should be handled by parser
+        dbgprint_nonl("ERROR:  found assignment with its left parameter not being a variable\n"); //!!! should be handled by parser
     }
 
     //check if everything that's on the right side of the equation can actually be added together
@@ -931,7 +1057,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
     type = semantic_get_expr_type(node->children[1], global_symtab);
     //val = semantic_get_expr_val(node->children[1], global_symtab);
     /**if (type == void_t){ //NULL assignment
-        dbgprint("ERROR[7]:  found NULL assignment");
+        dbgprint_nonl("ERROR[7]:  found NULL assignment");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
     }**/
     if (sem_retcode != SEM_SUCCESS){return;}
@@ -944,43 +1070,45 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
         curr_scope_func->local_symtab->node_data->vars_cnt++; //increment var count
         var->node_data->init_type = type;
         var->node_data->curr_type = type;
-        //dbgprint("node->children[1]->attrib:  %s", node->children[1]->attrib);
-        //dbgprint("type:                       %s", bintree_fnc_arg_type_tostr(type));
+        //dbgprint_nonl("node->children[1]->attrib:  %s", node->children[1]->attrib);
+        //dbgprint_nonl("type:                       %s", bintree_fnc_arg_type_tostr(type));
         //char* tmp;
         //float f = strtof(node->children[1]->attrib, &tmp);
-        //dbgprint("f:  %.1f", f);
-        if (((type == int_t || type == nint_t) && (strcmp(node->children[1]->attrib, "0") == 0)) ||
-            ((type == float_t || type == nfloat_t) && ((strcmp(node->children[1]->attrib, "0.0") == 0) || (strcmp(node->children[1]->attrib, "0.00") == 0)))){
-            //dbgprint("zero");
+        //dbgprint_nonl("f:  %.1f", f);
+
+        /**if (((type == int_t || type == nint_t) && (string_to_float(node->children[1]->attrib) == 0)) ||
+            ((type == float_t || type == nfloat_t) && ((string_to_float(node->children[1]->attrib) == 0) || (strcmp(node->children[1]->attrib, "0.00") == 0)))){
+            //dbgprint_nonl("zero");
             var->node_data->is_zero = true;
         } else {
-            //dbgprint("not zero");
+            //dbgprint_nonl("not zero");
             var->node_data->is_zero = false;
-        }
+        }**/
     } else {
         //CHECK CONVERSION COMPATIBILITY
-        //dbgprint("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
-        //dbgprint("type:                      %s", bintree_fnc_arg_type_tostr(type));
+        //dbgprint_nonl("var->node_data->curr_type: %s", bintree_fnc_arg_type_tostr(var->node_data->curr_type));
+        //dbgprint_nonl("type:                      %s", bintree_fnc_arg_type_tostr(type));
         /**if (!(var->node_data->curr_type == type || //same types
            (var->node_data->curr_type == void_t) || //var is type void
            ((var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||          //?int = int/void
            ((var->node_data->curr_type == float_t || var->node_data->curr_type == nfloat_t) && (type == int_t || type == nint_t || type == float_t || type == nfloat_t || type == void_t)) ||    //?float = float/void
            ((var->node_data->curr_type == string_t || var->node_data->curr_type == nstring_t) && (type == string_t || type == nstring_t || type == void_t)))){ //?string = string/void 
-            dbgprint("ERROR[7]:  type incompatibility in assignment");
+            dbgprint_nonl("ERROR[7]:  type incompatibility in assignment");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
             return;
         } else {**/
             if (type != void_t){
                 var->node_data->curr_type = type;
-                //dbgprint("node->children[1]->attrib:  %s", node->children[1]->attrib);
-                if ((type == int_t || type == nint_t) && (strcmp(node->children[1]->attrib, "0") == 0)){
+                //dbgprint_nonl("node->children[1]->attrib:  %s", node->children[1]->attrib);
+                /**if ((type == int_t || type == nint_t) && (string_to_float(node->children[1]->attrib) == 0)){
                     var->node_data->is_zero = true;
                 } else {
                     var->node_data->is_zero = false;
-                }
+                }**/
             } else if (node->children[1]->sub_type == VVAL){
                 var->node_data->curr_type = void_t;
-                var->node_data->is_zero = false;
+                //var->node_data->is_zero = false;
+        //! scratched conversions
                 /**ast_node* node_r;
                 if (var->node_data->curr_type == int_t || var->node_data->curr_type == nint_t){
                     node_r = node_new(CONVERT_TYPE, NULL_TO_INT, NULL);
@@ -992,7 +1120,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
                     return;
                 }
                 if (node_insert_betwene(node, node_r, node->children[1]) == false){
-                    dbgprint("ERROR[99]:  'node_insert_between' failed to insert conversion node");
+                    dbgprint_nonl("ERROR[99]:  'node_insert_between' failed to insert conversion node");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                     return; 
                 }**/
@@ -1015,7 +1143,7 @@ void semantic_check_assign(ast_node* node, struct bintree_node* global_symtab){
 void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
 // [3] check if function defined
     if ((search = bintree_search_by_key(global_symtab, node->attrib)) == NULL){
-        dbgprint("ERROR[3]:  found an attempt at calling an undefined function\n");
+        dbgprint_nonl("ERROR[3]:  found an attempt at calling an undefined function\n");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
         return;
     }
@@ -1034,7 +1162,7 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
 
     if (node->children_cnt == 0){ //if no parameters passed
         if (search->node_data->arg_cnt != 0){ //check if called function needs any params
-            dbgprint("ERROR[4]:  wrong number of parameters passed in function call\n");
+            dbgprint_nonl("ERROR[4]:  wrong number of parameters passed in function call\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
         }
         return; //nothing to be done for function with no params
@@ -1050,19 +1178,19 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
         node = node->children[0];
     } else if (node->children[0]->type == EXPR || node->children[0]->type == EXPR_FCALL){ //if child is EXPR or EXPR_FCALL
         if (search->node_data->arg_cnt != 1){
-            dbgprint("ERROR[4]:  wrong number of parameters passed in function call\n");
+            dbgprint_nonl("ERROR[4]:  wrong number of parameters passed in function call\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
     } else {//else AST is wrongly formatted
-        dbgprint("ERROR[99]: wrong format of AST received: in function call, expected node with type 'EXPR_LIST' but %s received instead\n", node_type_tostr(node->children[0]->type));
+        dbgprint_nonl("ERROR[99]: wrong format of AST received: in function call, expected node with type 'EXPR_LIST' but %s received instead\n", node_type_tostr(node->children[0]->type));
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         return;
     }
 
     if ((node->children_cnt != search->node_data->arg_cnt) && (node->type == EXPR_LIST)){ //if number of parameters in EXPR_LIST doesn't correspond to the number of parameters required by given function
         if (search->node_data->variadic_func == false){
-            dbgprint("ERROR[4]:  wrong number of parameters passed in function call\n");
+            dbgprint_nonl("ERROR[4]:  wrong number of parameters passed in function call\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
@@ -1084,18 +1212,18 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                 }
 
                 if (node2->children[0]->type == EXPR_FCALL){ //if passed parameter is a function call
-                    dbgprint("9.9");
+                    dbgprint_nonl("9.9");
                     if ((search2 = bintree_search_by_key(global_symtab, node2->children[0]->attrib)) == NULL){ //check if called function exists
-                        dbgprint("ERROR[3]:  found an attempt at calling an undefined function\n");
+                        dbgprint_nonl("ERROR[3]:  found an attempt at calling an undefined function\n");
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
                         return;
                     }
                     arg_type type = semantic_get_expr_type(node2->children[0], global_symtab); //get its rettype (also has imbedded fcall checking)
                     if (sem_retcode != SEM_SUCCESS){return;}
-                    //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                    //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                    //dbgprint_nonl("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                    //dbgprint_nonl("ptr->linkData->type:               %s",ptr->linkData->type);
                     if (strcmp(bintree_fnc_arg_type_tostr(type), ptr->linkData->type) != 0){ //should also handle nullables? (?int, ?string,...)
-                        dbgprint("ERROR[4]:  wrong types of parameters passed in function call\n");
+                        dbgprint_nonl("ERROR[4]:  wrong types of parameters passed in function call\n");
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                         return;
                     }
@@ -1103,17 +1231,17 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                     type = semantic_get_expr_type(node2->children[0], global_symtab);
                     strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
                     if (sem_retcode != 0){return;}
-                    //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
-                    //dbgprint("?tmp:  %s", tmp);
+                    //dbgprint_nonl("?type: %s", bintree_fnc_arg_type_tostr(type));
+                    //dbgprint_nonl("?tmp:  %s", tmp);
 
                     /**INFORUN(
                         const char* type = node_type_tostr(node->children[i]->type);
                         const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
-                        dbgprint("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
+                        dbgprint_nonl("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
                     );**/
-                    //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                    //dbgprint("tmp:                               %s",tmp);
-                    //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                    //dbgprint_nonl("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                    //dbgprint_nonl("tmp:                               %s",tmp);
+                    //dbgprint_nonl("ptr->linkData->type:               %s",ptr->linkData->type);
                     if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
                         if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
                                                             strcmp(ptr->linkData->type, "?float") == 0 ||
@@ -1121,33 +1249,33 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                             (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
                             (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
                             (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
-                            dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
+                            dbgprint_nonl("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
                             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                             return;
                         }
                     }
-                    //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
-                    //dbgprint("?tmp:  %s", tmp);
+                    //dbgprint_nonl("?type: %s", bintree_fnc_arg_type_tostr(type));
+                    //dbgprint_nonl("?tmp:  %s", tmp);
                 }
             }
             /**INFORUN(
-                dbgprint("-- node->children[i]->type:    %s\n", node_type_tostr(node->children[i]->type));
-                dbgprint("-- node->children[i]->attrib:  %s\n", node->children[i]->attrib);
-                dbgprint("-- node->children_cnt:         %ld\n", node->children_cnt);
-                dbgprint("-- search->node_data->arg_cnt: %ld\n", search->node_data->arg_cnt);
+                dbgprint_nonl("-- node->children[i]->type:    %s\n", node_type_tostr(node->children[i]->type));
+                dbgprint_nonl("-- node->children[i]->attrib:  %s\n", node->children[i]->attrib);
+                dbgprint_nonl("-- node->children_cnt:         %ld\n", node->children_cnt);
+                dbgprint_nonl("-- search->node_data->arg_cnt: %ld\n", search->node_data->arg_cnt);
             );**/
             if (node->children[i]->type == EXPR_FCALL){ //if passed parameter is a function call
                 if ((search2 = bintree_search_by_key(global_symtab, node->children[i]->attrib)) == NULL){ //check if called function exists
-                    dbgprint("ERROR[3]:  found an attempt at calling an undefined function\n");
+                    dbgprint_nonl("ERROR[3]:  found an attempt at calling an undefined function\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
                     return;
                 }
                 arg_type type = semantic_get_expr_type(node->children[i], global_symtab); //get its rettype (also has imbedded fcall checking)
                 if (sem_retcode != SEM_SUCCESS){return;}
-                //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                //dbgprint_nonl("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                //dbgprint_nonl("ptr->linkData->type:               %s",ptr->linkData->type);
                 if (strcmp(bintree_fnc_arg_type_tostr(type), ptr->linkData->type) != 0){ //should also handle nullables? (?int, ?string,...)
-                    dbgprint("ERROR[4]:  wrong types of parameters passed in function call\n");
+                    dbgprint_nonl("ERROR[4]:  wrong types of parameters passed in function call\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                     return;
                 }
@@ -1155,17 +1283,17 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                 type = semantic_get_expr_type(node->children[i], global_symtab);
                 strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
                 if (sem_retcode != 0){return;}
-                //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
-                //dbgprint("?tmp:  %s", tmp);
+                //dbgprint_nonl("?type: %s", bintree_fnc_arg_type_tostr(type));
+                //dbgprint_nonl("?tmp:  %s", tmp);
 
                 /**INFORUN(
                     const char* type = node_type_tostr(node->children[i]->type);
                     const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
-                    dbgprint("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
+                    dbgprint_nonl("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
                 );**/
-                //dbgprint("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
-                //dbgprint("tmp:                               %s",tmp);
-                //dbgprint("ptr->linkData->type:               %s",ptr->linkData->type);
+                //dbgprint_nonl("bintree_fnc_arg_type_tostr(type):  %s",bintree_fnc_arg_type_tostr(type));
+                //dbgprint_nonl("tmp:                               %s",tmp);
+                //dbgprint_nonl("ptr->linkData->type:               %s",ptr->linkData->type);
                 if (strcmp(tmp, ptr->linkData->type) != 0){ //if passed parameter is 'int', 'float' or 'string' (+ their nullable versions)
                     if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
                                                         strcmp(ptr->linkData->type, "?float") == 0 ||
@@ -1173,18 +1301,18 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                         (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
                         (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
                         (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
-                        dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
+                        dbgprint_nonl("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                         return;
                     }
                 }
-                //dbgprint("?type: %s", bintree_fnc_arg_type_tostr(type));
-                //dbgprint("?tmp:  %s", tmp);
+                //dbgprint_nonl("?type: %s", bintree_fnc_arg_type_tostr(type));
+                //dbgprint_nonl("?tmp:  %s", tmp);
             }
             /**INFORUN(
                 const char* type = node_type_tostr(node->children[i]->type);
                 const char* sub_type = node_subtype_tostr(node->children[i]->sub_type);
-                dbgprint("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
+                dbgprint_nonl("![attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", node->children[i]->attrib, type, sub_type);
             );**/
             ptr = ptr->next; //move to next parameter in list
         }
@@ -1202,7 +1330,7 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                   (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
                   (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
                   (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
-                dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
+                dbgprint_nonl("ERROR[4]:  encountered wrong type of parameter passed in function call\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                 return;
             }
@@ -1212,13 +1340,13 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
         strncpy(tmp, bintree_fnc_arg_type_tostr(type), sizeof(tmp));
         if (sem_retcode != SEM_SUCCESS){return;}
         ptr = search->node_data->args_list->tail; //go to end of function's 'args_list' list
-        /**dbgprint("node->children[node->children_cnt-1]-attrib: %s", node->children[node->children_cnt-1]->attrib);
-        dbgprint("node->children[node->children_cnt-1]->type:  %s", node_subtype_tostr(node->children[node->children_cnt-1]->sub_type));
-        dbgprint("tmp:                  %s", tmp);
-        dbgprint("ptr->linkData->type:  %s", ptr->linkData->type);
-        dbgprint("arg_list:             ");
+        /**dbgprint_nonl("node->children[node->children_cnt-1]-attrib: %s", node->children[node->children_cnt-1]->attrib);
+        dbgprint_nonl("node->children[node->children_cnt-1]->type:  %s", node_subtype_tostr(node->children[node->children_cnt-1]->sub_type));
+        dbgprint_nonl("tmp:                  %s", tmp);
+        dbgprint_nonl("ptr->linkData->type:  %s", ptr->linkData->type);
+        dbgprint_nonl("arg_list:             ");
         dll_print_forwards(search->node_data->args_list);
-        dbgprint("\n");**/
+        dbgprint_nonl("\n");**/
 
         if (strcmp(tmp, ptr->linkData->type) != 0){
             if (!(((strcmp(tmp, "void") == 0) && (strcmp(ptr->linkData->type, "?int") == 0 ||
@@ -1227,14 +1355,14 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
                   (((strcmp(tmp, "int") == 0) || (strcmp(tmp, "?int") == 0)) && ((strcmp(ptr->linkData->type, "int") == 0) || (strcmp(ptr->linkData->type, "?int") == 0))) ||
                   (((strcmp(tmp, "float") == 0) || (strcmp(tmp, "?float") == 0)) && ((strcmp(ptr->linkData->type, "float") == 0) || (strcmp(ptr->linkData->type, "?float") == 0))) ||
                   (((strcmp(tmp, "string") == 0) || (strcmp(tmp, "?string") == 0)) && ((strcmp(ptr->linkData->type, "string") == 0) || (strcmp(ptr->linkData->type, "?string") == 0))))){
-                dbgprint("ERROR[4]:  encountered wrong type of parameter passed in function call %s\n",search->node_data->key);
+                dbgprint_nonl("ERROR[4]:  encountered wrong type of parameter passed in function call %s\n",search->node_data->key);
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                 return;
             }
         }
     } else if (node->type == EXPR_FCALL) {
         if ((search2 = bintree_search_by_key(global_symtab, node->attrib)) == NULL){ //check if called function exists
-            dbgprint("ERROR[3]:  found an attempt at calling an undefined function\n");
+            dbgprint_nonl("ERROR[3]:  found an attempt at calling an undefined function\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_DEF_ERR;}
             return;
         }
@@ -1242,7 +1370,7 @@ void semantic_check_fcall(ast_node* node, struct bintree_node* global_symtab){
         arg_type type = semantic_get_expr_type(node, global_symtab);
         if (sem_retcode != SEM_SUCCESS){return;}
         if (search2->node_data->rtype != type){ //should also handle nullables? (?int, ?string,...)
-            dbgprint("ERROR[4]:  wrong types of parameters passed in function call\n");
+            dbgprint_nonl("ERROR[4]:  wrong types of parameters passed in function call\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
@@ -1266,7 +1394,7 @@ void semantic_check_expr(ast_node* node, struct bintree_node* global_symtab){
     if (node->type == EXPR){
         semantic_get_expr_type(node, global_symtab);
     }/** else {
-        dbgprint("ERROR[99]  'semantic_check_expr' received AST node which wasn't of type 'EXPR'");
+        dbgprint_nonl("ERROR[99]  'semantic_check_expr' received AST node which wasn't of type 'EXPR'");
         if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
     }**/
 
@@ -1287,13 +1415,13 @@ void semantic_check_return(ast_node* node, struct bintree_node* global_symtab){
     if (node->type == RETURN_N){
         if (node->children_cnt == 0){ //empty return (return;)
             if (curr_scope_func->node_data->rtype != void_t){
-                dbgprint("ERROR[4]:  found empty return inside a function not defined with 'void' return type\n");
+                dbgprint_nonl("ERROR[4]:  found empty return inside a function not defined with 'void' return type\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             }
         } else if (node->children_cnt == 1){ //return with expression (e.g. [return 1;] or [return $b+foo($b);])
             if (curr_scope_func->node_data->rtype == void_t){
                 if ((strcmp(curr_scope_func->node_data->key, ":b") != 0) && (node->children[0]->sub_type != VVAL)){ //if it's not main body and NULL
-                    dbgprint("ERROR[6]:  found non-empty return inside a function defined with 'void' return type\n");
+                    dbgprint_nonl("ERROR[6]:  found non-empty return inside a function defined with 'void' return type\n");
                     if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_RET_EXPR_ERR;}
                     return;
                 }
@@ -1309,19 +1437,19 @@ void semantic_check_return(ast_node* node, struct bintree_node* global_symtab){
                           ((type == int_t || type == nint_t) && (curr_scope_func->node_data->rtype == int_t || curr_scope_func->node_data->rtype == nint_t)) ||       //int + ?int
                           ((type == float_t || type == nfloat_t) && (curr_scope_func->node_data->rtype == float_t || curr_scope_func->node_data->rtype == nfloat_t)) ||   //float + ?float
                           ((type == string_t || type == nstring_t) && (curr_scope_func->node_data->rtype == string_t || curr_scope_func->node_data->rtype == nstring_t)))){  //string + ?string
-                        //dbgprint("type:                               %s", bintree_fnc_arg_type_tostr(type));
-                        //dbgprint("curr_scope_func->node_data->rtype:  %s", bintree_fnc_arg_type_tostr(curr_scope_func->node_data->rtype));
-                        dbgprint("ERROR[4]:  wrong return type encountered\n");
+                        //dbgprint_nonl("type:                               %s", bintree_fnc_arg_type_tostr(type));
+                        //dbgprint_nonl("curr_scope_func->node_data->rtype:  %s", bintree_fnc_arg_type_tostr(curr_scope_func->node_data->rtype));
+                        dbgprint_nonl("ERROR[4]:  wrong return type encountered\n");
                         if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
                     } 
                 }
             }
         } else {
-            dbgprint("ERROR[99]:  received 'RETURN' node in AST with more than 1 child nodes\n");
+            dbgprint_nonl("ERROR[99]:  received 'RETURN' node in AST with more than 1 child nodes\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
         }
     }/** else {
-        dbgprint("ERROR[99]  'semantic_check_return' received AST node which wasn't of type 'RETURN_N'");
+        dbgprint_nonl("ERROR[99]  'semantic_check_return' received AST node which wasn't of type 'RETURN_N'");
         sem_retcode = ERR_INTERNAL;
     }**/
 
@@ -1353,8 +1481,8 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
         type_r = semantic_get_expr_type(node->children[1], global_symtab);
         if (sem_retcode != SEM_SUCCESS){return;}
 
-        //dbgprint("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
-        //dbgprint("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
+        //dbgprint_nonl("type_l:  %s",bintree_fnc_arg_type_tostr(type_l));
+        //dbgprint_nonl("type_r:  %s",bintree_fnc_arg_type_tostr(type_r));
 
         if (!((type_l == type_r) || //same
               ((type_l == int_t || type_l == nint_t) && (type_r == float_t || type_r == nfloat_t)) ||     //int and float
@@ -1364,7 +1492,7 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
               ((type_l == string_t || type_l == nstring_t) && (type_r == string_t || type_r == nstring_t)) || //string/?string and string/?string
               (type_l == void_t || type_r == void_t))){ //void
             if (node->sub_type != EQ && node->sub_type != NEQ){
-                dbgprint("ERROR[7]:  found type incompatibility in a(n) %s conditional\n", node_type_tostr(node->type));
+                dbgprint_nonl("ERROR[7]:  found type incompatibility in a(n) %s conditional\n", node_type_tostr(node->type));
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
                 return;
             }
@@ -1399,7 +1527,7 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
     INFORUN(
         const char* type = node_type_tostr(AST->type);
         const char* sub_type = node_subtype_tostr(AST->sub_type);
-        dbgprint("[attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", AST->attrib, type, sub_type);
+        dbgprint_nonl("[attrib]%-10s:  [type]%-10s  [subtype]%-10s\n", AST->attrib, type, sub_type);
     );
 
     switch (AST->type){
@@ -1425,7 +1553,7 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
             break;
         case IF_N:
             if (AST->children_cnt < 2){
-                dbgprint("ERROR[99]:  received IF_N AST node with only one child\n");
+                dbgprint_nonl("ERROR[99]:  received IF_N AST node with only one child\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 break;
             }
@@ -1442,7 +1570,7 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
             break;
         case WHILE_N:
             if (AST->children_cnt < 2){
-                dbgprint("ERROR[99]:  received IF_N AST node with only one child\n");
+                dbgprint_nonl("ERROR[99]:  received IF_N AST node with only one child\n");
                 if (sem_retcode == SEM_SUCCESS){sem_retcode = ERR_INTERNAL;}
                 break;
             }
@@ -1465,9 +1593,9 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
                 }
                 //destroy everything after RETURN_N
                 INFORUN(
-                    dbgprint( "trimming: ");
+                    dbgprint_nonl( "trimming: ");
                     node_print(stderr, AST);
-                    dbgprint( "  after RETURN_N received\n");
+                    dbgprint_nonl( "  after RETURN_N received\n");
                 );
                 for (size_t j = i+1; j < AST->children_cnt;){
                     if (AST->children[j] != NULL && AST->children[j]->type != FDEF){
@@ -1482,7 +1610,7 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
     if (AST->type == FDEF){ //move current scope back to main
         search4 = bintree_search_by_key(global_symtab, AST->attrib); //at this point, this has been checked enough times
         if (search4->node_data->rtype != void_t && return_encountered == false){
-            dbgprint("ERROR[4]:  missing return in a function returning non-void\n");
+            dbgprint_nonl("ERROR[4]:  missing return in a function returning non-void\n");
             if (sem_retcode == SEM_SUCCESS){sem_retcode = FUNC_CALL_OR_RETTYPE_ERR;}
             return;
         }
@@ -1497,9 +1625,9 @@ void AST_DF_traversal(ast_node* AST, struct bintree_node* global_symtab){
 \**===========================================================**/
 int semantic(context* cont){
     INFORUN(
-        dbgprint("\n  __  _               ___ ___  _  __ \n");
-        dbgprint(" (_  |_ |\\/|  /\\  |\\ | |   |  /  (_  \n");
-        dbgprint(" __) |_ |  | /--\\ | \\| |  _|_ \\_ __) \n\n");
+        printf("\n  __  _               ___ ___  _  __ \n");
+        printf(" (_  |_ |\\/|  /\\  |\\ | |   |  /  (_  \n");
+        printf(" __) |_ |  | /--\\ | \\| |  _|_ \\_ __) \n\n");
     );
 //initialize global symtable
     //bintree_init(&cont->global_symtab);
@@ -1509,7 +1637,7 @@ int semantic(context* cont){
     create_predef_funcs(cont->global_symtab);
 //check if inserted and set curr scope to main body
     if ((curr_scope_func = bintree_search_by_key(cont->global_symtab, ":b")) == NULL){
-        dbgprint("ERROR[99]:  failed to find ':b' (aka main) node in global symtable\n");
+        dbgprint_nonl("ERROR[99]:  failed to find ':b' (aka main) node in global symtable\n");
         return ERR_INTERNAL;
     }
     dll list = dll_create();
@@ -1526,18 +1654,18 @@ int semantic(context* cont){
     if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured during first traversal (afaik, only error #3 can occur here)
 //DEBUG: print out main body symtable and global symtable
     INFORUN(
-        dbgprint("--------------------------------------------------\n");
+        printf("--------------------------------------------------\n");
         bintree_inorder_fullprint(cont->global_symtab, false);
-        dbgprint("--------------------------------------------------\n");
+        printf("--------------------------------------------------\n");
     );
 //main AST traversal
     AST_DF_traversal(cont->root, cont->global_symtab);
     if (sem_retcode != SEM_SUCCESS){ return sem_retcode; } //if error occured
 
     INFORUN(
-        dbgprint("--------------------------------------------------\n");
+        printf("--------------------------------------------------\n");
         bintree_inorder_currvarsonly(curr_scope_func->local_symtab);
-        dbgprint("--------------------------------------------------\n");
+        printf("--------------------------------------------------\n");
     );
 
     return sem_retcode;
