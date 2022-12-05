@@ -54,6 +54,7 @@ typedef enum lex_state
     LEX_STATE_PS_MARK_0,
     LEX_STATE_PC_MARK_0,
     LEX_STATE_PC_MARK_1,
+    LEX_STATE_PC_MARK_2,
     LEX_STATE_PE_MARK_0,
     LEX_STATE_PE_MARK_1,
     LEX_STATE_PE_MARK_2,

@@ -76,6 +76,7 @@ lex_state lex_state_neq_1(context* context, FILE* input);
 lex_state lex_state_ps_mark_0(context* context, FILE* input);
 lex_state lex_state_pc_mark_0(context* context, FILE* input);
 lex_state lex_state_pc_mark_1(context* context, FILE* input);
+lex_state lex_state_pc_mark_2(context* context, FILE* input);
 lex_state lex_state_pe_mark_0(context* context, FILE* input);
 lex_state lex_state_pe_mark_1(context* context, FILE* input);
 lex_state lex_state_pe_mark_2(context* context, FILE* input);
@@ -117,6 +118,7 @@ const lex_state_function LEX_TABLE[] =
     /* LEX_STATE_PS_MARK_0 */ lex_state_ps_mark_0,
     /* LEX_STATE_PC_MARK_0 */ lex_state_pc_mark_0,
     /* LEX_STATE_PC_MARK_1 */ lex_state_pc_mark_1,
+    /* LEX_STATE_PC_MARK_2 */ lex_state_pc_mark_2,
     /* LEX_STATE_PE_MARK_0 */ lex_state_pe_mark_0,
     /* LEX_STATE_PE_MARK_1 */ lex_state_pe_mark_1,
     /* LEX_STATE_PE_MARK_2 */ lex_state_pe_mark_2
@@ -199,6 +201,17 @@ lex_state lex_validate_float(context* context)
     }
 
     return LEX_STATE_FVAL;
+}
+
+void lex_reset(context* context, FILE* input)
+{
+    for (int i = char_buffer_len(&context->attrib) - 1; i >= 0; i--)
+    {
+        char c = char_buffer_get(&context->attrib, i);
+        ungetc(c, input);
+    }
+
+    char_buffer_clear(&context->attrib);
 }
 
 bool lex_init(context* context, FILE* input)
@@ -356,6 +369,7 @@ lex_state lex_state_start(context* context, FILE* input)
 lex_state lex_state_com_0(context* context, FILE* input)
 {
     int current = fgetc(input);
+    CHAR_BUFFER_ADD(context, current);
 
     if (current == '/')
         return LEX_STATE_LCOM_0;
@@ -363,13 +377,15 @@ lex_state lex_state_com_0(context* context, FILE* input)
     if (current == '*')
         return LEX_STATE_BCOM_0;
 
-    ungetc(current, input);
-
     if (lex_current_mode == LEX_MODE_CONTINUE)
     {
-        dbgprint("Unexpected symbol '%c'!", current);
-        return LEX_STATE_ERROR;
+        lex_reset(context, input);
+        lex_current_mode = LEX_MODE_NORMAL;
+        
+        return LEX_STATE_START;
     }
+
+    ungetc(current, input);
 
     context->token = DIV;
     return LEX_STATE_DIV;
@@ -891,10 +907,10 @@ lex_state lex_state_ps_mark_0(context* context, FILE* input)
     int current = fgetc(input);
     size_t len = char_buffer_len(&context->attrib);
 
+    CHAR_BUFFER_ADD(context, current);
+
     if (current == LEX_PHP_PS_MARK[len])
     {
-        CHAR_BUFFER_ADD(context, current);
-
         if (char_buffer_equals(&context->attrib, LEX_PHP_PS_MARK))
         {
             lex_current_mode = LEX_MODE_CONTINUE;
@@ -928,7 +944,6 @@ lex_state lex_state_pc_mark_0(context* context, FILE* input)
 lex_state lex_state_pc_mark_1(context* context, FILE* input)
 {
     int current = fgetc(input);
-    size_t len = char_buffer_len(&context->attrib);
 
     if (lex_is_whitespace(current))
         return LEX_STATE_PC_MARK_1;
@@ -936,10 +951,26 @@ lex_state lex_state_pc_mark_1(context* context, FILE* input)
     if (current == '/')
         return LEX_STATE_COM_0;
 
+    CHAR_BUFFER_ADD(context, current);
+
+    if (current == LEX_PHP_PC_MARK[0])
+        return LEX_STATE_PC_MARK_2;
+
+    lex_reset(context, input);
+    lex_current_mode = LEX_MODE_NORMAL;
+
+    return LEX_STATE_START;
+}
+
+lex_state lex_state_pc_mark_2(context* context, FILE* input)
+{
+    int current = fgetc(input);
+    size_t len = char_buffer_len(&context->attrib);
+
+    CHAR_BUFFER_ADD(context, current);
+
     if (current == LEX_PHP_PC_MARK[len])
     {
-        CHAR_BUFFER_ADD(context, current);
-
         if (char_buffer_equals(&context->attrib, LEX_PHP_PC_MARK))
         {
             lex_current_mode = LEX_MODE_NORMAL;
@@ -948,11 +979,13 @@ lex_state lex_state_pc_mark_1(context* context, FILE* input)
             return LEX_STATE_PC_MARK;
         }
 
-        return LEX_STATE_PC_MARK_1;
+        return LEX_STATE_PC_MARK_2;
     }
 
-    dbgprint("Unexpected symbol '%c'!", current);
-    return LEX_STATE_ERROR;
+    lex_reset(context, input);
+    lex_current_mode = LEX_MODE_NORMAL;
+
+    return LEX_STATE_START;
 }
 
 lex_state lex_state_pe_mark_0(context* context, FILE* input)
