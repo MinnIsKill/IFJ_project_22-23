@@ -54,4 +54,4 @@ type_n -> STYPE
 		| NSTYPE
 		| NITYPE
 		| NFTYPE
-
+		

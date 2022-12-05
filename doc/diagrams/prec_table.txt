@@ -1,0 +1,28 @@
+
+    FID  :  function = {FID}
+    ID   :  ID 
+    TERM : term = {IVAL|FVAL|SVAL|NUL}
+    CL1  : class1 = {*| \ }
+    CL2  : class2 = {+| -|  .}
+    CL3  : class3 = {<| >| <=| >=}
+    CL4  : class4 = {===| !==}
+
+
+           FID      ID     TERM    CL1     CL2     CL3     CL4      (       )       ,       =       $
+        +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+    F  |{ ERROR | ERROR | ERROR | ERROR | ERROR | ERROR | ERROR |   <   | ERROR | ERROR | ERROR | ERROR }|
+    I  |{ ERROR | ERROR | ERROR |   >   |   >   |   >   |   >   | ERROR |   >   |   >   |   <   |   >   }|
+    T  |{ ERROR | ERROR | ERROR |   >   |   >   |   >   |   >   | ERROR |   >   |   >   | ERROR |   >   }|
+   CL1 |{   <   |   <   |   <   |   >   |   >   |   >   |   >   |   <   |   >   |   >   | ERROR |   >   }|
+   CL2 |{   <   |   <   |   <   |   <   |   >   |   >   |   >   |   <   |   >   |   >   | ERROR |   >   }|
+   CL3 |{   <   |   <   |   <   |   <   |   <   |   >   |   >   |   <   |   >   |   >   | ERROR |   >   }|
+   CL4 |{   <   |   <   |   <   |   <   |   <   |   <   |   >   |   <   |   >   |   >   | ERROR |   >   }|
+    (  |{   <   |   <   |   <   |   <   |   <   |   <   |   <   |   <   |   =   |   <   | ERROR | ERROR }|
+    )  |{ ERROR | ERROR | ERROR | ERROR | ERROR | ERROR | ERROR | ERROR | ERROR |   >   | ERROR | ERROR }|
+    ,  |{   <   |   <   |   <   |   <   |   <   |   <   |   <   |   <   |   >   |   >   | ERROR | ERROR }|
+    =  |{   <   |   <   |   <   |   <   |   <   |   <   |   <   |   <   |   >   |   >   | ERROR |   >   }|
+    $  |{   <   |   <   |   <   |   <   |   <   |   <   |   <   |   <   | ERROR |   <   |   <   | ACCEPT}|
+        +-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+
+
+
