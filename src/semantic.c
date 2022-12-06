@@ -497,6 +497,7 @@ float string_to_float(const char* string){
     float res = 0;
     bool is_negative = false;
     bool decimal_point_found = false;
+    bool found_something_that_aint_a_number = true;
 
     if (*string == '-'){ //first check if number is negative
         string++;
@@ -507,8 +508,13 @@ float string_to_float(const char* string){
             decimal_point_found = true;
         } else if ((*string - '0') >= 0 && (*string - '0') <= 9){ //if char is a number
             res = (res * 10.0f) + (float)(*string - '0');
+            found_something_that_aint_a_number = false;
         }
         string++; //move to next char
+    }
+
+    if (found_something_that_aint_a_number == true){
+        return -999;
     }
 
     if (decimal_point_found == true){ //if it's float
@@ -617,6 +623,12 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         while (tmp_r->type == EXPR_PAR){
                             tmp_r = tmp_r->children[0];
                         }
+                        if (tmp_l->type == CONVERT_TYPE){
+                            tmp_l = tmp_l->children[0];
+                        }
+                        if (tmp_r->type == CONVERT_TYPE){
+                            tmp_r = tmp_r->children[0];
+                        }
                         if (!((is_conditional(tmp_l->sub_type) || type_l == string_t || type_l == nstring_t || type_l == void_t) && 
                             (is_conditional(tmp_r->sub_type) || type_r == string_t || type_r == nstring_t || type_r == void_t))){ //string/condit/void + string/condit/void
                             dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
@@ -682,8 +694,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         }
                         return type_l;
                     }
-                //conditionals (need string conversions as well)
-                } else if (node->sub_type == LT || node->sub_type == GT || node->sub_type == LTE || node->sub_type == GTE || node->sub_type == EQ || node->sub_type == NEQ){
+                //conditionals
+                } else if (is_conditional(node->sub_type)){
+                    dbgprint("!! hmm\n");
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
                         if (type_l == void_t || type_r == void_t){
                             if (already_converted == false){
@@ -692,10 +705,27 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         }
                         return string_t;
                     } else {
-                        if (node->sub_type != EQ && node->sub_type != NEQ){
-                            dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
-                            if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
-                            return ARG_TYPE_ERROR;
+                        //last chance, check if either side of conditional statement is another conditional statement (it can be retyped)
+                        ast_node* tmp_l = node->children[0];
+                        ast_node* tmp_r = node->children[1];
+                        while (tmp_l->type == EXPR_PAR){
+                            tmp_l = tmp_l->children[0];
+                        }
+                        while (tmp_r->type == EXPR_PAR){
+                            tmp_r = tmp_r->children[0];
+                        }
+                        if (tmp_l->type == CONVERT_TYPE){
+                            tmp_l = tmp_l->children[0];
+                        }
+                        if (tmp_r->type == CONVERT_TYPE){
+                            tmp_r = tmp_r->children[0];
+                        }
+                        if (!(is_conditional(tmp_l->sub_type) || is_conditional(tmp_r->sub_type))){
+                            if (node->sub_type != EQ && node->sub_type != NEQ){
+                                dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
+                                if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                                return ARG_TYPE_ERROR;
+                            }
                         }
                     }
                 } else {
@@ -1501,10 +1531,26 @@ void semantic_check_conditionals(ast_node* node, struct bintree_node* global_sym
               ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t)) || //float/?float and float/?float
               ((type_l == string_t || type_l == nstring_t) && (type_r == string_t || type_r == nstring_t)) || //string/?string and string/?string
               (type_l == void_t || type_r == void_t))){ //void
-            if (node->sub_type != EQ && node->sub_type != NEQ){
-                dbgprint_nonl("ERROR[7]:  found type incompatibility in a(n) %s conditional\n", node_type_tostr(node->type));
-                if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
-                return;
+            //last chance, check if either side of conditional statement is another conditional statement (it can be retyped)
+            ast_node* tmp_l = node->children[0];
+            ast_node* tmp_r = node->children[1];
+            while (tmp_l->type == EXPR_PAR){
+                tmp_l = tmp_l->children[0];
+            }
+            while (tmp_r->type == EXPR_PAR){
+                tmp_r = tmp_r->children[0];
+            }
+            if (tmp_l->type == CONVERT_TYPE){
+                tmp_l = tmp_l->children[0];
+            }
+            if (tmp_r->type == CONVERT_TYPE){
+                tmp_r = tmp_r->children[0];
+            }
+            if (!(is_conditional(tmp_l->sub_type) || is_conditional(tmp_r->sub_type))){
+                if (node->sub_type != EQ && node->sub_type != NEQ){
+                    dbgprint_nonl("ERROR[7]:  found a type incompatibility error in an expression\n");
+                    if (sem_retcode == SEM_SUCCESS){sem_retcode = INCOMP_TYPES_ERR;}
+                }
             }
         } else {
             if (node->sub_type == ADD || node->sub_type == SUB || node->sub_type == MUL || node->sub_type == DIV || node->sub_type == IDIV || node->sub_type == STRCAT){
