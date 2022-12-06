@@ -25,4 +25,4 @@ lex:
 	cd ./src/flex;flex lexer.l
 
 finalize:
-	zip -j ./final/xkalis03.zip ./src/* ./final/Makefile ./final/rozdeleni
+	zip -j ./final/xkalis03.zip ./src/* ./final/Makefile ./final/rozdeleni ./final/dokumentace.pdf
