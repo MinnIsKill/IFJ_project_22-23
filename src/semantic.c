@@ -596,9 +596,9 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
 
                 ///TODO: AST CONVERT_TYPE nodes insertion
 
-                //dbgprint_nonl("type_l: %s", bintree_fnc_arg_type_tostr(type_l));
-                //dbgprint_nonl("type_r: %s", bintree_fnc_arg_type_tostr(type_r));
-                //dbgprint_nonl("node->sub_type: %s", node_subtype_tostr(node->sub_type));
+                //dbgprint_nonl("type_l: %s\n", bintree_fnc_arg_type_tostr(type_l));
+                //dbgprint_nonl("type_r: %s\n", bintree_fnc_arg_type_tostr(type_r));
+                //dbgprint_nonl("node->sub_type: %s\n", node_subtype_tostr(node->sub_type));
                 //string concatenation
                 if (node->sub_type == STRCAT){ //first check if STRCAT
                     if ((type_l == string_t || type_l == nstring_t || type_l == void_t) && (type_r == string_t || type_r == nstring_t || type_r == void_t)){
@@ -635,6 +635,12 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                         while (tmp_r->type == EXPR_PAR){
                             tmp_r = tmp_r->children[0];
                         }
+                        if (tmp_r->type == CONVERT_TYPE){
+                            tmp_r = tmp_r->children[0];
+                        }
+                        //dbgprint_nonl("tmp_r->type: %s\n", node_type_tostr(tmp_r->type));
+                        //dbgprint_nonl("tmp_r->sub_type: %s\n", node_subtype_tostr(tmp_r->sub_type));
+                        //dbgprint_nonl("string_to_float(tmp_r->attrib):  %.2f\n", string_to_float(tmp_r->attrib));
                         if (((type_r == int_t || type_r == nint_t) && (string_to_float(tmp_r->attrib) == 0) && (!is_conditional(tmp_r->sub_type))) ||
                             ((type_r == float_t || type_r == nfloat_t) && (string_to_float(tmp_r->attrib) == 0) && (!is_conditional(tmp_r->sub_type)))){
                             if (node->children[1]->sub_type != ID){
