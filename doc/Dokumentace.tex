@@ -51,7 +51,29 @@
 	propojovány a opět testována jejich funkčnost.
 	\subsection{Lexikální analyzátor}
 	\subsection{Syntaktický analyzátor}
+    Syntaktický analyzátor je závislý na lexykalním a vála jeho funkce aby získal nový token. Tokeny
+    jsou předávány přes strukturu context která slouží pro sdílení dat mezi částmi překladače.
+    Rozhodli jsme se implementovat syntaktickou analýzu metodou rekurzivního sestupu. Při návrhu gramatiky
+    jsme narazili na problém kdy pravidlo pro příkaz přiřazení výrazu do proměné kolidovalo s
+    výrazem bez přizazení který osahuje pouze identifikátor z toho to důvodu jsme se rozhodli 
+    přemístit syntaktickoou analízu příkazu přiřazení do precedenční syntaktické analýzy. 
+    Na další problém jsme narazili při volání funkcí, protože jsme se rozhodli implementovat 
+    rozšíření FUNEXP tak jsme museli zajistit, že funkce je možné analyzovat i uprostřed výrazů 
+    a jelikož nám přišlo složité přepínat mezi syntaktickou analýzou rekurzivním sestupem a syntaktickou 
+    analyzou precednční tabulkou tak jsme se rozhodli přemístit volání funkce jen do syntaktické analýzi precedenřní
+    tabulkou. Analyzátor paři svém fungovaní tvoří abstraktní \ignore{TODO link} syntaktický strom který je dále spracováván 
+    dalšími části překladače.
+
 	\subsubsection{Precedenční syntaktický analyzátor}
+    Slouží ke zpracování výrazů, přikazu přiřazení do proměné a volání funkce. Při tvorbě precedenční tabulky jsem si 
+    všiml, že operátori je možné sjednotit do množin se stejnou precedencí díky tomu jsem mohl tabulku zmenšit. Precedenční
+    analyzátor analyzuje vstupní tokeny, ziskané z lexikálního analyzátoru přes strukturu context, dokud nenarazý na první
+    token který se nesmí vyskytovat ve výrazu, volání funkce nebo v příkazu přiřazení. Tento token není zkonzumován a je 
+    ponechán v struktůře context pro další zpracování Syntaktickým analizátorem metodou rekurzivní sestup. Redukce gramatických
+    pravidel na zásobníku Precedenční syntaktycké analýzi probíhají pomocí stavového automatu posaným tímto diagramem. \ignore{TODO link}
+    \ignore{TODO vložit gram pravidla pro redukce}
+
+
 	\subsection{Sémantický analyzátor}
 	\label{semantic}
 	Sémantický analyzátor provádí sémantickou analýzu nad vstupním programem, a je obsažen v souboru \textit{semantic\.c}; jeho hlavičkový soubor pak 
@@ -69,6 +91,20 @@
 	\subsection{Generátor cílového kódu}
 %%%
 	\section{Speciální datové struktury}
+    \subsection{Abstraktní syntaktický strom}
+    Je implementován N-arním stromem\ignore{TODO link na wiki(M-ary tree)} tento strom je tvořen při syntaktické analýze a slouží jako vnitřní reprazentace
+    vstupního kódu. Tento strom je ze syntektické analýzi předávan do sémantické analýzi kde je dále zpracováván po sémantické analýze je strom předán
+    generátoru kódu který strom projde a generuje úseky kódu v závislosti na uzlech stromu. N-arní strom nám zjednodušil spracování zřetězených gramatických
+    pravidel jako například seznam parametrů při definici funkce nebo seznam parametrů při volání funkce. \ignore{TODO obrazki AST pro každé pravidlo}
+
+    \subsection{Generický zásobník}
+    Je implementován pomocí dynamického pole ukazatelů na void. Při přidávání prvků na zásobník může dojít místo v dynamickém poli v takovém případě je k poli přialokováno 
+    24 volných slotů zásobníku pomocí funkce realloc. Zvolil jsem přialokovávat 24 položek, protože mi to přišlo dostatečné ale nemohu to podložit žádným měřením
+    nebo testy.
+    
+    \subsection{Zásobník pro precedenční syntaktickou analyzu}
+    Je přetypvaná struktůra generického zásobníku. Pro tento zásobník byli vytvořeny funkce které správně přetipují vstupy a výstupy tak aby bylo možné volat funkce
+    generického zásobníku. Samotný zásobník slouží pro ukládání uzlů syntaktického stromu které jsou následně redukovány precedenčním syntaktickým analyzátorem.
 
 	\subsection{Tabulka symbolů}
 	\label{symtab}

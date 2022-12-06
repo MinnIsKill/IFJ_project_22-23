@@ -774,7 +774,7 @@ void gen_fcall(ast_node* root)
         putchar('\n');
     }
 
-    //TODO if variadic function push children count
+    // if variadic function push children count
     struct bintree_node* tab = bintree_search_by_key(GLOBAL,fid);
     if(tab->node_data->variadic_func)
     {
@@ -916,6 +916,10 @@ void gen_expr(ast_node* root)
             
         case(DIV):
         case(IDIV):
+            printf("POPS GF@_R2\n");
+            printf("POPS GF@_R1\n");
+            printf("PUSHS GF@_R2\n");
+            printf("PUSHS GF@_R1\n");
             printf("CALL $$$_CONVERT_TO_NUMERIC\n");
             printf("CALL $$$_DO_DIV\n");
             break;
