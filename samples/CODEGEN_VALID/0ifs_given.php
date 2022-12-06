@@ -375,7 +375,7 @@ else
 {
     write("null > true == false:: OK \n");
 }
-if(null > (0===3)
+if(null > (0===3))
 {
     write("null > false == true:: ERROR \n");
 }
@@ -427,11 +427,11 @@ else
 }
 if(1.1 > (1===1))
 {
-    write("1.1 > true == true:: ERROR \n");
+    write("1.1 > true == true:: OK \n");
 }
 else
 {
-    write("1.1 > true == false:: OK \n");
+    write("1.1 > true == false:: ERROR \n");
 }
 if(0.0 > (1===1))
 {
@@ -473,7 +473,7 @@ else
 {
     write("false > true == false:: OK \n");
 }
-if((0===3) > (0===3)
+if((0===3) > (0===3))
 {
     write("false > false == true:: ERROR \n");
 }
@@ -483,33 +483,189 @@ else
 }
 if("" > (1===1))
 {
-    write("\"\" > true :: ERROR \n");
+    write("\"\" > true == true:: ERROR \n");
 }
 else
 {
-    write("\"\" > true :: OK \n");
+    write("\"\" > true == false:: OK \n");
 }
 if("" > (0===3))
 {
-    write("\"\" > false :: ERROR \n");
+    write("\"\" > false == true:: ERROR \n");
 }
 else
 {
-    write("\"\" > false :: OK \n");
+    write("\"\" > false == false:: OK \n");
 }
 if("empty" > (1===1))
 {
-    write("\"empty\" > true :: ERROR \n");
+    write("\"empty\" > true == true:: OK \n");
 }
 else
 {
-    write("\"empty\" > true :: OK \n");
+    write("\"empty\" > true == false:: ERROR \n");
 }
 if("empty" > (0===3))
 {
-    write("\"empty\" > false :: ERROR \n");
+    write("\"empty\" > false == true:: OK \n");
 }
 else
 {
-    write("\"empty\" > false :: OK \n");
+    write("\"empty\" > false == false:: ERROR \n");
+}
+
+/*
+ *  N S
+ *  I S -- X
+ *  F S -- X
+ *  B S
+ *  S S
+ */
+if(null > "")
+{
+    write("null > \"\" == true:: ERROR \n");
+}
+else
+{
+    write("null > \"\" == false:: OK \n");
+}
+if(null > "empty")
+{
+    write("null > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("null > \"empty\" == false:: OK \n");
+}
+/*
+if(1 > "")
+{
+    write("1 > \"\" == true:: OK \n");
+}
+else
+{
+    write("1 > \"\" == false:: ERROR \n");
+}
+if(1 > "empty")
+{
+    write("1 > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("1 > \"empty\" == false:: OK \n");
+}
+
+if(0 > "")
+{
+    write("0 > \"\" == true:: ERROR \n");
+}
+else
+{
+    write("0 > \"\" == false:: OK \n");
+}
+if(0 > "empty")
+{
+    write("0 > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("0 > \"empty\" == false:: OK \n");
+}
+
+if(1.1 > "")
+{
+    write("1.1 > \"\" == true:: OK \n");
+}
+else
+{
+    write("1.1 > \"\" == false:: ERROR \n");
+}
+if(1.1 > "empty")
+{
+    write("1.1 > \"empty\" == true:: OK \n");
+}
+else
+{
+    write("1.1 > \"empty\" == false:: ERROR \n");
+}
+if(0.0 > "empty")
+{
+    write("0.0 > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("0.0 > \"empty\" == false:: OK \n");
+}
+if(0.0 > "")
+{
+    write("0.0 > \"\" == true:: ERROR \n");
+}
+else
+{
+    write("0.0 > \"\" == false:: OK \n");
+}
+ */
+if((1===1) > "empty")
+{
+    write("true > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("true > \"empty\" == false:: OK \n");
+}
+if((1===1) > "")
+{
+    write("true > \"\" == true:: OK \n");
+}
+else
+{
+    write("true > \"\" == false:: ERROR \n");
+}
+if((0===3) > "empty")
+{
+    write("false > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("false > \"empty\" == false:: OK \n");
+}
+if((0===3) > "")
+{
+    write("false > \"\" == true:: ERROR \n");
+}
+else
+{
+    write("false > \"\" == false:: OK \n");
+}
+if("" > "empty")
+{
+    write("\"\" > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("\"\" > \"empty\" == false:: OK \n");
+}
+if("" > "")
+{
+    write("\"\" > \"\" == true:: ERROR \n");
+}
+else
+{
+    write("\"\" > \"\" == false:: OK \n");
+}
+if("empty" > "empty")
+{
+    write("\"empty\" > \"empty\" == true:: ERROR \n");
+}
+else
+{
+    write("\"empty\" > \"empty\" == false:: OK \n");
+}
+if("empty" > "")
+{
+    write("\"empty\" > \"\" == true:: OK \n");
+}
+else
+{
+    write("\"empty\" > \"\" == false:: ERROR \n");
 }
