@@ -1,0 +1,207 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+% Modified by Jeremie Gillet in March 2017 to make an OIST template
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% !!!!!
+%	I HEREBY SWEAR NOT TO USE THIS TEMPLATE FOR ANY MEANS WHICH WOULD 
+%     IN ANY WAY LEAD TO A MONETARY GAIN
+% !!!!!
+
+% Author (aside from template, obviously): Vojtech Kalis (xkalis03), presentation created 
+%                                                                    for a project for subject IFJ, VUTBR FIT
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass[10pt]{beamer}
+
+\usepackage{graphicx} % Allows to include images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{textcomp}
+
+\mode<presentation> {
+
+\usetheme{default}
+
+\usecolortheme[named=white]{structure} % White titles and such
+\setbeamercolor{normal text}{fg=white} % White text
+\setbeamercolor{background canvas}{bg=black} % Black background
+\setbeamertemplate{itemize item}{\color{white}$\bullet$} % Comment this line for default bullet points (triangles)
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+\setbeamertemplate{navigation symbols}{} % No navigation symbols
+\setbeamertemplate{footline}
+ {\begin{minipage}{125mm} \vspace{-4 mm} \hfill \textbf{\normalsize{\insertframenumber\,/\,\inserttotalframenumber}} \end{minipage}}
+ }
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Short title]{Prezentace k projektu do předmětu IFJ\\\vspace{0.3cm}}
+\subtitle{Tým "Tým xkalis03", varianta BVS}
+\author{Vojtěch Kališ, Jan Lutonský, Jan Salaš, Lucie Hlaváčová}
+\date{}
+
+\begin{document}
+
+\setbeamertemplate{background}{\includegraphics[width=\paperwidth, trim = 0 0 0 -17]{img/title.png}} % Adding the background logo for the title page
+
+\begin{frame}[plain]
+\vspace*{1.55cm}
+\titlepage
+\end{frame}
+
+\setbeamertemplate{background}{\includegraphics[width=\paperwidth]{img/background.png}} % Adding the background logo for the rest of the slides
+
+\begin{frame}
+\frametitle{Obsah}
+\centering
+\textbf{IMPLEMENTACE} \\
+\pause
+\vspace{0.5cm}
+\textbf{SPECIÁLNÍ DATOVÉ STRUKTURY} \\
+\pause
+\vspace{0.5cm}
+\textbf{PRÁCE V TÝMU} \\
+\pause
+\vspace{0.5cm}
+\textbf{ZÁVĚR}
+
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Implementace}
+\begin{itemize}[<+->]
+\item struktura Context
+	\begin{itemize}[<2->]
+	\item $\rightarrow$ context.c, context.h
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Lexikální analýza
+	\begin{itemize}[<4->]
+	\item $\rightarrow$ lex.c, lex.h
+	\item 3 módy, stavy jako funkce
+	\item funkce lex\_init, lex\_next
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Syntaktická analýza
+	\begin{itemize}[<6->]
+	\item $\rightarrow$ parser.c, parser.h, parser\_expr.c, parser\_expr.h
+	\item LL-gramatika, rekurzivní sestup
+	\item precedenční syntaktická analýza
+	\item AST
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Implementace}
+\begin{itemize}[<+->]
+\item Sémantická analýza
+	\begin{itemize}[<2->]
+	\item $\rightarrow$ semantic.c, semantic.h
+	\item globální tabulka symbolů, definice funkcí
+	\item práce s AST
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Generování cílového kódu
+	\begin{itemize}[<4->]
+	\item $\rightarrow$ codegen.c, codegen.h
+	\item architektura, průchod AST
+	\item implicitní typové konverze
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Speciální datové struktury}
+\begin{itemize}[<+->]
+\item Abstraktní syntaktický strom
+	\begin{itemize}[<2->]
+	\item $\rightarrow$ ast.c, ast.h
+	\item N-ární strom
+	\item Použití
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Generický zásobník
+	\begin{itemize}[<4->]
+	\item $\rightarrow$ g\_stack.c, g\_stack.h
+	\item dynamické pole ukazatelů na void
+	\item přialokování místa
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Zásobník pro precedenční syntaktickou analýzu
+	\begin{itemize}[<6->]
+	\item $\rightarrow$ g\_stack.c, g\_stack.h
+	\item přetypovaný generický zásobník
+	\item pro ukládání uzlů syntaktického stromu
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Tabulka symbolů
+	\begin{itemize}[<8->]
+	\item $\rightarrow$ symtable.c, symtable.h
+	\item binární strom
+	\item nerekurzivní implementace
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Práce v týmu}
+\begin{itemize}[<+->]
+\item Komunikace
+	\begin{itemize}[<2->]
+	\item Discord
+	\item GitHub
+	\end{itemize}
+\pause
+\vspace{0.2cm}
+\item Rozdělení práce
+	\begin{itemize}[<4->]
+	\item teorie společně
+	\item následné rozdělení na podúkoly
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+	\vspace{\stretch{0.382}}
+	\Large{\centerline{PROSTOR PRO DOTAZY}}
+	\vspace{\stretch{0.618}}
+\end{frame}
+
+
+
+%------------------------------------------------
+
+\end{document} 
