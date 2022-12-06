@@ -68,14 +68,14 @@
 	Na začátku programu se lexikální analyzátor inicializuje funkcí $lex \textunderscore init$. Ta rovnou načte první token ze vstupu a vrátí jej syntaktickému 
 	analyzátoru. Pro získání dalšího tokenu syntaktický analyzátor zavolá funkci $lex \textunderscore next$.
 	\subsection{Syntaktický analyzátor}
-	Syntaktický analyzátor je závislý na lexikalním; volá jeho funkce aby získal nový token. Tokeny jsou předávány přes strukturu \textit{context}, která slouží pro 
-	sdílení dat mezi částmi překladače. Pro implementaci syntaktické analýzy byla zvolena metoda rekurzivního sestupu. Při návrhu gramatiky jsme narazili 
-	na problém, kdy pravidlo pro příkaz přiřazení výrazu do proměné kolidovalo s výrazem bez přizazení, který osahuje pouze identifikátor, a z tohoto důvodu 
-	jsme se rozhodli přemístit syntaktickou analýzu příkazu přiřazení do precedenční syntaktické analýzy. Další problém pak byl ještě nalezen při volání funkcí, 
-	kde, z důvodu našeho rozhodnutí implementovat rozšíření FUNEXP, bylo potřeba zajistit možnost analyzovat funkce i uprostřed výrazů a jelikož nám přišlo 
-	složité přepínat mezi syntaktickou analýzou rekurzivním sestupem a syntaktickou analýzou precedenční tabulkou, tak jsme se rozhodli přemístit volání funkce 
-	jen do syntaktické analýzi precedenční tabulkou. Analyzátor při své funkci tvoří \hyperref[abstrtree]{abstraktní syntaktický strom}, který je dále zpracováván 
-	dalšími částmi překladače.
+	Syntaktický analyzátor je závislý na lexikalním; volá jeho funkce aby získal nový token. Tokeny jsou předávány přes strukturu \hyperref[cont]{context}, která 
+	slouží pro sdílení dat mezi částmi překladače. Pro implementaci syntaktické analýzy byla zvolena metoda rekurzivního sestupu. Při návrhu gramatiky jsme 
+	narazili na problém, kdy pravidlo pro příkaz přiřazení výrazu do proměné kolidovalo s výrazem bez přizazení, který osahuje pouze identifikátor, a z tohoto 
+	důvodu jsme se rozhodli přemístit syntaktickou analýzu příkazu přiřazení do precedenční syntaktické analýzy. Další problém pak byl ještě nalezen při volání 
+	funkcí, kde, z důvodu našeho rozhodnutí implementovat rozšíření FUNEXP, bylo potřeba zajistit možnost analyzovat funkce i uprostřed výrazů a jelikož nám 
+	přišlo složité přepínat mezi syntaktickou analýzou rekurzivním sestupem a syntaktickou analýzou precedenční tabulkou, tak jsme se rozhodli přemístit volání 
+	funkce jen do syntaktické analýzi precedenční tabulkou. Analyzátor při své funkci tvoří \hyperref[abstrtree]{abstraktní syntaktický strom}, který je dále 
+	zpracováván dalšími částmi překladače.
 
 	\subsubsection{Precedenční syntaktický analyzátor}
 	Slouží ke zpracování výrazů, přikazu přiřazení do proměné a volání funkce. Při tvorbě precedenční tabulky bylo zpozorováno, že operátory je možné sjednotit 
@@ -88,9 +88,9 @@
 	\subsection{Sémantický analyzátor}
 	\label{semantic}
 	Sémantický analyzátor provádí sémantickou analýzu nad vstupním programem, a je obsažen v souboru \textit{semantic\.c}; jeho hlavičkový soubor pak 
-	analogicky nese název \textit{semantic\.h}. Sémantický analyzátor pracuje převážně s \texit{globální tabulkou symbolů} (využívající implementace 
+	analogicky nese název \textit{semantic\.h}. Sémantický analyzátor pracuje převážně s \textit{globální tabulkou symbolů} (využívající implementace 
 	\hyperref[symtab]{tabulky symbolů} a \hyperref[abstrtree]{abstraktním syntaktickým stromem} (dále jen ASS); obojí se nachází ve sdílené struktuře 
-	\texit{Context}. Očekává se korektní naplnění ASS v rámci 
+	\hyperref[cont]{Context}. Očekává se korektní naplnění ASS v rámci 
 	syntaktické analýzy. Na začátku své funkce sémantický analyzátor projde ASS a vyhledá v něm všechny definice funkcí, jež vloží jakožto nody s typem 	
 	\textit{function} do globální tabulky symbolů; možné parametry definované při deklaraci funkce zase vloží do \textit{lokální tabulky symbolů} dané funkce 
 	jakožto nody s typem \textit{variable}. Do globální tabulky symbolů jsou také vloženy deklarace vestavěných funkcí (zavoláním funkce ), společně s funkcí 
@@ -101,9 +101,26 @@
 	speciální funkci zabývající se prověřením sémantické korektnosti toho konkrétního typu AST nody. V případě, že je nalezena sémantická chyba, program 
 	ukončí svou činnost, vypropaguje kód odpovídající nalezené chybě, a zaručí, že dojde ke kompletnímu uvolnění veškeré alokované paměti.
 	\subsection{Generátor cílového kódu}
-	
+	Na začátku programu jsou definovány globální proměné a lokální proměné na hodnotu nill. Dále následuje hlavní telo programu. Na konci jsou vygenerovány 
+	všechny vestavěné funkce.
+	\subsubsection{Definice funkcí}
+	Při vstupu do funkce se vytvoří nový lokální rámec, do něž se přesunou parametry volané funkce z datového zásobníku, a následně jsou inicializovány 
+	všechny lokální proměné v lokálním rámci na nil. Na konci funkce se na datový zásobník vloží návratová hodnota funkce a to i v případě funkcí vracejících 
+	void, v tomto případě se vrací nil.
+	\subsubsection{Volání funkcí}
+	Při volání funkce se na datový zásobní vloží všechny parametry volané funkce zprava do leva, a pokud se jedná o vestavěnou funkci write (jediná variadická 
+	funkce) je nakonec na datový zásobník vložen i počet předaných parametrů funkce. Při návratu z funkce je návratová hodnota ponechána na datovém 
+	zásobníku pro dalši zpracování.
+	\subsubsection{Výrazy}
+	Výrazy jsou vyhodnovocány převážne za použití datového zásobníku. Při generování výrazů jsou prováděny dynamické typové konverze podle tabulky ze 
+	zadání.
 %%%
 	\section{Speciální datové struktury}
+	\subsection{Context}
+	\label{cont}
+	Jedná se o strukturu určenou pro sdílení dat mezi lexikálním analyzátorem, syntaktickým analyzátorem, sémantickým analyzátorem i generátorem cílového 
+	kódu. Obsahuje globální tabulku symbolů, buffed posledního tokenu, buffer atributu posledního tokenu (jeho přímá "stringová reprezentace"), kořen AST a 
+	zásobník pro precedenční syntaktickou analýzu.
 	\subsection{Abstraktní syntaktický strom}
 	\label{abstrtree}
 	Je implementován jako \href{https://en.wikipedia.org/wiki/M-ary_tree}{N-ární strom}. Tento strom je tvořen při syntaktické analýze a slouží jako vnitřní 
@@ -114,8 +131,8 @@
 
 	\subsection{Generický zásobník}
 	Je implementován pomocí dynamického pole ukazatelů na void. Při přidávání prvků na zásobník může dojít místo v dynamickém poli, v takovém případě je k 
-	poli přialokováno 24 volných slotů zásobníku pomocí funkce realloc. Přialokovávání 24 položek by mělo být dostatečné, avšak nebyly podniknuty žádná měření 
-	či testy které by tuhle skutečnost potrdily.
+	poli přialokováno 24 volných slotů zásobníku pomocí funkce realloc. Přialokovávání 24 položek by mělo být dostatečné, avšak nebyly podniknuty žádná 
+	měření či testy které by tuhle skutečnost potrdily.
     
 	\subsection{Zásobník pro precedenční syntaktickou analýzu}
 	Je přetypovaná struktura generického zásobníku. Pro tento zásobník byly vytvořeny funkce, které správně přetypují vstupy a výstupy tak, aby bylo možné 
@@ -159,8 +176,8 @@
 	Avšak zkušenosti, získané během řešení projektu, a to nejen z hlediska programovacího, nýbrž i komunikace v týmu a rozebírání logistických problémů, 
 	bere celý tým jako velice přínosné a nenahraditelné. 
 
-	Během projektu jsme se potýkali s nesrovnalostmi v zadání či přímo chybějící specifikace některých specifik, avšak ty byly vyřešeny konzultací fóra k projektu. 
-	Velice nám také pomohlo pokusné odevzdání, které nám dodale důležitou zpětnou vazbu ještě před řádným termínem odevzdání.
+	Během projektu jsme se potýkali s nesrovnalostmi v zadání či přímo chybějící specifikace některých specifik, avšak ty byly vyřešeny konzultací fóra k 
+	projektu. Velice nám také pomohlo pokusné odevzdání, které nám dodale důležitou zpětnou vazbu ještě před řádným termínem odevzdání.
 %%%
 	\newpage
 	
