@@ -82,6 +82,197 @@ void gen_CONVERT_X_TO_BOOL()
     );
 }
 
+void gen_CONVERT_X_TO_STRING()
+{
+    printf
+    (
+        "LABEL $$$_CONVERT_X_TO_STRING\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_VAL\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_VAL\n"
+        "TYPE LF@_TYPE LF@_VAL\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_STRING_NIL LF@_TYPE string@nil\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_STRING_BOOL LF@_TYPE string@bool\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_STRING_END LF@_TYPE string@string\n"
+        "EXIT int@7\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_STRING_NIL\n"
+        "MOVE LF@_VAL string@\n"
+        "JUMP $$$_CONVERT_X_TO_STRING_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_STRING_BOOL\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_STRING_BOOL_FALSE LF@_VAL bool@false\n"
+        "\n"
+        "MOVE LF@_VAL string@1\n"
+        "\n"
+        "JUMP $$$_CONVERT_X_TO_STRING_END\n"
+        "LABEL $$$_CONVERT_X_TO_STRING_BOOL_FALSE\n"
+        "\n"
+        "MOVE LF@_VAL string@\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_STRING_END\n"
+        "PUSHS LF@_VAL\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+        );
+}
+
+void gen_CONVERT_X_TO_INT()
+{
+    printf
+        (
+        "LABEL $$$_CONVERT_X_TO_INT\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_VAL\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_VAL\n"
+        "TYPE LF@_TYPE LF@_VAL\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_INT_NIL LF@_TYPE string@nil\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_INT_END LF@_TYPE string@int\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_INT_FLOAT LF@_TYPE string@float\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_INT_BOOL LF@_TYPE string@bool\n"
+        "EXIT int@7\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_INT_NIL\n"
+        "MOVE LF@_VAL int@0\n"
+        "JUMP $$$_CONVERT_X_TO_INT_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_INT_FLOAT\n"
+        "FLOAT2INT LF@_VAL LF@_VAL\n"
+        "JUMP $$$_CONVERT_X_TO_INT_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_INT_BOOL\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_INT_BOOL_FALSE LF@_VAL bool@false\n"
+        "MOVE LF@_VAL int@1\n"
+        "\n"
+        "JUMP $$$_CONVERT_X_TO_INT_END\n"
+        "LABEL $$$_CONVERT_X_TO_INT_BOOL_FALSE\n"
+        "MOVE LF@_VAL int@0\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_INT_END\n"
+        "PUSHS LF@_VAL\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+        );
+}
+
+void gen_CONVERT_TO_NUMERIC()
+{
+    printf
+        (
+        "LABEL $$$_CONVERT_TO_NUMERIC\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_L\n"
+        "DEFVAR LF@_R\n"
+        "DEFVAR LF@_LT\n"
+        "DEFVAR LF@_RT\n"
+        "POPS LF@_L\n"
+        "POPS LF@_R\n"
+        "TYPE LF@_LT LF@_L\n"
+        "TYPE LF@_RT LF@_R\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_RIGHT_INT LF@_LT string@int\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_RIGHT_FLOAT LF@_LT string@float\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_LEFT_INT LF@_RT string@int\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_LEFT_FLOAT LF@_RT string@float\n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_L\n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_CONVERT_TO_NUMERIC_END\n"
+        "\n"
+        "\n"
+        "LABEL $$$_CONVERT_TO_NUMERIC_RIGHT_INT\n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_INT\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_CONVERT_TO_NUMERIC_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_TO_NUMERIC_RIGHT_FLOAT\n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_CONVERT_TO_NUMERIC_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_TO_NUMERIC_LEFT_INT\n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_INT\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_CONVERT_TO_NUMERIC_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_TO_NUMERIC_LEFT_FLOAT\n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_L\n"
+        "\n"
+        "LABEL $$$_CONVERT_TO_NUMERIC_END\n"
+        "PUSHS LF@_R\n"
+        "PUSHS LF@_L\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
+
+void gen_CONVERT_X_TO_FLOAT()
+{
+    printf
+        (
+        "LABEL $$$_CONVERT_X_TO_FLOAT\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_VAL\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_VAL\n"
+        "TYPE LF@_TYPE LF@_VAL\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_FLOAT_NIL LF@_TYPE string@nil\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_FLOAT_INT LF@_TYPE string@int\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_FLOAT_END LF@_TYPE string@float\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_FLOAT_BOOL LF@_TYPE string@bool\n"
+        "EXIT int@7\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_FLOAT_NIL\n"
+        "MOVE LF@_VAL float@0x0p+0\n"
+        "JUMP $$$_CONVERT_X_TO_FLOAT_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_FLOAT_INT\n"
+        "INT2FLOAT LF@_VAL LF@_VAL\n"
+        "JUMP $$$_CONVERT_X_TO_FLOAT_END\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_FLOAT_BOOL\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_FLOAT_BOOL_FALSE LF@_VAL bool@false\n"
+        "MOVE LF@_VAL float@0x1p+0\n"
+        "\n"
+        "JUMP $$$_CONVERT_X_TO_FLOAT_END\n"
+        "LABEL $$$_CONVERT_X_TO_FLOAT_BOOL_FALSE\n"
+        "MOVE LF@_VAL float@0x0p+0\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_FLOAT_END\n"
+        "PUSHS LF@_VAL\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+        );
+}
+
 void gen_CONVERT_NIL_TO_X()
 {
     printf
@@ -237,6 +428,70 @@ void gen_REL_GT()
     );
 }
 
+void gen_STRCAT()
+{
+    printf
+    (
+        "LABEL $$$_STRCATENATE\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_R\n"
+        "DEFVAR LF@_L\n"
+        "\n"
+        "CALL $$$_CONVERT_X_TO_STRING\n"
+        "POPS LF@_L\n"
+        "\n"
+        "CALL $$$_CONVERT_X_TO_STRING\n"
+        "POPS LF@_R\n"
+        "\n"
+        "CONCAT LF@_L LF@_L LF@_R\n"
+        "PUSHS LF@_L\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
+void gen_DO_DIV()
+{
+printf
+    (
+        "LABEL $$$_DO_DIV\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_L\n"
+        "DEFVAR LF@_R\n"
+        "DEFVAR LF@_T\n"
+        "POPS LF@_L\n"
+        "POPS LF@_R\n"
+        "TYPE LF@_T LF@_L\n"
+        "\n"
+        "JUMPIFEQ $$$_DO_DIV_INT LF@_T string@int\n"
+        "JUMPIFEQ $$$_DO_DIV_FLOAT LF@_T string@float\n"
+        "\n"
+        "LABEL $$$_DO_DIV_INT\n"
+        "JUMPIFEQ $$$_DO_DIV_DIV_BY_ZERO LF@_R int@0\n"
+        "IDIV LF@_L LF@_L LF@_R\n"
+        "JUMP $$$_DO_DIV_END\n"
+        "\n"
+        "LABEL $$$_DO_DIV_FLOAT\n"
+        "JUMPIFEQ $$$_DO_DIV_DIV_BY_ZERO LF@_R float@0x0p+0\n"
+        "DIV LF@_L LF@_L LF@_R\n"
+        "\n"
+        "LABEL $$$_DO_DIV_END\n"
+        "PUSHS LF@_L\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+        "\n"
+        "LABEL $$$_DO_DIV_DIV_BY_ZERO\n"
+        "EXIT int@7\n"
+    );
+
+}
+
 void gen_prolog()
 {
     printf(".IFJcode22\n");
@@ -262,6 +517,12 @@ void gen_epilog()
     gen_REL_GT();
     gen_REL_LT();
     gen_CONVERT_X_TO_BOOL();
+    gen_CONVERT_X_TO_STRING();
+    gen_CONVERT_X_TO_INT();
+    gen_CONVERT_X_TO_FLOAT();
+    gen_CONVERT_TO_NUMERIC();
+    gen_DO_DIV();
+    gen_STRCAT();
     gen_built_ins();
     printf("LABEL $$$PROGRAM_END\n");
     printf("POPFRAME\n");
@@ -582,7 +843,7 @@ void gen_expr(ast_node* root)
     if(root->type == CONVERT_TYPE)
     {
         gen_expr(root->children[0]);
-        gen_convert(root->sub_type);
+        //gen_convert(root->sub_type);
         return;
     }
     // skip EXPR_PAR
@@ -639,31 +900,36 @@ void gen_expr(ast_node* root)
             break;
 
         case(ADD):
+            printf("CALL $$$_CONVERT_TO_NUMERIC\n");
             printf("ADDS\n");
             break;
         
         case(SUB):
+            printf("CALL $$$_CONVERT_TO_NUMERIC\n");
             printf("SUBS\n");
             break;
 
         case(MUL):
+            printf("CALL $$$_CONVERT_TO_NUMERIC\n");
             printf("MULS\n");
             break;
             
         case(DIV):
-            printf("DIVS\n");
-            break;
-        
         case(IDIV):
-            printf("IDIVS\n");
+            printf("CALL $$$_CONVERT_TO_NUMERIC\n");
+            printf("CALL $$$_DO_DIV\n");
             break;
 
         case(STRCAT):
-            
             printf("POPS GF@_R2\n");
             printf("POPS GF@_R1\n");
-            printf("CONCAT GF@_R1 GF@_R1 GF@_R2\n");
+            printf("PUSHS GF@_R2\n");
             printf("PUSHS GF@_R1\n");
+            printf("CALL $$$_STRCATENATE\n");
+            //printf("POPS GF@_R2\n");
+            //printf("POPS GF@_R1\n");
+            //printf("CONCAT GF@_R1 GF@_R1 GF@_R2\n");
+            //printf("PUSHS GF@_R1\n");
             break;
         
         case(EQ):
@@ -720,7 +986,7 @@ void gen_expr(ast_node* root)
             break;
         
         default:
-            //TODO erro
+            printf("EXIT int@2\n");
             return;
     }
     

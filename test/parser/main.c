@@ -15,9 +15,10 @@
 int main()
 {
     context con;
-    if(!context_new(&con))
+    int crc = 0;
+    if((crc = context_new(&con)) != 0)
     {
-        return(INTERNAL_ERROR);
+        return(crc);
     }
 
     p_codes p_rc = parse(&con);
@@ -30,15 +31,22 @@ int main()
 
     switch(p_rc)
     { 
-
-        //TODO other error types
         default:
             context_delete(&con); 
-            return(SYNTAX_ERROR); 
+            return(INTERNAL_ERROR);
+
+        case(P_SYNTAX_ERROR):
+            context_delete(&con); 
+            return(SYNTAX_ERROR);
+
+        case(P_LEX_ERROR):
+            context_delete(&con); 
+            return(LEX_ERROR);
         
         case(P_SUCCESS):
             tree_dot_print(stdout,con.root); 
             break; // continue
+
     } 
 
     
