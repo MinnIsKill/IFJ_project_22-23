@@ -432,7 +432,7 @@ lex_state lex_state_lcom_0(context* context, FILE* input)
     return LEX_STATE_LCOM_0;
 }
 
-/* Input content: /*(...) */
+/* Input content: /\*(...) */
 lex_state lex_state_bcom_0(context* context, FILE* input)
 {
     (void) context;
@@ -450,7 +450,7 @@ lex_state lex_state_bcom_0(context* context, FILE* input)
     return LEX_STATE_BCOM_0;
 }
 
-/* Input content: /*(...)* */
+/* Input content: /\*(...)* */
 lex_state lex_state_bcom_1(context* context, FILE* input)
 {
     int current = fgetc(input);
