@@ -101,6 +101,17 @@
 	speciální funkci zabývající se prověřením sémantické korektnosti toho konkrétního typu AST nody. V případě, že je nalezena sémantická chyba, program 
 	ukončí svou činnost, vypropaguje kód odpovídající nalezené chybě, a zaručí, že dojde ke kompletnímu uvolnění veškeré alokované paměti.
 	\subsection{Generátor cílového kódu}
+    Na začátku programu jsou definovány globální proměné a lokální proměné na hodnotu nill. Dále následuje hlavní telo programu. Nakonci jsou vygenerovány všechny
+    vestavěné funkce.
+    \subsubsection{Definice funkcí}
+    Při vstupu do funkce se vytvoří nový lokální rámec a do toho rámce se přesunou parametry volané funkce z datového zásobníku následně jsou inicializovány všechny lokální
+    proměné v lokálním rámci na nil. Na konci funkce se na datový zásobník
+    vloží návratová hodnota funkce a to i v případě funkcí vracejících void, v tomto případě se vrací nil.
+    \subsubsection{Volání funkcí}
+    Při volání funkce se na datový zásobní vloží všechny parametry volané funkce zprava do leva nakonce pokud se jedná o vestavěnou funkci write(jeniná variadická funkce)
+    je na datový zásobní vložen i počet předaných parametrů funkce. Při návratu z funkce je návratová hodnota ponechána na datovém zásobníku pro dalši zpracování.
+    \subsubsection{Výrazy}
+    Výrazy jsou vyhodnovocány převážne za použití datového zásobníku.Při generování výrazů jsou prováděny dynamické typové konverze podle tabulky ze zadání.
 	
 %%%
 	\section{Speciální datové struktury}
