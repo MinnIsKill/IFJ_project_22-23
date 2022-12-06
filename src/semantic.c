@@ -631,8 +631,12 @@ arg_type semantic_get_expr_type(ast_node* node, struct bintree_node* global_symt
                            ((type_l == int_t || type_l == nint_t) && (type_r == int_t || type_r == nint_t)) ||
                            ((type_l == float_t || type_l == nfloat_t) && (type_r == float_t || type_r == nfloat_t))){ //if one type is int and the other float
                     if (node->sub_type == DIV || node->sub_type == IDIV){ //if dividing, check if right value isn't a zero
-                        if (((type_r == int_t || type_r == nint_t) && (string_to_float(node->children[1]->attrib) == 0)) ||
-                            ((type_r == float_t || type_r == nfloat_t) && (string_to_float(node->children[1]->attrib) == 0))){
+                        ast_node* tmp_r = node->children[1];
+                        while (tmp_r->type == EXPR_PAR){
+                            tmp_r = tmp_r->children[0];
+                        }
+                        if (((type_r == int_t || type_r == nint_t) && (string_to_float(tmp_r->attrib) == 0) && (!is_conditional(tmp_r->sub_type))) ||
+                            ((type_r == float_t || type_r == nfloat_t) && (string_to_float(tmp_r->attrib) == 0) && (!is_conditional(tmp_r->sub_type)))){
                             if (node->children[1]->sub_type != ID){
                                 dbgprint_nonl("ERROR[8]:  found an attempt at division by zero\n");
                                 if (sem_retcode == SEM_SUCCESS){sem_retcode = SEM_GENERAL_ERR;}
