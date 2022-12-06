@@ -10,17 +10,26 @@
 
 #include "context.h"
 
+/* Determines how to scanner will interact with incoming code */
 typedef enum lex_mode
 {
+    /* Loading only '<?php' */
     LEX_MODE_START,
+
+    /* Loading optionally '\s+declare(strict_types=1);' */
     LEX_MODE_CONTINUE,
+    
+    /* Loading rest of the tokens */
     LEX_MODE_NORMAL
 } lex_mode;
 
+/* Internal states used for token analyzation */
 typedef enum lex_state
 {
+    /* The initial state */
     LEX_STATE_START,
 
+    /* Intermediate states */
     LEX_STATE_COM_0,
     LEX_STATE_LCOM_0,
     LEX_STATE_BCOM_0,
@@ -59,7 +68,10 @@ typedef enum lex_state
     LEX_STATE_PE_MARK_1,
     LEX_STATE_PE_MARK_2,
 
+    /* An error occured state */
     LEX_STATE_ERROR,
+
+    /* End states that return the token */
     LEX_STATE_END,
 
     LEX_STATE_FUNC,
@@ -114,10 +126,38 @@ typedef enum lex_state
     LEX_STATE_EOS
 } lex_state;
 
+/**
+ * @brief A function pointer to a scanner state implementation
+ * 
+ * @param[in] context Compiler context
+ * @param[in] input The input stream
+ * @return Next state to enter
+ */
 typedef lex_state (*lex_state_function)(context* context, FILE* input);
 
+/**
+ * @brief Initializes the scanner, loads first token and stores it to context
+ * 
+ * @param[in] context Compiler context
+ * @param[in] input The input stream
+ * @return true if operation succeeded
+ */
 bool lex_init(context* context, FILE* input);
+
+/**
+ * @brief Loads next token and stores it to context
+ * 
+ * @param[in] context Compiler context
+ * @param[in] input The input stream
+ * @return true if operation succeeded
+ */
 bool lex_next(context* context, FILE* input);
+
+/**
+ * @brief Frees all scanner used memory
+ * 
+ * @param context Compiler context
+ */
 void lex_destroy(context* context);
 
 #endif
