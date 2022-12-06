@@ -107,11 +107,11 @@ else
 }
 if(1 < 0)
 {
-    write("1 < 0 == true:: OK \n");
+    write("1 < 0 == true:: ERROR \n");
 }
 else
 {
-    write("1 < 0 == false:: ERROR \n");
+    write("1 < 0 == false:: OK \n");
 }
 if(1 < 1)
 {
@@ -132,36 +132,36 @@ else
 }
 if(0 < 1)
 {
-    write("0 < 1 == true:: ERROR \n");
+    write("0 < 1 == true:: OK \n");
 }
 else
 {
-    write("0 < 1 == false:: OK \n");
+    write("0 < 1 == false:: ERROR \n");
 }
 
 if(1.1 < 0)
 {
-    write("1.1 < 0 == true:: OK \n");
+    write("1.1 < 0 == true:: ERROR \n");
 }
 else
 {
-    write("1.1 < 0 == false:: ERROR \n");
+    write("1.1 < 0 == false:: OK \n");
 }
 if(1.1 < 3)
 {
-    write("1.1 < 3 == true:: ERROR \n");
+    write("1.1 < 3 == true:: OK \n");
 }
 else
 {
-    write("1.1 < 3 == false:: OK \n");
+    write("1.1 < 3 == false:: ERROR \n");
 }
 if(0.0 < 1)
 {
-    write("0.0 < 1 == true:: ERROR \n");
+    write("0.0 < 1 == true:: OK \n");
 }
 else
 {
-    write("0.0 < 1 == false:: OK \n");
+    write("0.0 < 1 == false:: ERROR \n");
 }
 if(0.0 < 0)
 {
@@ -181,19 +181,19 @@ else
 }
 if((1===1) < 0)
 {
-    write("true < 0 == true:: OK \n");
+    write("true < 0 == true:: ERROR \n");
 }
 else
 {
-    write("true < 0 == false:: ERROR \n");
+    write("true < 0 == false:: OK \n");
 }
 if((0===3) < 1)
 {
-    write("false < 1 == true:: ERROR \n");
+    write("false < 1 == true:: OK \n");
 }
 else
 {
-    write("false < 1 == false:: OK \n");
+    write("false < 1 == false:: ERROR \n");
 }
 if((0===3) < 0)
 {
@@ -263,101 +263,101 @@ else
 }
 if(1 < 0.1)
 {
-    write("1 < 0.1 == true:: OK \n");
+    write("1 < 0.1 == true:: ERROR \n");
 }
 else
 {
-    write("1 < 0.1 == false:: ERROR \n");
+    write("1 < 0.1 == false:: OK \n");
 }
 if(1 < 1.1)
 {
-    write("1 < 1.1 == true:: ERROR \n");
+    write("1 < 1.1 == true:: OK \n");
 }
 else
 {
-    write("1 < 1.1 == false:: OK \n");
+    write("1 < 1.1 == false:: ERROR \n");
 }
 
 if(0 < 0.1)
 {
-    write("0 < 0.1 == true:: ERROR \n");
+    write("0 < 0.1 == true:: OK \n");
 }
 else
 {
-    write("0 < 0.1 == false:: OK \n");
+    write("0 < 0.1 == false:: ERROR \n");
 }
 if(0 < 1.1)
 {
-    write("0 < 1.1 == true:: ERROR \n");
+    write("0 < 1.1 == true:: OK \n");
 }
 else
 {
-    write("0 < 1.1 == false:: OK \n");
+    write("0 < 1.1 == false:: ERROR \n");
 }
 
 if(1.1 < 1.0)
 {
-    write("1.1 < 1.0 == true:: OK\n");
+    write("1.1 < 1.0 == true:: ERROR\n");
 }
 else
 {
-    write("1.1 < 1.0 == false:: ERROR \n");
+    write("1.1 < 1.0 == false:: OK \n");
 }
 if(1.1 < 3.1)
 {
-    write("1.1 < 3.1 == true:: ERROR \n");
+    write("1.1 < 3.1 == true:: OK \n");
 }
 else
 {
-    write("1.1 < 3.1 == false:: OK \n");
+    write("1.1 < 3.1 == false:: ERROR \n");
 }
 if(0.0 < 1.1)
 {
-    write("0.0 < 1.1 == true:: ERROR \n");
+    write("0.0 < 1.1 == true:: OK \n");
 }
 else
 {
-    write("0.0 < 1.1 == false:: OK \n");
+    write("0.0 < 1.1 == false:: ERROR \n");
 }
 if(0.0 < 0.1)
 {
-    write("0.0 < 0.1 == true:: ERROR \n");
+    write("0.0 < 0.1 == true:: OK \n");
 }
 else
 {
-    write("0.0 < 0.1 == false:: OK \n");
+    write("0.0 < 0.1 == false:: ERROR \n");
 }
 if((1===1) < 1.1)
 {
-    write("true < 1.1 == true:: ERROR \n");
+    write("true < 1.1 == true:: OK \n");
 }
 else
 {
-    write("true < 1.1 == false:: OK \n");
+    write("true < 1.1 == false:: ERROR \n");
 }
 if((1===1) < 0.1)
 {
-    write("true < 0.1 == true:: OK \n");
+    write("true < 0.1 == true:: ERROR \n");
 }
 else
 {
-    write("true < 0.1 == false:: ERROR \n");
+    write("true < 0.1 == false:: OK \n");
 }
 if((0===3) < 1.1)
 {
-    write("false < 1.1 == true:: ERROR \n");
+    write("false < 1.1 == true:: OK \n");
 }
 else
 {
-    write("false < 1.1 == false:: OK \n");
+    write("false < 1.1 == false:: ERROR \n");
 }
 if((0===3) < 0.1)
 {
-    write("false < 0.1 == true:: ERROR \n");
+    write("false < 0.1 == true:: OK \n");
 }
 else
 {
-    write("false < 0.1 == false:: OK \n");
+    write("false < 0.1 == false:: ERROR \n");
 }
 
 /*
@@ -385,11 +385,11 @@ else
 }
 if(1 < (0===3))
 {
-    write("1 < false == true:: OK \n");
+    write("1 < false == true:: ERROR \n");
 }
 else
 {
-    write("1 < false == false:: ERROR \n");
+    write("1 < false == false:: OK \n");
 }
 if(1 < (1===1))
 {
@@ -410,36 +410,36 @@ else
 }
 if(0 < (1===1))
 {
-    write("0 < true == true:: ERROR \n");
+    write("0 < true == true:: OK \n");
 }
 else
 {
-    write("0 < true == false:: OK \n");
+    write("0 < true == false:: ERROR \n");
 }
 
 if(1.1 < (0===3))
 {
-    write("1.1 < false == true:: OK \n");
+    write("1.1 < false == true:: ERROR \n");
 }
 else
 {
-    write("1.1 < false == false:: ERROR \n");
+    write("1.1 < false == false:: OK \n");
 }
 if(1.1 < (1===1))
 {
-    write("1.1 < true == true:: OK \n");
+    write("1.1 < true == true:: ERROR \n");
 }
 else
 {
-    write("1.1 < true == false:: ERROR \n");
+    write("1.1 < true == false:: OK \n");
 }
 if(0.0 < (1===1))
 {
-    write("0.0 < true == true:: ERROR \n");
+    write("0.0 < true == true:: OK \n");
 }
 else
 {
-    write("0.0 < true == false:: OK \n");
+    write("0.0 < true == false:: ERROR \n");
 }
 if(0.0 < (0===3))
 {
@@ -459,19 +459,19 @@ else
 }
 if((1===1) < (0===3))
 {
-    write("true < false == true:: OK \n");
+    write("true < false == true:: ERROR \n");
 }
 else
 {
-    write("true < false == false:: ERROR \n");
+    write("true < false == false:: OK \n");
 }
 if((0===3) < (1===1))
 {
-    write("false < true == true:: ERROR \n");
+    write("false < true == true:: OK \n");
 }
 else
 {
-    write("false < true == false:: OK \n");
+    write("false < true == false:: ERROR \n");
 }
 if((0===3) < (0===3))
 {
@@ -483,35 +483,35 @@ else
 }
 if("" < (1===1))
 {
-    write("\"\" < true == true:: ERROR \n");
+    write("\"\" < true == true:: OK \n");
 }
 else
 {
-    write("\"\" < true == false:: OK \n");
+    write("\"\" < true == false:: ERROR \n");
 }
 if("" < (0===3))
 {
-    write("\"\" < false == true:: ERROR \n");
+    write("\"\" < false == true:: OK \n");
 }
 else
 {
-    write("\"\" < false == false:: OK \n");
+    write("\"\" < false == false:: FALSE \n");
 }
 if("empty" < (1===1))
 {
-    write("\"empty\" < true == true:: OK \n");
+    write("\"empty\" < true == true:: ERROR \n");
 }
 else
 {
-    write("\"empty\" < true == false:: ERROR \n");
+    write("\"empty\" < true == false:: OK \n");
 }
 if("empty" < (0===3))
 {
-    write("\"empty\" < false == true:: OK \n");
+    write("\"empty\" < false == true:: ERROR \n");
 }
 else
 {
-    write("\"empty\" < false == false:: ERROR \n");
+    write("\"empty\" < false == false:: OK \n");
 }
 
 /*
@@ -607,27 +607,27 @@ else
  */
 if((1===1) < "empty")
 {
-    write("true < \"empty\" == true:: ERROR \n");
+    write("true < \"empty\" == true:: OK \n");
 }
 else
 {
-    write("true < \"empty\" == false:: OK \n");
+    write("true < \"empty\" == false:: ERROR \n");
 }
 if((1===1) < "")
 {
-    write("true < \"\" == true:: OK \n");
+    write("true < \"\" == true:: ERROR \n");
 }
 else
 {
-    write("true < \"\" == false:: ERROR \n");
+    write("true < \"\" == false:: OK \n");
 }
 if((0===3) < "empty")
 {
-    write("false < \"empty\" == true:: ERROR \n");
+    write("false < \"empty\" == true:: OK \n");
 }
 else
 {
-    write("false < \"empty\" == false:: OK \n");
+    write("false < \"empty\" == false:: ERROR \n");
 }
 if((0===3) < "")
 {
@@ -639,11 +639,11 @@ else
 }
 if("" < "empty")
 {
-    write("\"\" < \"empty\" == true:: ERROR \n");
+    write("\"\" < \"empty\" == true:: OK \n");
 }
 else
 {
-    write("\"\" < \"empty\" == false:: OK \n");
+    write("\"\" < \"empty\" == false:: ERROR \n");
 }
 if("" < "")
 {
@@ -663,9 +663,9 @@ else
 }
 if("empty" < "")
 {
-    write("\"empty\" < \"\" == true:: OK \n");
+    write("\"empty\" < \"\" == true:: ERROR \n");
 }
 else
 {
-    write("\"empty\" < \"\" == false:: ERROR \n");
+    write("\"empty\" < \"\" == false:: OK \n");
 }
