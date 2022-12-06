@@ -1,5 +1,15 @@
+/**
+ * @brief Lexical analyzer implementation
+ * 
+ * @file lex.c
+ * @author Jan Salaš (xsalas02)
+ * @author Lucie Hlaváčová (xhlava60)
+ * 
+ */
+
 #include "lex.h"
 
+/* Constant string definitions */
 #define LEX_KEYWORD_FUNCTION        "function"
 #define LEX_KEYWORD_IF              "if"
 #define LEX_KEYWORD_ELSE            "else"
@@ -20,11 +30,13 @@
 #define LEX_PHP_PC_MARK             "declare(strict_types=1);"
 #define LEX_PHP_PE_MARK             "?>"
 
+/* Integer escape sequence constants */
 #define LEX_ESC_HEX_LEN             2
 #define LEX_ESC_HEX_PREFIX          2
 #define LEX_ESC_OCTAL_LEN           3
 #define LEX_ESC_OCTAL_PREFIX        1
 
+/* Checks whether current input is keyword or not */
 #define LEX_KEYWORD_CHECK(ctx, value, result, state)        \
         if (char_buffer_equals(&ctx->attrib, value))        \
         {                                                   \
@@ -32,6 +44,7 @@
             return state;                                   \
         }
 
+/* Safe adding of character that checks for memory error */
 #define CHAR_BUFFER_ADD(ctx, c)                             \
         if (!char_buffer_add(&ctx->attrib, c))              \
         {                                                   \
@@ -39,8 +52,10 @@
             return LEX_STATE_ERROR;                         \
         }
 
+/* Current mode, that will be used for analysis */
 static lex_mode lex_current_mode;
 
+/* Forward declaration of functions */
 lex_state lex_state_start(context* context, FILE* input);
 
 lex_state lex_state_com_0(context* context, FILE* input);
@@ -81,6 +96,7 @@ lex_state lex_state_pe_mark_0(context* context, FILE* input);
 lex_state lex_state_pe_mark_1(context* context, FILE* input);
 lex_state lex_state_pe_mark_2(context* context, FILE* input);
 
+/* A table mapping states to functions */
 const lex_state_function LEX_TABLE[] =
 {
     /* LEX_STATE_START */ lex_state_start,
@@ -219,6 +235,7 @@ bool lex_init(context* context, FILE* input)
     if (!char_buffer_init(&context->attrib))
         return false;
 
+    /* Begin in the START mode */
     lex_current_mode = LEX_MODE_START;
     return lex_next(context, input);
 }
@@ -230,6 +247,7 @@ bool lex_next(context* context, FILE* input)
 
     while (state < LEX_STATE_END)
     {
+        /* Execute function based on current state */
         lex_state_function fun = LEX_TABLE[state];
         state = fun(context, input);
 
@@ -241,6 +259,7 @@ bool lex_next(context* context, FILE* input)
         }
     }
 
+    /* Print debug information */
     const char* content = char_buffer_cstr(&context->attrib);
     const char* token = token_str(context->token);
     
@@ -262,6 +281,7 @@ void lex_destroy(context* context)
     char_buffer_destroy(&context->attrib);
 }
 
+/* Input content:  */
 lex_state lex_state_start(context* context, FILE* input)
 {
     if (lex_current_mode == LEX_MODE_START)
@@ -366,6 +386,7 @@ lex_state lex_state_start(context* context, FILE* input)
     }
 }
 
+/* Input content: / */
 lex_state lex_state_com_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -377,6 +398,7 @@ lex_state lex_state_com_0(context* context, FILE* input)
     if (current == '*')
         return LEX_STATE_BCOM_0;
 
+    /* In CONTINUE mode, we ignore errors */
     if (lex_current_mode == LEX_MODE_CONTINUE)
     {
         lex_reset(context, input);
@@ -391,6 +413,7 @@ lex_state lex_state_com_0(context* context, FILE* input)
     return LEX_STATE_DIV;
 }
 
+/* Input content: //(...) */
 lex_state lex_state_lcom_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -409,6 +432,7 @@ lex_state lex_state_lcom_0(context* context, FILE* input)
     return LEX_STATE_LCOM_0;
 }
 
+/* Input content: /\*(...) */
 lex_state lex_state_bcom_0(context* context, FILE* input)
 {
     (void) context;
@@ -426,6 +450,7 @@ lex_state lex_state_bcom_0(context* context, FILE* input)
     return LEX_STATE_BCOM_0;
 }
 
+/* Input content: /\*(...)* */
 lex_state lex_state_bcom_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -446,6 +471,7 @@ lex_state lex_state_bcom_1(context* context, FILE* input)
     return LEX_STATE_BCOM_0;
 }
 
+/* Input content: $ */
 lex_state lex_state_id_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -460,6 +486,7 @@ lex_state lex_state_id_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: $[a-zA-Z_]([a-zA-Z0-9_]...) */
 lex_state lex_state_id_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -476,6 +503,7 @@ lex_state lex_state_id_1(context* context, FILE* input)
     return LEX_STATE_ID;
 }
 
+/* Input content: [a-zA-Z_]([a-zA-Z0-9_]...) */
 lex_state lex_state_fid_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -488,6 +516,7 @@ lex_state lex_state_fid_0(context* context, FILE* input)
 
     ungetc(current, input);
 
+    /* Detect constant strings */
     LEX_KEYWORD_CHECK(context, LEX_KEYWORD_FUNCTION, FUNC, LEX_STATE_FUNC);
     LEX_KEYWORD_CHECK(context, LEX_KEYWORD_IF, IF, LEX_STATE_IF);
     LEX_KEYWORD_CHECK(context, LEX_KEYWORD_ELSE, ELSE, LEX_STATE_ELSE);
@@ -504,6 +533,7 @@ lex_state lex_state_fid_0(context* context, FILE* input)
     return LEX_STATE_FID;
 }
 
+/* Input content: ?([a-zA-Z0-9]+) */
 lex_state lex_state_nid_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -521,10 +551,10 @@ lex_state lex_state_nid_0(context* context, FILE* input)
     LEX_KEYWORD_CHECK(context, LEX_TYPE_NSTRING, NSTYPE, LEX_STATE_NSTYPE);
 
     dbgprint("Unexpected token '%s'!", char_buffer_cstr(&context->attrib));
-
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ([0-9]...) */
 lex_state lex_state_ival_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -553,6 +583,7 @@ lex_state lex_state_ival_0(context* context, FILE* input)
     return lex_validate_int(context);
 }
 
+/* Input content: ([0-9]...). */
 lex_state lex_state_fval_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -567,6 +598,7 @@ lex_state lex_state_fval_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ([0-9]...).([0-9]...) */
 lex_state lex_state_fval_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -589,6 +621,7 @@ lex_state lex_state_fval_1(context* context, FILE* input)
     return lex_validate_float(context);
 }
 
+/* Input content: ([0-9]...)(.([0-9]...)?)[eE] */
 lex_state lex_state_fval_2(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -609,6 +642,7 @@ lex_state lex_state_fval_2(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ([0-9]...)(.([0-9]...)?)[eE][+-] */
 lex_state lex_state_fval_3(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -623,6 +657,7 @@ lex_state lex_state_fval_3(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ([0-9]...)(.([0-9]...)?)[eE][+-]([0-9]...) */
 lex_state lex_state_fval_4(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -639,6 +674,7 @@ lex_state lex_state_fval_4(context* context, FILE* input)
     return lex_validate_float(context);
 }
 
+/* Input content: " */
 lex_state lex_state_sval_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -668,6 +704,7 @@ lex_state lex_state_sval_0(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: "(...)\ */
 lex_state lex_state_sval_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -710,6 +747,7 @@ lex_state lex_state_sval_1(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: "(...)\x */
 lex_state lex_state_sval_x0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -728,6 +766,7 @@ lex_state lex_state_sval_x0(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: "(...)\x[0-9a-fA-F] */
 lex_state lex_state_sval_x1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -757,6 +796,7 @@ lex_state lex_state_sval_x1(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: "(...)\[0-9] */
 lex_state lex_state_sval_o0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -775,6 +815,7 @@ lex_state lex_state_sval_o0(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: "(...)\[0-9][0-9] */
 lex_state lex_state_sval_o1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -804,6 +845,7 @@ lex_state lex_state_sval_o1(context* context, FILE* input)
     return LEX_STATE_SVAL_0;
 }
 
+/* Input content: = */
 lex_state lex_state_assig_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -820,6 +862,7 @@ lex_state lex_state_assig_0(context* context, FILE* input)
     return LEX_STATE_ASSIG;
 }
 
+/* Input content: < */
 lex_state lex_state_lt_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -838,6 +881,7 @@ lex_state lex_state_lt_0(context* context, FILE* input)
     return LEX_STATE_LT;
 }
 
+/* Input content: > */
 lex_state lex_state_gt_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -856,6 +900,7 @@ lex_state lex_state_gt_0(context* context, FILE* input)
     return LEX_STATE_GT;
 }
 
+/* Input content: == */
 lex_state lex_state_eq_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -872,6 +917,7 @@ lex_state lex_state_eq_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ! */
 lex_state lex_state_neq_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -886,6 +932,7 @@ lex_state lex_state_neq_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: != */
 lex_state lex_state_neq_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -902,6 +949,7 @@ lex_state lex_state_neq_1(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: (mode=START) ('<?php'???) */
 lex_state lex_state_ps_mark_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -926,6 +974,7 @@ lex_state lex_state_ps_mark_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: (mode=CONTINUE) */
 lex_state lex_state_pc_mark_0(context* context, FILE* input)
 {
     (void) context;
@@ -941,6 +990,7 @@ lex_state lex_state_pc_mark_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: (mode=CONTINUE) */
 lex_state lex_state_pc_mark_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -956,12 +1006,14 @@ lex_state lex_state_pc_mark_1(context* context, FILE* input)
     if (current == LEX_PHP_PC_MARK[0])
         return LEX_STATE_PC_MARK_2;
 
+    /* In CONTINUE mode, we ignore errors */
     lex_reset(context, input);
     lex_current_mode = LEX_MODE_NORMAL;
 
     return LEX_STATE_START;
 }
 
+/* Input content: (mode=CONTINUE) d('eclare(strict_types=1);'???) */
 lex_state lex_state_pc_mark_2(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -982,12 +1034,14 @@ lex_state lex_state_pc_mark_2(context* context, FILE* input)
         return LEX_STATE_PC_MARK_2;
     }
 
+    /* In CONTINUE mode, we ignore errors */
     lex_reset(context, input);
     lex_current_mode = LEX_MODE_NORMAL;
 
     return LEX_STATE_START;
 }
 
+/* Input content: ? */
 lex_state lex_state_pe_mark_0(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -1008,6 +1062,7 @@ lex_state lex_state_pe_mark_0(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ?> */
 lex_state lex_state_pe_mark_1(context* context, FILE* input)
 {
     int current = fgetc(input);
@@ -1025,6 +1080,7 @@ lex_state lex_state_pe_mark_1(context* context, FILE* input)
     return LEX_STATE_ERROR;
 }
 
+/* Input content: ?>(\n?) */
 lex_state lex_state_pe_mark_2(context* context, FILE* input)
 {
     int current = fgetc(input);
