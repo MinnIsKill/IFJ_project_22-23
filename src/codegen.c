@@ -355,7 +355,11 @@ void gen_EQEQ()
         "\n"
         "JUMPIFEQ $$$_EQEQ_LEFT_NIL LF@_LEFT_TYPE string@nil\n"
         "JUMPIFEQ $$$_EQEQ_RIGHT_NIL LF@_RIGHT_TYPE string@nil\n"
-        // TODO dyn check
+        "PUSHS LF@_RIGHT\n"
+        "PUSHS LF@_LEFT\n"
+        "CALL $$$_DYN_CONVERT\n"
+        "POPS LF@_LEFT\n"
+        "POPS LF@_RIGHT\n"
         "PUSHS LF@_LEFT\n"
         "PUSHS LF@_RIGHT\n"
         "EQS\n"
@@ -405,7 +409,11 @@ void gen_REL_LT()
         "\n"
         "JUMPIFEQ $$$_REL_LT_FALSE LF@_LEFT_TYPE string@nil\n"
         "JUMPIFEQ $$$_REL_LT_FALSE LF@_RIGHT_TYPE string@nil\n"
-        //TODO dyna check
+        "PUSHS LF@_RIGHT\n"
+        "PUSHS LF@_LEFT\n"
+        "CALL $$$_DYN_CONVERT\n"
+        "POPS LF@_LEFT\n"
+        "POPS LF@_RIGHT\n"
         "LT LF@_RESAULT LF@_LEFT LF@_RIGHT\n"
         "JUMP $$$_REL_LT_SKIP\n"
         "\n"
@@ -427,90 +435,90 @@ void gen_DYN_CONVERT()
         "LABEL $$$_DYN_CONVERT\n"
         "CREATEFRAME\n"
         "PUSHFRAME\n"
-
-        DEFVAR LF@_L
-        DEFVAR LF@_R
-        DEFVAR LF@_LT
-        DEFVAR LF@_RT
-        POPS LF@_L
-        POPS LF@_R
-        TYPE LF@_LT LF@_L
-        TYPE LF@_RT LF@_R
-
-        JUMPIFEQ $$$_DYN_CONVERT_RTB LF@_LT string@bool
-        JUMPIFEQ $$$_DYN_CONVERT_LTB LF@_RT string@bool
-        JUMPIFEQ $$$_DYN_CONVERT_RTF LF@_LT string@float
-        JUMPIFEQ $$$_DYN_CONVERT_LTF LF@_RT string@float
-        JUMPIFEQ $$$_DYN_CONVERT_RTI LF@_LT string@int
-        JUMPIFEQ $$$_DYN_CONVERT_LTI LF@_RT string@int
-        JUMPIFEQ $$$_DYN_CONVERT_RTS LF@_LT string@string
-        JUMPIFEQ $$$_DYN_CONVERT_LTS LF@_RT string@string
-        JUMPIFEQ $$$_DYN_CONVERT_RTN LF@_LT string@nil
-        JUMPIFEQ $$$_DYN_CONVERT_LTN LF@_RT string@nil
-        EXIT int@7
-
-        LABEL $$$_DYN_CONVERT_RTB 
-        PUSHS LF@_R
-        CALL $$$_CONVERT_X_TO_BOOL
-        POPS LF@_R
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_LTB 
-        PUSHS LF@_L
-        CALL $$$_CONVERT_X_TO_BOOL
-        POPS LF@_L
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_LTF 
-        PUSHS LF@_L
-        CALL $$$_CONVERT_X_TO_FLOAT
-        POPS LF@_L
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_RTF 
-        PUSHS LF@_R
-        CALL $$$_CONVERT_X_TO_FLOAT
-        POPS LF@_R
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_LTI 
-        PUSHS LF@_L
-        CALL $$$_CONVERT_X_TO_INT
-        POPS LF@_L
-        JUMP $$$_DYN_CONVERT_END
-        
-        LABEL $$$_DYN_CONVERT_RTI 
-        PUSHS LF@_R
-        CALL $$$_CONVERT_X_TO_INT
-        POPS LF@_R
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_LTS 
-        PUSHS LF@_L
-        CALL $$$_CONVERT_X_TO_STRING
-        POPS LF@_L
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_RTS 
-        PUSHS LF@_R
-        CALL $$$_CONVERT_X_TO_STRING
-        POPS LF@_R
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_LTN 
-        PUSHS LF@_L
-        CALL $$$_CONVERT_X_TO_NIL
-        POPS LF@_L
-        JUMP $$$_DYN_CONVERT_END
-
-        LABEL $$$_DYN_CONVERT_RTN 
-        PUSHS LF@_R
-        CALL $$$_CONVERT_X_TO_NIL
-        POPS LF@_R
-
+        "\n"
+        "DEFVAR LF@_L\n"
+        "DEFVAR LF@_R\n"
+        "DEFVAR LF@_LT\n"
+        "DEFVAR LF@_RT\n"
+        "POPS LF@_L\n"
+        "POPS LF@_R\n"
+        "TYPE LF@_LT LF@_L\n"
+        "TYPE LF@_RT LF@_R\n"
+        "\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_RTS LF@_LT string@string\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_LTS LF@_RT string@string\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_RTF LF@_LT string@float\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_LTF LF@_RT string@float\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_RTI LF@_LT string@int\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_LTI LF@_RT string@int\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_RTB LF@_LT string@bool\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_LTB LF@_RT string@bool\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_RTN LF@_LT string@nil\n"
+        "JUMPIFEQ $$$_DYN_CONVERT_LTN LF@_RT string@nil\n"
+        "EXIT int@7\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_RTB \n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_BOOL\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_LTB \n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_BOOL\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_LTF \n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_RTF \n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_FLOAT\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_LTI \n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_INT\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_RTI \n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_INT\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_LTS \n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_STRING\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_RTS \n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_STRING\n"
+        "POPS LF@_R\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_LTN \n"
+        "PUSHS LF@_L\n"
+        "CALL $$$_CONVERT_X_TO_NIL\n"
+        "POPS LF@_L\n"
+        "JUMP $$$_DYN_CONVERT_END\n"
+        "\n"
+        "LABEL $$$_DYN_CONVERT_RTN \n"
+        "PUSHS LF@_R\n"
+        "CALL $$$_CONVERT_X_TO_NIL\n"
+        "POPS LF@_R\n"
+        "\n"
         "LABEL $$$_DYN_CONVERT_END\n"
-        "PUSHP LF@_R\n"
-        "PUSHP LF@_L\n"
+        "PUSHS LF@_R\n"
+        "PUSHS LF@_L\n"
         "\n"
         "POPFRAME\n"
         "RETURN\n"
@@ -537,7 +545,11 @@ void gen_REL_GT()
         "\n"
         "JUMPIFEQ $$$_REL_GT_FALSE LF@_LEFT_TYPE string@nil\n"
         "JUMPIFEQ $$$_REL_GT_FALSE LF@_RIGHT_TYPE string@nil\n"
-        //TODO dyna check
+        "PUSHS LF@_RIGHT\n"
+        "PUSHS LF@_LEFT\n"
+        "CALL $$$_DYN_CONVERT\n"
+        "POPS LF@_LEFT\n"
+        "POPS LF@_RIGHT\n"
         "GT LF@_RESAULT LF@_LEFT LF@_RIGHT\n"
         "JUMP $$$_REL_GT_SKIP\n"
         "\n"
