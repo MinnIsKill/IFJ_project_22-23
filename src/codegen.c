@@ -183,10 +183,10 @@ void gen_CONVERT_TO_NUMERIC()
         "TYPE LF@_LT LF@_L\n"
         "TYPE LF@_RT LF@_R\n"
         "\n"
-        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_RIGHT_INT LF@_LT string@int\n"
         "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_RIGHT_FLOAT LF@_LT string@float\n"
-        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_LEFT_INT LF@_RT string@int\n"
         "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_LEFT_FLOAT LF@_RT string@float\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_RIGHT_INT LF@_LT string@int\n"
+        "JUMPIFEQ $$$_CONVERT_TO_NUMERIC_LEFT_INT LF@_RT string@int\n"
         "PUSHS LF@_L\n"
         "CALL $$$_CONVERT_X_TO_FLOAT\n"
         "POPS LF@_L\n"
@@ -313,6 +313,29 @@ void gen_CONVERT_NIL_TO_X()
     );
 }
 
+void gen_CONVERT_X_TO_NILL()
+{
+    printf
+    (
+        "LABEL $$$_CONVERT_X_TO_NIL\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_VAL\n"
+        "DEFVAR LF@_TYPE\n"
+        "POPS LF@_VAL\n"
+        "TYPE LF@_TYPE LF@_TYPE\n"
+        "\n"
+        "JUMPIFEQ $$$_CONVERT_X_TO_NIL_RETURN LF@_TYPE string@nil\n"
+        "EXIT int@7\n"
+        "\n"
+        "LABEL $$$_CONVERT_X_TO_NIL_RETURN\n"
+        "PUSHS LF@_VAL\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
 void gen_EQEQ()
 {
     printf
@@ -332,6 +355,7 @@ void gen_EQEQ()
         "\n"
         "JUMPIFEQ $$$_EQEQ_LEFT_NIL LF@_LEFT_TYPE string@nil\n"
         "JUMPIFEQ $$$_EQEQ_RIGHT_NIL LF@_RIGHT_TYPE string@nil\n"
+        // TODO dyn check
         "PUSHS LF@_LEFT\n"
         "PUSHS LF@_RIGHT\n"
         "EQS\n"
@@ -394,6 +418,105 @@ void gen_REL_LT()
         "RETURN\n"
     );
 }
+
+// LEFT, RIGH
+void gen_DYN_CONVERT()
+{
+    printf
+        (
+        "LABEL $$$_DYN_CONVERT\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+
+        DEFVAR LF@_L
+        DEFVAR LF@_R
+        DEFVAR LF@_LT
+        DEFVAR LF@_RT
+        POPS LF@_L
+        POPS LF@_R
+        TYPE LF@_LT LF@_L
+        TYPE LF@_RT LF@_R
+
+        JUMPIFEQ $$$_DYN_CONVERT_RTB LF@_LT string@bool
+        JUMPIFEQ $$$_DYN_CONVERT_LTB LF@_RT string@bool
+        JUMPIFEQ $$$_DYN_CONVERT_RTF LF@_LT string@float
+        JUMPIFEQ $$$_DYN_CONVERT_LTF LF@_RT string@float
+        JUMPIFEQ $$$_DYN_CONVERT_RTI LF@_LT string@int
+        JUMPIFEQ $$$_DYN_CONVERT_LTI LF@_RT string@int
+        JUMPIFEQ $$$_DYN_CONVERT_RTS LF@_LT string@string
+        JUMPIFEQ $$$_DYN_CONVERT_LTS LF@_RT string@string
+        JUMPIFEQ $$$_DYN_CONVERT_RTN LF@_LT string@nil
+        JUMPIFEQ $$$_DYN_CONVERT_LTN LF@_RT string@nil
+        EXIT int@7
+
+        LABEL $$$_DYN_CONVERT_RTB 
+        PUSHS LF@_R
+        CALL $$$_CONVERT_X_TO_BOOL
+        POPS LF@_R
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_LTB 
+        PUSHS LF@_L
+        CALL $$$_CONVERT_X_TO_BOOL
+        POPS LF@_L
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_LTF 
+        PUSHS LF@_L
+        CALL $$$_CONVERT_X_TO_FLOAT
+        POPS LF@_L
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_RTF 
+        PUSHS LF@_R
+        CALL $$$_CONVERT_X_TO_FLOAT
+        POPS LF@_R
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_LTI 
+        PUSHS LF@_L
+        CALL $$$_CONVERT_X_TO_INT
+        POPS LF@_L
+        JUMP $$$_DYN_CONVERT_END
+        
+        LABEL $$$_DYN_CONVERT_RTI 
+        PUSHS LF@_R
+        CALL $$$_CONVERT_X_TO_INT
+        POPS LF@_R
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_LTS 
+        PUSHS LF@_L
+        CALL $$$_CONVERT_X_TO_STRING
+        POPS LF@_L
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_RTS 
+        PUSHS LF@_R
+        CALL $$$_CONVERT_X_TO_STRING
+        POPS LF@_R
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_LTN 
+        PUSHS LF@_L
+        CALL $$$_CONVERT_X_TO_NIL
+        POPS LF@_L
+        JUMP $$$_DYN_CONVERT_END
+
+        LABEL $$$_DYN_CONVERT_RTN 
+        PUSHS LF@_R
+        CALL $$$_CONVERT_X_TO_NIL
+        POPS LF@_R
+
+        "LABEL $$$_DYN_CONVERT_END\n"
+        "PUSHP LF@_R\n"
+        "PUSHP LF@_L\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+        );
+}
+
 
 void gen_REL_GT()
 {
@@ -487,7 +610,7 @@ printf
         "RETURN\n"
         "\n"
         "LABEL $$$_DO_DIV_DIV_BY_ZERO\n"
-        "EXIT int@7\n"
+        "EXIT int@8\n"
     );
 
 }
@@ -516,10 +639,12 @@ void gen_epilog()
     gen_EQEQ();
     gen_REL_GT();
     gen_REL_LT();
+    gen_CONVERT_X_TO_NILL();
     gen_CONVERT_X_TO_BOOL();
     gen_CONVERT_X_TO_STRING();
     gen_CONVERT_X_TO_INT();
     gen_CONVERT_X_TO_FLOAT();
+    gen_DYN_CONVERT();
     gen_CONVERT_TO_NUMERIC();
     gen_DO_DIV();
     gen_STRCAT();

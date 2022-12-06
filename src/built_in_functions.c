@@ -18,6 +18,24 @@ void gen_reads()
     );
 }
 
+// function readf() : ?float
+void gen_readf()
+{
+    printf
+    (
+        "LABEL $$readf\n"
+        "CREATEFRAME\n"
+        "PUSHFRAME\n"
+        "\n"
+        "DEFVAR LF@_out\n"
+        "READ LF@_out float\n"
+        "PUSHS LF@_out\n"
+        "\n"
+        "POPFRAME\n"
+        "RETURN\n"
+    );
+}
+
 
 // function readi() : ?int
 void gen_readi()
@@ -200,5 +218,6 @@ void gen_built_ins()
     gen_substring();
     gen_write();
     gen_readi();
+    gen_readf();
     gen_reads();
 }
